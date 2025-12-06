@@ -10,12 +10,15 @@
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f postgres",
     "docker:restart": "docker-compose restart postgres",
-    "migrate:init": "ts-node migrations/index.ts init",
-    "migrate:create": "ts-node migrations/index.ts new -n",
-    "migrate:up": "ts-node migrations/index.ts up",
-    "migrate:down_last": "ts-node migrations/index.ts down --last",
-    "migrate:status": "ts-node migrations/index.ts status",
-    "migrate:down_all": "ts-node migrations/index.ts down --all"
+    "migrate:up": "npx sequelize-cli db:migrate",
+    "migrate:down": "npx sequelize-cli db:migrate:undo",
+    "migrate:down_all": "npx sequelize-cli db:migrate:undo:all",
+    "migrate:status": "npx sequelize-cli db:migrate:status",
+    "migrate:create": "npx sequelize-cli migration:generate --name",
+    "seed:up": "npx sequelize-cli db:seed:all",
+    "seed:down": "npx sequelize-cli db:seed:undo",
+    "seed:down_all": "npx sequelize-cli db:seed:undo:all",
+    "seed:create": "npx sequelize-cli seed:generate --name"
   },
   "keywords": [
     "clean-code"

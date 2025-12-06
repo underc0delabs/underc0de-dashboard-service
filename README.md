@@ -24,7 +24,7 @@ DEFAULT_PAGE_COUNT=10
 
 # Database Configuration
 DB_HOST=localhost
-DB_PORT=5432
+DB_PORT=5433
 DB_NAME=underc0deDashboard
 DB_USERNAME=postgres
 DB_PASSWORD=postgres
@@ -54,7 +54,7 @@ Este comando levantará un contenedor de PostgreSQL con:
 - **Usuario**: `postgres`
 - **Contraseña**: `postgres`
 - **Base de datos**: `underc0deDashboard`
-- **Puerto**: `5432`
+- **Puerto**: `5433` (mapeado desde el puerto interno 5432 del contenedor)
 
 ### Otros comandos útiles de Docker
 
@@ -89,22 +89,18 @@ La aplicación se ejecutará en `http://localhost:3002` (o el puerto configurado
 
 ## Migraciones
 
-### Inicializar migraciones
-
-```bash
-npm run migrate:init
-```
-
-### Crear una nueva migración
-
-```bash
-npm run migrate:create
-```
-
 ### Ejecutar migraciones
 
 ```bash
 npm run migrate:up
+```
+
+Este comando ejecutará todas las migraciones pendientes y creará las tablas en la base de datos.
+
+### Crear una nueva migración
+
+```bash
+npm run migrate:create nombre-de-la-migracion
 ```
 
 ### Ver estado de migraciones
@@ -116,7 +112,7 @@ npm run migrate:status
 ### Revertir última migración
 
 ```bash
-npm run migrate:down_last
+npm run migrate:down
 ```
 
 ### Revertir todas las migraciones
@@ -124,6 +120,42 @@ npm run migrate:down_last
 ```bash
 npm run migrate:down_all
 ```
+
+## Seeds (Datos Iniciales)
+
+### Ejecutar todos los seeds
+
+```bash
+npm run seed:up
+```
+
+Este comando ejecutará todos los seeds y creará datos iniciales (como el usuario administrador por defecto).
+
+### Crear un nuevo seed
+
+```bash
+npm run seed:create nombre-del-seed
+```
+
+### Revertir último seed
+
+```bash
+npm run seed:down
+```
+
+### Revertir todos los seeds
+
+```bash
+npm run seed:down_all
+```
+
+### Usuario Administrador por Defecto
+
+Después de ejecutar los seeds, tendrás un usuario administrador con las siguientes credenciales:
+- **Email**: `admin@underc0de.com`
+- **Password**: `admin123`
+
+**⚠️ IMPORTANTE**: Cambia estas credenciales en producción.
 
 ## Estructura del Proyecto
 
