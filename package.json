@@ -1,0 +1,50 @@
+{
+  "name": "underc0de-dashboard-service",
+  "version": "1.0.0",
+  "description": "Underc0de dashboard service",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f postgres",
+    "docker:restart": "docker-compose restart postgres",
+    "migrate:init": "ts-node migrations/index.ts init",
+    "migrate:create": "ts-node migrations/index.ts new -n",
+    "migrate:up": "ts-node migrations/index.ts up",
+    "migrate:down_last": "ts-node migrations/index.ts down --last",
+    "migrate:status": "ts-node migrations/index.ts status",
+    "migrate:down_all": "ts-node migrations/index.ts down --all"
+  },
+  "keywords": [
+    "clean-code"
+  ],
+  "author": "Gianella Vezzoni",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@types/express": "^5.0.6",
+    "@types/pg": "^8.15.6",
+    "@types/sequelize": "^6.12.0",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.1",
+    "multer": "^2.0.2",
+    "mysql2": "^3.15.3",
+    "nodemon": "^3.1.11",
+    "pg": "^8.16.3",
+    "sequelize": "^6.37.7",
+    "sequelize-cli": "^6.6.3",
+    "sinon": "^21.0.0",
+    "sinon-express-mock": "^2.2.1",
+    "ts-sinon": "^2.0.2"
+  }
+}

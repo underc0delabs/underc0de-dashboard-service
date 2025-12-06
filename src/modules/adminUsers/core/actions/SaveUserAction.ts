@@ -1,0 +1,29 @@
+import IAdminUser from "../entities/IAdminUser";
+import { IAdminUserRepository } from "../repository/IAdminUserRepository";
+import { IHashService } from "../services/IHashService";
+
+export interface ISaveUserAction {
+  execute: (body: IAdminUser) => Promise<any>;
+}
+
+export const SaveUserAction = (
+  AdminUserRepository: IAdminUserRepository,
+  hashService: IHashService
+): ISaveUserAction => {
+  return {
+    execute: (body) => {
+      return new Promise(async (resolve, reject) => {
+        try {
+          const user = {
+            ...body,
+            password: hashService.hash(body.password),
+          };
+          const result = await AdminUserRepository.save(user);
+          resolve(result);
+        } catch (error) {
+          reject(error);
+        }
+      });
+    },
+  };
+};
