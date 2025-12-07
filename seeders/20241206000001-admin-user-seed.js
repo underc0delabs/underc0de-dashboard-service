@@ -11,6 +11,7 @@ module.exports = {
         name: 'Admin',
         email: 'admin@underc0de.com',
         password: hashedPassword,
+        rol: 'Admin',
         status: true,
         createdAt: new Date(),
         updatedAt: new Date()

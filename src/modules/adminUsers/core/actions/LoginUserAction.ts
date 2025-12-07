@@ -27,7 +27,15 @@ export const LoginUserAction = (
           if (!validPassword) throw new WrongCredentialsException();
           const token = await generateJWT(user.id);
           resolve({
-            user,
+            user: {
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              role: user.rol,
+              status: user.status,
+              createdAt: user.createdAt,
+              updatedAt: user.updatedAt,
+            },
             token,
           });
         } catch (error) {

@@ -6,6 +6,7 @@ import { UserNotActiveException } from "../../core/exceptions/UserNotActiveExcep
 import { UserNotExistException } from "../../core/exceptions/UserNotExistException";
 import { WrongCredentialsException } from "../../core/exceptions/WrongCredentialsException";
 import { IAdminUserActions } from "../../core/actions/actionsProvider";
+import { decryptJWT } from "../../../../helpers/decrypt-jwt";
 const name = 'Usuario'
 const pronoun = 'o'
 export const UserControllers = ({
@@ -14,7 +15,8 @@ export const UserControllers = ({
     remove,
     getAll,
     getById,
-    login
+    login,
+    getUsersMetrics
   }: IAdminUserActions) => {
     
   const errorResponses = createHashMap({
@@ -76,6 +78,15 @@ export const UserControllers = ({
       const message = "Inicio de sesión exitoso"
       loginExecution.then(result => {
         SuccessResponse(res,200,message,result)
+      }).catch(error => {
+        errorResponses[error.name](res, error)
+      })
+    },
+    getUsersMetrics(req: Request, res: Response) {
+      const { data }: any = decryptJWT(req.headers.authorization as string);
+      const getUsersMetricsExecution = getUsersMetrics.execute(data?.id as string)
+      getUsersMetricsExecution.then(metrics => {
+        SuccessResponse(res,200,"Métricas obtenidas correctamente",metrics)
       }).catch(error => {
         errorResponses[error.name](res, error)
       })

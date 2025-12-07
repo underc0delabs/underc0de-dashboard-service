@@ -12,6 +12,10 @@ const AdminUser = sequelize.define('AdminUser', {
         type: DataTypes.STRING,
         allowNull: false
     },
+    rol: {
+        type: DataTypes.ENUM('Admin', 'Editor'),
+        allowNull: false
+    },
     email: {
         type: DataTypes.STRING,
         allowNull: false,
