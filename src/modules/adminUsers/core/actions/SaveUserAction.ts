@@ -16,7 +16,9 @@ export const SaveUserAction = (
         try {
           const user = {
             ...body,
+            createdAt: new Date(body.createdAt || new Date()),
             password: hashService.hash(body.password),
+            rol: body.role == "editor" ? "Editor" : "Admin",
           };
           const result = await AdminUserRepository.save(user);
           resolve(result);

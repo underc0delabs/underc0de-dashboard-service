@@ -1,9 +1,10 @@
 import { NextFunction, Request, Response } from "express";
 import configs from "../../../configs";
-import { IUserRepository } from "../../../modules/users/core/repository/IMongoUserRepository";
-import { IJwtValidator } from "../core/IJwtValidator";
+import { IAdminUserRepository } from "../../../modules/adminUsers/core/repository/IAdminUserRepository";
+import { IJwtValidator } from "../../JwtValidator/core/IJwtValidator";
+
 const jwt = require("jsonwebtoken");
-const getJwtValidator = (UserRepository: IUserRepository): IJwtValidator => {
+const getJwtValidator = (UserAdminRepository: IAdminUserRepository): IJwtValidator => {
     const jwtValidator = async (req: Request, res: Response, next: NextFunction) => {
         const bearerHeader = req.header("authorization");
         if (!bearerHeader) {
@@ -29,7 +30,7 @@ const getJwtValidator = (UserRepository: IUserRepository): IJwtValidator => {
         try {
           const { id } = jwt.verify(token, configs.secret_key);
           //leer user
-          const user = await UserRepository.getById(id);
+          const user = await UserAdminRepository.getById(id);
           //si el user existe
           if (!user) {
             return res.status(401).json({

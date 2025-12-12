@@ -1,5 +1,5 @@
 import { DependencyManager } from "../../dependencyManager";
-import { IUserRepository } from "../../modules/users/core/repository/IMongoUserRepository";
+import { IAdminUserRepository } from "../../modules/adminUsers/core/repository/IAdminUserRepository";
 import getJwtValidator from "./infrastructure/GetJwtValidator";
 
 const JwtMiddlewareInitializer = (dependencyManager: DependencyManager) => {
@@ -7,7 +7,7 @@ const JwtMiddlewareInitializer = (dependencyManager: DependencyManager) => {
     dependencyManager.register('jwtValidator', jwtValidator)
 }
 const getUserRepository = (dependencyManager:DependencyManager) => {
-    return dependencyManager.resolve('userRepository') as IUserRepository
+    return dependencyManager.resolve('adminUserRepository') as IAdminUserRepository
 }
 
 export default JwtMiddlewareInitializer

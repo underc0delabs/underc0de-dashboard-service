@@ -6,7 +6,9 @@ import AdminUserModel from "../models/AdminUserModel";
 export const AdminUserRepository = (): IAdminUserRepository => ({
   async save(user) {
     const newUser = await AdminUserModel.create(user as any);
-    return newUser.toJSON() as IAdminUser;
+    const userJson = newUser.toJSON() as any;
+    delete userJson.password;
+    return userJson as IAdminUser;
   },
   async edit(user, id) {
     return await AdminUserModel.update(user, { where: { id } });
@@ -20,16 +22,31 @@ export const AdminUserRepository = (): IAdminUserRepository => ({
       page_number = 0,
       ...rest
     } = query;
-    const total = await AdminUserModel.count(rest);
+    
+    const validFields = ['id', 'name', 'rol', 'email', 'status', 'createdAt', 'updatedAt'];
+    const whereClause: any = {};
+    
+    Object.keys(rest).forEach(key => {
+      if (validFields.includes(key) && rest[key] !== undefined && rest[key] !== null && rest[key] !== '') {
+        whereClause[key] = rest[key];
+      }
+    });
+    
+    const defaultPageCount = Number(configs.api.default_page_count) || 10;
+    const pageCountNum = Number(page_count);
+    const pageNumberNum = Number(page_number);
+    
+    const total = await AdminUserModel.count({ where: whereClause });
     const users = await AdminUserModel.findAll({
-      where: rest,
-      limit: Number(page_count),
-      offset: Number(page_number),
+      where: whereClause,
+      attributes: { exclude: ['password'] },
+      limit: isNaN(pageCountNum) ? defaultPageCount : pageCountNum,
+      offset: isNaN(pageNumberNum) ? 0 : pageNumberNum,
     });
     const pagination = {
       total,
-      page_number,
-      page_count,
+      page_number: isNaN(pageNumberNum) ? 0 : pageNumberNum,
+      page_count: isNaN(pageCountNum) ? defaultPageCount : pageCountNum,
       records: users.length,
     };
     return {
@@ -38,9 +55,14 @@ export const AdminUserRepository = (): IAdminUserRepository => ({
     };
   },
   async getById(id) {
-    return await AdminUserModel.findByPk(id);
+    return await AdminUserModel.findByPk(id, {
+      attributes: { exclude: ['password'] },
+    });
   },
   async getOne(query) {
-    return await AdminUserModel.findOne({ where: query });
+    return await AdminUserModel.findOne({
+      where: query,
+      attributes: { exclude: ['password'] },
+    });
   },
 });

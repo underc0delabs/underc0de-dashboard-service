@@ -6,4 +6,5 @@ export default interface IAdminUser {
   updatedAt?: Date;
   status?: boolean;
   role?: string;
+  rol?: string;
 }

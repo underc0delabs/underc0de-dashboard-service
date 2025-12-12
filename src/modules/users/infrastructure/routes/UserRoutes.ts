@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { DependencyManager } from '../../../../dependencyManager'
-import { IJwtValidator } from '../../../../middlewares/jwtValidator/core/IJwtValidator'
+import { IJwtValidator } from '../../../../middlewares/JwtValidator/core/IJwtValidator'
 import { getUserControllers } from '../controllers/controllersProvider'
 
 const getUserRoutes = (dependencyManager: DependencyManager) => {

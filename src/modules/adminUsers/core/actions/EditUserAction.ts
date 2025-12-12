@@ -17,7 +17,11 @@ export const EditAdminUserAction = (
           if (password) {
             body.password = hashService.hash(password);
           }
-          await AdminUserRepository.edit(body, id);
+          await AdminUserRepository.edit({
+            ...body,
+            rol: body.role == "editor" ? "Editor" : "Admin",
+            updatedAt: new Date(),
+          }, id);
           const result = await AdminUserRepository.getById(id);
           resolve(result);
         } catch (error) {
