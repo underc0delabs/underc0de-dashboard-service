@@ -2,17 +2,18 @@ import { Router } from 'express'
 import { DependencyManager } from '../../../../dependencyManager'
 import { IJwtValidator } from '../../../../middlewares/JwtValidator/core/IJwtValidator'
 import { getMerchantControllers } from '../controllers/controllersProvider'
+import { uploadLogoMiddleware } from '../middlewares/uploadLogoMiddleware'
 
 const getMerchantRoutes = (dependencyManager: DependencyManager) => {
     const jwtValidator = getJwtValidator(dependencyManager)
     const {save, edit,remove,get, getById} = getMerchantControllers(dependencyManager)
     const merchantRouter = Router()
-    const path = 'merchants'
+    const path = 'commerces'
 
-    merchantRouter.post(`/${path}`,[jwtValidator], save)
+    merchantRouter.post(`/${path}`, [jwtValidator, uploadLogoMiddleware], save)
     merchantRouter.get(`/${path}`,[jwtValidator], get)
     merchantRouter.get(`/${path}/:id`,[jwtValidator], getById)
-    merchantRouter.patch(`/${path}/:id`,[jwtValidator], edit)
+    merchantRouter.patch(`/${path}/:id`, [jwtValidator, uploadLogoMiddleware], edit)
     merchantRouter.delete(`/${path}/:id`,[jwtValidator], remove)
 
     return merchantRouter

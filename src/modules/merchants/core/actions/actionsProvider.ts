@@ -5,6 +5,7 @@ import { GetOneMerchantAction, IGetOneMerchantAction } from "./GetOneMerchantAct
 import { GetMerchantByIdAction, IGetMerchantByIdAction } from "./GetMerchantByIdAction";
 import { IRemoveMerchantAction, RemoveMerchantAction } from "./RemoveMerchantAction";
 import { ISaveMerchantAction, SaveMerchantAction } from "./SaveMerchantAction";
+import { IFileStorageService } from "../../infrastructure/services/FileStorageService";
 
 export interface IMerchantActions {
   save: ISaveMerchantAction;
@@ -15,11 +16,12 @@ export interface IMerchantActions {
   getById: IGetMerchantByIdAction;
 }
 export const getMerchantActions = (
-  MerchantRepository: IMerchantRepository
+  MerchantRepository: IMerchantRepository,
+  FileStorageService: IFileStorageService
 ) => {
   const MerchantActions: IMerchantActions = {
-    save: SaveMerchantAction(MerchantRepository),
-    edit: EditMerchantAction(MerchantRepository),
+    save: SaveMerchantAction(MerchantRepository, FileStorageService),
+    edit: EditMerchantAction(MerchantRepository, FileStorageService),
     remove: RemoveMerchantAction(MerchantRepository),
     getAll: GetAllMerchantsAction(MerchantRepository),
     getById: GetMerchantByIdAction(MerchantRepository),

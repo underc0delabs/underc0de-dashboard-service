@@ -59,10 +59,13 @@ export const AdminUserRepository = (): IAdminUserRepository => ({
       attributes: { exclude: ['password'] },
     });
   },
-  async getOne(query) {
-    return await AdminUserModel.findOne({
+  async getOne(query, includePassword = false) {
+    const options: any = {
       where: query,
-      attributes: { exclude: ['password'] },
-    });
+    };
+    if (!includePassword) {
+      options.attributes = { exclude: ['password'] };
+    }
+    return await AdminUserModel.findOne(options);
   },
 });

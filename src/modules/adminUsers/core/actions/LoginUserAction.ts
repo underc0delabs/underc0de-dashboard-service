@@ -17,7 +17,7 @@ export const LoginUserAction = (
         try {
           const user = await adminUserRepository.getOne({
             email: credentials.email,
-          });
+          }, true);
           if (!user) throw new UserNotExistException();
           if (!user.status) throw new UserNotActiveException();
           const validPassword = hashService.compare(

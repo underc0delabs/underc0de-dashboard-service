@@ -1,18 +1,31 @@
 import IMerchant from "../entities/IMerchant";
 import { IMerchantRepository } from "../repository/IMerchantRepository";
+import { IFileStorageService } from "../../infrastructure/services/FileStorageService";
 
 export interface ISaveMerchantAction {
-  execute: (body: IMerchant) => Promise<any>;
+  execute: (body: IMerchant, file?: Express.Multer.File) => Promise<any>;
 }
 
 export const SaveMerchantAction = (
-  MerchantRepository: IMerchantRepository
+  MerchantRepository: IMerchantRepository,
+  FileStorageService: IFileStorageService
 ): ISaveMerchantAction => {
   return {
-    execute: (body) => {
+    execute: (body, file) => {
       return new Promise(async (resolve, reject) => {
         try {
-          const result = await MerchantRepository.save(body);
+          let logoPath = body.logo;
+          
+          if (file) {
+            logoPath = await FileStorageService.saveFile(file, 'logos');
+          }
+          
+          const merchantData = {
+            ...body,
+            logo: logoPath,
+          };
+          
+          const result = await MerchantRepository.save(merchantData);
           resolve(result);
         } catch (error) {
           reject(error);

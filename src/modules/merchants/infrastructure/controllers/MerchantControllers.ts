@@ -20,7 +20,8 @@ export const MerchantControllers = ({
   }, (res:Response, error: Error,) => ErrorResponse(res,error)) as any
   return {
     save(req: Request, res: Response) {
-      const saveExecution = save.execute(req.body)
+      const file = (req as any).file;
+      const saveExecution = save.execute(req.body, file)
       saveExecution.then(merchant => {
         const message=`${name} cread${pronoun} correctamente`
         SuccessResponse(res,201,message,merchant)
@@ -29,7 +30,8 @@ export const MerchantControllers = ({
       })
     },
     edit(req: Request, res: Response) {
-      const editExecution = edit.execute(req.body, req.params.id)
+      const file = (req as any).file;
+      const editExecution = edit.execute(req.body, req.params.id, file)
       editExecution.then(merchant => {
         const message =`${name} editad${pronoun} correctamente`
         SuccessResponse(res,200,message,merchant)
