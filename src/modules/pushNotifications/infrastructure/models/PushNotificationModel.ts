@@ -1,5 +1,6 @@
 import { sequelize } from "../../../../server/DbConnection";
 import { DataTypes } from "sequelize";
+import AdminUser from "../../../adminUsers/infrastructure/models/AdminUserModel";
 
 const PushNotification = sequelize.define('PushNotification', {
     id: {
@@ -33,11 +34,19 @@ const PushNotification = sequelize.define('PushNotification', {
     },
     createdBy: {
         type: DataTypes.INTEGER,
-        allowNull: false
+        allowNull: false,
+        references: {
+            model: AdminUser,
+            key: 'id'
+        }
     },
     modifiedBy: {
         type: DataTypes.INTEGER,
-        allowNull: true
+        allowNull: true,
+        references: {
+            model: AdminUser,
+            key: 'id'
+        }
     },
     createdAt: {
         type: DataTypes.DATE,
@@ -48,6 +57,9 @@ const PushNotification = sequelize.define('PushNotification', {
         allowNull: false
     }
 })
+
+PushNotification.belongsTo(AdminUser, { foreignKey: 'createdBy', as: 'creator' });
+PushNotification.belongsTo(AdminUser, { foreignKey: 'modifiedBy', as: 'modifier' });
 
 export default PushNotification;
 

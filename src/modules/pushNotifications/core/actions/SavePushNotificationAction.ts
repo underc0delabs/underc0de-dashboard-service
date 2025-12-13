@@ -12,9 +12,11 @@ export const SavePushNotificationAction = (
     execute: (body) => {
       return new Promise(async (resolve, reject) => {
         try {
+          console.log(" body ", body)
           const result = await PushNotificationRepository.save(body);
           resolve(result);
         } catch (error) {
+          console.log(" error ", error)
           reject(error);
         }
       });

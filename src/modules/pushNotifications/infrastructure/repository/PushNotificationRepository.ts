@@ -2,6 +2,7 @@ import { IPushNotificationRepository } from "../../core/repository/IPushNotifica
 import PushNotificationModel from "../models/PushNotificationModel";
 import configs from "../../../../configs";
 import IPushNotification from "../../core/entities/IPushNotification";
+import AdminUserModel from "../../../adminUsers/infrastructure/models/AdminUserModel";
 
 export const PushNotificationRepository = (): IPushNotificationRepository => ({
   async save(pushNotification) {
@@ -20,17 +21,60 @@ export const PushNotificationRepository = (): IPushNotificationRepository => ({
       page_number = 0,
       ...rest
     } = query;
-    const total = await PushNotificationModel.count(rest);
-    const pushNotifications = await PushNotificationModel.findAll({
-      where: rest,
-      limit: Number(page_count),
-      offset: Number(page_number),
-      order: [['createdAt', 'DESC']]
+
+    const validFields = [
+      'id',
+      'title',
+      'message',
+      'audience',
+      'status',
+      'createdBy',
+      'modifiedBy',
+      'createdAt',
+      'updatedAt',
+    ];
+    const whereClause: any = {};
+
+    Object.keys(rest).forEach((key) => {
+      if (
+        validFields.includes(key) &&
+        rest[key] !== undefined &&
+        rest[key] !== null &&
+        rest[key] !== ''
+      ) {
+        whereClause[key] = rest[key];
+      }
     });
+
+    const defaultPageCount = Number(configs.api.default_page_count) || 10;
+    const pageCountNum = Number(page_count);
+    const pageNumberNum = Number(page_number);
+
+    const total = await PushNotificationModel.count({ where: whereClause });
+    const pushNotifications = await PushNotificationModel.findAll({
+      where: whereClause,
+      limit: isNaN(pageCountNum) ? defaultPageCount : pageCountNum,
+      offset: isNaN(pageNumberNum) ? 0 : pageNumberNum,
+      order: [['createdAt', 'DESC']],
+      include: [
+        {
+          model: AdminUserModel,
+          as: 'creator',
+          attributes: ['id', 'name', 'email'],
+        },
+        {
+          model: AdminUserModel,
+          as: 'modifier',
+          attributes: ['id', 'name', 'email'],
+          required: false,
+        },
+      ],
+    });
+
     const pagination = {
       total,
-      page_number,
-      page_count,
+      page_number: isNaN(pageNumberNum) ? 0 : pageNumberNum,
+      page_count: isNaN(pageCountNum) ? defaultPageCount : pageCountNum,
       records: pushNotifications.length,
     };
     return {
@@ -39,10 +83,41 @@ export const PushNotificationRepository = (): IPushNotificationRepository => ({
     };
   },
   async getById(id) {
-    return await PushNotificationModel.findByPk(id);
+    const pushNotification = await PushNotificationModel.findByPk(id, {
+      include: [
+        {
+          model: AdminUserModel,
+          as: 'creator',
+          attributes: ['id', 'name', 'email'],
+        },
+        {
+          model: AdminUserModel,
+          as: 'modifier',
+          attributes: ['id', 'name', 'email'],
+          required: false,
+        },
+      ],
+    });
+    return pushNotification;
   },
   async getOne(query) {
-    return await PushNotificationModel.findOne({ where: query });
+    const pushNotification = await PushNotificationModel.findOne({
+      where: query,
+      include: [
+        {
+          model: AdminUserModel,
+          as: 'creator',
+          attributes: ['id', 'name', 'email'],
+        },
+        {
+          model: AdminUserModel,
+          as: 'modifier',
+          attributes: ['id', 'name', 'email'],
+          required: false,
+        },
+      ],
+    });
+    return pushNotification;
   },
 });
 

@@ -7,7 +7,7 @@ const getPushNotificationRoutes = (dependencyManager: DependencyManager) => {
     const jwtValidator = getJwtValidator(dependencyManager)
     const {save, edit,remove,get, getById} = getPushNotificationControllers(dependencyManager)
     const pushNotificationRouter = Router()
-    const path = 'push-notifications'
+    const path = 'notifications'
 
     pushNotificationRouter.post(`/${path}`,[jwtValidator], save)
     pushNotificationRouter.get(`/${path}`,[jwtValidator], get)
