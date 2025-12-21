@@ -5,6 +5,8 @@ export default interface IMerchant {
     email: string,
     status?: boolean,
     category?: string,
-    logo?: string
+    logo?: string,
+    usersProDisccount?: number,
+    usersDisccount?: number
 }
 

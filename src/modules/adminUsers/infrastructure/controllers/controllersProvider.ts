@@ -9,7 +9,7 @@ import { UserControllers } from "./UserControllers"
 export const getAdminUserControllers = (dependencyManager: DependencyManager) => {
     const AdminUserRepository = getAdminUserRepository(dependencyManager)
     const hashService = getHashService(dependencyManager)
-    const UserRepository = getAdminUserRepository(dependencyManager)
+    const UserRepository = getUserRepository(dependencyManager)
     const UserActions= getAdminUserActions(AdminUserRepository, hashService, UserRepository)
     return UserControllers(UserActions)
 }

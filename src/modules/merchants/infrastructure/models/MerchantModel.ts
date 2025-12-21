@@ -40,6 +40,14 @@ const Merchant = sequelize.define('Merchant', {
     logo: {
         type: DataTypes.STRING,
         allowNull: true
+    },
+    usersProDisccount: {
+        type: DataTypes.INTEGER,
+        allowNull: true
+    },
+    usersDisccount: {
+        type: DataTypes.INTEGER,
+        allowNull: true
     }
 })
 

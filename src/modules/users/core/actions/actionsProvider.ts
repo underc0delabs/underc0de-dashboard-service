@@ -7,7 +7,7 @@ import { GetUserByIdAction, IGetUserByIdAction } from "./GetUserByIdAction";
 import { ILoginUserAction, LoginUserAction } from "./LoginUserAction";
 import { IRemoveUserAction, RemoveUserAction } from "./RemoveUserAction";
 import { ISaveUserAction, SaveUserAction } from "./SaveUserAction";
-
+import { ISaveFcmTokenAction, SaveFcmTokenAction } from "./SaveFcmTokenAction";
 export interface IUserActions {
   save: ISaveUserAction;
   edit: IEditUserAction;
@@ -16,6 +16,7 @@ export interface IUserActions {
   getOne: IGetOneUserAction;
   getById: IGetUserByIdAction;
   login: ILoginUserAction;
+  saveFcmToken: ISaveFcmTokenAction;
 }
 export const getUserActions = (
   UserRepository: IUserRepository,
@@ -29,6 +30,7 @@ export const getUserActions = (
     getById: GetUserByIdAction(UserRepository),
     getOne: GetOneUserAction(UserRepository),
     login: LoginUserAction(UserRepository, hashService),
+    saveFcmToken: SaveFcmTokenAction(UserRepository),
   };
   return UserActions;
 };
