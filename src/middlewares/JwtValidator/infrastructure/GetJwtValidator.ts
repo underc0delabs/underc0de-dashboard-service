@@ -51,7 +51,6 @@ const getJwtValidator = (UserAdminRepository: IAdminUserRepository): IJwtValidat
           }
           next();
         } catch (error:any) {
-          console.log(JSON.stringify(error,null,2))
           return res.status(401).json({
             status: 401,
             success: false,

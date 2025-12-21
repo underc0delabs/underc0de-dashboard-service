@@ -63,7 +63,6 @@ export const MerchantControllers = ({
       getByIdExecution.then(merchant => {
         SuccessResponse(res,200,message,merchant)
       }).catch(error => {
-        console.log(error)
         errorResponses[error.name](res, error)
       })
     }

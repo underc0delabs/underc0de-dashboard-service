@@ -61,7 +61,6 @@ export const PushNotificationControllers = ({
       getByIdExecution.then(pushNotification => {
         SuccessResponse(res,200,message,pushNotification)
       }).catch(error => {
-        console.log(error)
         errorResponses[error.name](res, error)
       })
     }

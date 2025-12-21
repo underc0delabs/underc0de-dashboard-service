@@ -61,7 +61,6 @@ export const PaymentControllers = ({
       getByIdExecution.then(payment => {
         SuccessResponse(res,200,message,payment)
       }).catch(error => {
-        console.log(error)
         errorResponses[error.name](res, error)
       })
     }

@@ -15,7 +15,8 @@ export const UserControllers = ({
     getAll,
     getById,
     login,
-    saveFcmToken
+    saveFcmToken,
+    getMetrics
   }: IUserActions) => {
     
   const errorResponses = createHashMap({
@@ -67,7 +68,6 @@ export const UserControllers = ({
       getByIdExecution.then(user => {
         SuccessResponse(res,200,message,user)
       }).catch(error => {
-        console.log(error)
         errorResponses[error.name](res, error)
       })
     },
@@ -85,6 +85,14 @@ export const UserControllers = ({
       saveFcmTokenExecution.then(user => {
         const message = `${name} fcm token guardado correctamente`
         SuccessResponse(res,200,message,user)
+      }).catch(error => {
+        errorResponses[error.name](res, error)
+      })
+    },
+    getMetrics(req: Request, res: Response) {
+      const getMetricsExecution = getMetrics.execute()
+      getMetricsExecution.then(metrics => {
+        SuccessResponse(res,200,"Métricas obtenidas correctamente",metrics)
       }).catch(error => {
         errorResponses[error.name](res, error)
       })

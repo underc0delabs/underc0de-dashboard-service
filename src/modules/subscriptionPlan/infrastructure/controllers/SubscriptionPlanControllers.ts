@@ -61,7 +61,6 @@ export const SubscriptionPlanControllers = ({
       getByIdExecution.then(subscriptionPlan => {
         SuccessResponse(res,200,message,subscriptionPlan)
       }).catch(error => {
-        console.log(error)
         errorResponses[error.name](res, error)
       })
     }

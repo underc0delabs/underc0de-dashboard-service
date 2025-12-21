@@ -69,7 +69,6 @@ export const UserControllers = ({
       getByIdExecution.then(user => {
         SuccessResponse(res,200,message,user)
       }).catch(error => {
-        console.log(error)
         errorResponses[error.name](res, error)
       })
     },
