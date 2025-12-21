@@ -20,21 +20,43 @@ export const MongoUserRepository = (): IUserRepository => ({
       page_number = 0,
       ...rest
     } = query;
-    const total = await UserModel.count(rest);
-    const users = await UserModel.findAll({
-      where: rest,
-      limit: Number(page_count),
-      offset: Number(page_number),
+
+    const validFields = [
+      'id',
+      'username',
+      'name',
+      'lastname',
+      'phone',
+      'email',
+      'idNumber',
+      'userType',
+      'birthday',
+      'vip',
+      'suscription',
+      'status',
+      'fcmToken',
+      'createdAt',
+      'updatedAt',
+    ];
+    const whereClause: any = {};
+
+    Object.keys(rest).forEach((key) => {
+      if (
+        validFields.includes(key) &&
+        rest[key] !== undefined &&
+        rest[key] !== null &&
+        rest[key] !== ''
+      ) {
+        whereClause[key] = rest[key];
+      }
     });
-    const pagination = {
-      total,
-      page_number,
-      page_count,
-      records: users.length,
-    };
+
+    const users = await UserModel.findAll({
+      where: whereClause,
+    });
+
     return {
       users,
-      pagination,
     };
   },
   async getById(id) {

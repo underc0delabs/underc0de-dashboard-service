@@ -54,9 +54,9 @@ export const UserControllers = ({
     },
     get(req: Request, res: Response) {
       const getExecution = getAll.execute(req.query)
-      getExecution.then(({users, pagination}) => {
+      getExecution.then(({users}) => {
         const message = `${name}s obtenid${pronoun}s con exito`
-        SuccessResponse(res,200,message,users,pagination)
+        SuccessResponse(res,200,message,users)
       }).catch(error => {
         errorResponses[error.name](res, error)
       })
