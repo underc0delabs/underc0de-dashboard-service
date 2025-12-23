@@ -10,27 +10,26 @@ const Merchant = sequelize.define('Merchant', {
     },
     name: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: true
     },
     address: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: true
     },
     phone: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: true
     },
     email: {
         type: DataTypes.STRING,
-        allowNull: false,
-        unique: true,
+        allowNull: true,
         validate: {
             isEmail: true
         }
     },
     status: {
         type: DataTypes.BOOLEAN,
-        allowNull: false,
+        allowNull: true,
         defaultValue: true
     },
     category: {
@@ -47,6 +46,14 @@ const Merchant = sequelize.define('Merchant', {
     },
     usersDisccount: {
         type: DataTypes.INTEGER,
+        allowNull: true
+    },
+    url: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    detail: {
+        type: DataTypes.STRING,
         allowNull: true
     }
 })

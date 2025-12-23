@@ -7,6 +7,8 @@ export default interface IMerchant {
     category?: string,
     logo?: string,
     usersProDisccount?: number,
-    usersDisccount?: number
+    usersDisccount?: number,
+    url?: string,
+    detail?: string
 }
 

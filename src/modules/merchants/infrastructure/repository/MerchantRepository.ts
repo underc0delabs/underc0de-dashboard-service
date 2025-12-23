@@ -35,6 +35,10 @@ export const MerchantRepository = (): IMerchantRepository => ({
       "status",
       "category",
       "logo",
+      "usersProDisccount",
+      "usersDisccount",
+      "url",
+      "detail",
       "createdAt",
       "updatedAt",
     ];
