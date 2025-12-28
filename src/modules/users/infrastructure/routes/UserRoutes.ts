@@ -5,7 +5,7 @@ import { getUserControllers } from '../controllers/controllersProvider'
 
 const getUserRoutes = (dependencyManager: DependencyManager) => {
     const jwtValidator = getJwtValidator(dependencyManager)
-    const {save, edit,remove,get, getById,login, saveFcmToken, getMetrics} = getUserControllers(dependencyManager)
+    const {save, edit,remove,get, getById,login, saveFcmToken, getMetrics, getByUsername} = getUserControllers(dependencyManager)
     const userRouter = Router()
     const path = 'users'
 
@@ -15,6 +15,7 @@ const getUserRoutes = (dependencyManager: DependencyManager) => {
     userRouter.get(`/${path}/metrics`,[jwtValidator], getMetrics)
     userRouter.post(`/${path}/fcm-token`,[jwtValidator], saveFcmToken)
     userRouter.get(`/${path}/:id`,[jwtValidator], getById)
+    userRouter.get(`/${path}/get-by-username/:username`, getByUsername)
     userRouter.patch(`/${path}/:id`,[jwtValidator], edit)
     userRouter.delete(`/${path}/:id`,[jwtValidator], remove)
     return userRouter

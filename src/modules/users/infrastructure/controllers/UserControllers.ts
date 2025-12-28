@@ -16,7 +16,8 @@ export const UserControllers = ({
     getById,
     login,
     saveFcmToken,
-    getMetrics
+    getMetrics,
+    getByUsername
   }: IUserActions) => {
     
   const errorResponses = createHashMap({
@@ -96,6 +97,15 @@ export const UserControllers = ({
       }).catch(error => {
         errorResponses[error.name](res, error)
       })
-    }
+    },
+    getByUsername(req: Request, res: Response) {
+      const getByUsernameExecution = getByUsername.execute(req.params.username)
+      const message = "Usuario obtenido correctamente"
+      getByUsernameExecution.then((user: any) => {
+        SuccessResponse(res,200,message,user)
+      }).catch((error: any) => {
+        errorResponses[error.name](res, error)
+      })
+    },
   }
-}
+} 

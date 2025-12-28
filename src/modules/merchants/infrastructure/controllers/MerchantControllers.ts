@@ -50,9 +50,9 @@ export const MerchantControllers = ({
     },
     get(req: Request, res: Response) {
       const getExecution = getAll.execute(req.query)
-      getExecution.then(({merchants, pagination}) => {
+      getExecution.then(({merchants}) => {
         const message = `${name}s obtenid${pronoun}s con exito`
-        SuccessResponse(res,200,message,merchants,pagination)
+        SuccessResponse(res,200,message,merchants)
       }).catch(error => {
         errorResponses[error.name](res, error)
       })

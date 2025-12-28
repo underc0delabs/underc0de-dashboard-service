@@ -10,6 +10,10 @@ import { ISaveUserAction, SaveUserAction } from "./SaveUserAction";
 import { ISaveFcmTokenAction, SaveFcmTokenAction } from "./SaveFcmTokenAction";
 import { IGetMetricsAction, GetMetricsAction } from "./GetMetricsAction";
 import { IMerchantRepository } from "../../../merchants/core/repository/IMerchantRepository";
+import {
+  IGetUserByUsernameAction,
+  GetUserByUsernameAction,
+} from "./GetUserByUsernameAction";
 import { IPushNotificationRepository } from "../../../pushNotifications/core/repository/IPushNotificationRepository";
 export interface IUserActions {
   save: ISaveUserAction;
@@ -21,6 +25,7 @@ export interface IUserActions {
   login: ILoginUserAction;
   saveFcmToken: ISaveFcmTokenAction;
   getMetrics: IGetMetricsAction;
+  getByUsername: IGetUserByUsernameAction;
 }
 export const getUserActions = (
   UserRepository: IUserRepository,
@@ -42,6 +47,7 @@ export const getUserActions = (
       merchantsRepository,
       notificationsRepository
     ),
+    getByUsername: GetUserByUsernameAction(UserRepository),
   };
   return UserActions;
 };

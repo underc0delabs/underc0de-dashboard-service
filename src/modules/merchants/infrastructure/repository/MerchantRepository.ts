@@ -21,8 +21,6 @@ export const MerchantRepository = (): IMerchantRepository => ({
   },
   async get(query) {
     const {
-      page_count = configs.api.default_page_count,
-      page_number = 0,
       ...rest
     } = query;
 
@@ -55,15 +53,8 @@ export const MerchantRepository = (): IMerchantRepository => ({
       }
     });
 
-    const defaultPageCount = Number(configs.api.default_page_count) || 10;
-    const pageCountNum = Number(page_count);
-    const pageNumberNum = Number(page_number);
-
-    const total = await MerchantModel.count({ where: whereClause });
     const merchants = await MerchantModel.findAll({
       where: whereClause,
-      limit: isNaN(pageCountNum) ? defaultPageCount : pageCountNum,
-      offset: isNaN(pageNumberNum) ? 0 : pageNumberNum,
     });
     
     // Convertir rutas relativas de logos a URLs completas
@@ -75,15 +66,8 @@ export const MerchantRepository = (): IMerchantRepository => ({
       return merchantData;
     });
     
-    const pagination = {
-      total,
-      page_number: isNaN(pageNumberNum) ? 0 : pageNumberNum,
-      page_count: isNaN(pageCountNum) ? defaultPageCount : pageCountNum,
-      records: merchantsWithUrls.length,
-    };
     return {
       merchants: merchantsWithUrls,
-      pagination,
     };
   },
   async getById(id) {

@@ -11,7 +11,7 @@ const getMerchantRoutes = (dependencyManager: DependencyManager) => {
     const path = 'commerces'
 
     merchantRouter.post(`/${path}`, [jwtValidator, uploadLogoMiddleware], save)
-    merchantRouter.get(`/${path}`,[jwtValidator], get)
+    merchantRouter.get(`/${path}`, get)
     merchantRouter.get(`/${path}/:id`,[jwtValidator], getById)
     merchantRouter.patch(`/${path}/:id`, [jwtValidator, uploadLogoMiddleware], edit)
     merchantRouter.delete(`/${path}/:id`,[jwtValidator], remove)
