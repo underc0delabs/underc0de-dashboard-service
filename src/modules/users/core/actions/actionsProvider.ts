@@ -15,6 +15,12 @@ import {
   GetUserByUsernameAction,
 } from "./GetUserByUsernameAction";
 import { IPushNotificationRepository } from "../../../pushNotifications/core/repository/IPushNotificationRepository";
+import {
+  ILinkSubscriptionAction,
+  LinkSubscriptionAction,
+} from "./LinkSubscriptionAction";
+import { ISubscriptionPlanRepository } from "../../../subscriptionPlan/core/repository/ISubscriptionPlanRepository";
+import { IPaymentRepository } from "../../../payment/core/repository/IPaymentRepository";
 export interface IUserActions {
   save: ISaveUserAction;
   edit: IEditUserAction;
@@ -26,12 +32,15 @@ export interface IUserActions {
   saveFcmToken: ISaveFcmTokenAction;
   getMetrics: IGetMetricsAction;
   getByUsername: IGetUserByUsernameAction;
+  linkSubscription: ILinkSubscriptionAction;
 }
 export const getUserActions = (
   UserRepository: IUserRepository,
   hashService: IHashService,
   merchantsRepository: IMerchantRepository,
-  notificationsRepository: IPushNotificationRepository
+  notificationsRepository: IPushNotificationRepository,
+  subscriptionPlanRepository: ISubscriptionPlanRepository,
+  paymentRepository: IPaymentRepository
 ) => {
   const UserActions: IUserActions = {
     save: SaveUserAction(UserRepository, hashService),
@@ -47,7 +56,16 @@ export const getUserActions = (
       merchantsRepository,
       notificationsRepository
     ),
-    getByUsername: GetUserByUsernameAction(UserRepository),
+    getByUsername: GetUserByUsernameAction(
+      UserRepository,
+      subscriptionPlanRepository,
+      paymentRepository
+    ),
+    linkSubscription: LinkSubscriptionAction(
+      UserRepository,
+      subscriptionPlanRepository,
+      paymentRepository
+    ),
   };
   return UserActions;
 };

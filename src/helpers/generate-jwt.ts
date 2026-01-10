@@ -6,7 +6,7 @@ const generateJWT = async (id: string) => {
     jwt_token.sign(
       payload,
       configs.secret_key,
-      { expiresIn: "1d" },
+      {},
       (err: Error, token:string) => {
         if (err) {
           reject("No se pudo generar token");

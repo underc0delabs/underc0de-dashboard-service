@@ -11,5 +11,6 @@ export default interface IUser {
     vip?: boolean,
     suscription?: string,
     status?: boolean,
-    fcmToken?: string
+    fcmToken?: string,
+    mpPayerId?: number
 }

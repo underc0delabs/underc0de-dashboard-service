@@ -7,6 +7,8 @@ import ConfigureServerMiddlewares from "./server/MiddlewaresConfig";
 import ReduceRouters from "./server/RoutesReducer";
 import InitializeServer from "./server/ServerInitializer";
 import ServicesInitializer from "./services/ServicesInitalizer";
+import { startMercadoPagoSyncCron } from "./jobs/mercadoPagoSync.cron";
+import "./modules/modelsRelations";
 
 const dependencyManager = new DependencyManager()
 
@@ -23,5 +25,7 @@ ModulesInitializer(dependencyManager)
 MiddlewaresInitializer(dependencyManager)
 
 ReduceRouters(app,dependencyManager)
+
+startMercadoPagoSyncCron(dependencyManager)
 
 app.get("/health", (_req, res) => res.status(200).send("ok"));

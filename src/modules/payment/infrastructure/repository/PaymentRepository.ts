@@ -20,11 +20,16 @@ export const PaymentRepository = (): IPaymentRepository => ({
       page_number = 0,
       ...rest
     } = query;
-    const total = await PaymentModel.count(rest);
+    
+    // Sanitizar page_count y page_number para evitar NaN
+    const pageCount = Number(page_count) || Number(configs.api.default_page_count) || 10;
+    const pageNumber = Number(page_number) || 0;
+    
+    const total = await PaymentModel.count({ where: rest });
     const payments = await PaymentModel.findAll({
       where: rest,
-      limit: Number(page_count),
-      offset: Number(page_number),
+      limit: pageCount,
+      offset: pageNumber * pageCount,
       order: [['paidAt', 'DESC']]
     });
     const pagination = {

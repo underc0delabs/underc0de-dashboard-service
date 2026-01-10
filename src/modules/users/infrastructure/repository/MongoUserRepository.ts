@@ -2,11 +2,15 @@ import { IUserRepository } from "../../core/repository/IMongoUserRepository";
 import UserModel from "../models/UserModel";
 import configs from "../../../../configs";
 import IUser from "../../core/entities/IUser";
+import SubscriptionPlan from "../../../subscriptionPlan/infrastructure/models/SubscriptionPlanModel";
+import Payment from "../../../payment/infrastructure/models/PaymentModel";
 
 export const MongoUserRepository = (): IUserRepository => ({
   async save(user) {
     const newUser = await UserModel.create(user as any);
-    return newUser.toJSON() as IUser;
+    const userJson = newUser.toJSON() as any;
+    delete userJson.password;
+    return userJson as IUser;
   },
   async edit(user, id) {
     return await UserModel.update(user as any, { where: { id } });
@@ -31,10 +35,9 @@ export const MongoUserRepository = (): IUserRepository => ({
       'idNumber',
       'userType',
       'birthday',
-      'vip',
-      'suscription',
       'status',
       'fcmToken',
+      'mpPayerId',
       'createdAt',
       'updatedAt',
     ];
@@ -53,16 +56,244 @@ export const MongoUserRepository = (): IUserRepository => ({
 
     const users = await UserModel.findAll({
       where: whereClause,
+      attributes: { exclude: ['password'] },
+      include: [
+        {
+          model: SubscriptionPlan,
+          as: 'subscriptionPlans',
+          required: false,
+          include: [
+            {
+              model: Payment,
+              as: 'payments',
+              required: false,
+              separate: true,
+              order: [['paidAt', 'DESC']],
+              limit: 1,
+            }
+          ]
+        }
+      ]
+    });
+
+    const usersWithSubscriptionInfo = users.map((user: any) => {
+      const userJson = user.toJSON();
+      const activeSubscription = userJson.subscriptionPlans?.find((sub: any) => sub.status === 'ACTIVE');
+      
+      let subscriptionStatus = null;
+      let isUpToDate = null;
+      let lastPayment = null;
+      let nextPaymentDate = null;
+
+      if (activeSubscription) {
+        subscriptionStatus = activeSubscription.status;
+        nextPaymentDate = activeSubscription.nextPaymentDate;
+        lastPayment = activeSubscription.payments?.[0] || null;
+        
+        if (nextPaymentDate) {
+          const nextPayment = new Date(nextPaymentDate);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          
+          if (lastPayment) {
+            const lastPaymentDate = new Date(lastPayment.paidAt);
+            lastPaymentDate.setHours(0, 0, 0, 0);
+            isUpToDate = lastPaymentDate >= nextPayment;
+          } else {
+            isUpToDate = nextPayment >= today;
+          }
+        } else {
+          if (lastPayment) {
+            const lastPaymentDate = new Date(lastPayment.paidAt);
+            const today = new Date();
+            const daysSinceLastPayment = Math.floor((today.getTime() - lastPaymentDate.getTime()) / (1000 * 60 * 60 * 24));
+            isUpToDate = daysSinceLastPayment < 30;
+          } else {
+            isUpToDate = false;
+          }
+        }
+      }
+
+      return {
+        ...userJson,
+        subscription: activeSubscription ? {
+          id: activeSubscription.id,
+          status: subscriptionStatus,
+          startedAt: activeSubscription.startedAt,
+          nextPaymentDate: nextPaymentDate,
+          isUpToDate: isUpToDate,
+          lastPayment: lastPayment ? {
+            id: lastPayment.id,
+            amount: lastPayment.amount,
+            currency: lastPayment.currency,
+            paidAt: lastPayment.paidAt,
+          } : null,
+        } : null,
+      };
     });
 
     return {
-      users,
+      users: usersWithSubscriptionInfo,
     };
   },
   async getById(id) {
-    return await UserModel.findByPk(id);
+    const user = await UserModel.findByPk(id, {
+      attributes: { exclude: ['password'] },
+      include: [
+        {
+          model: SubscriptionPlan,
+          as: 'subscriptionPlans',
+          required: false,
+          include: [
+            {
+              model: Payment,
+              as: 'payments',
+              required: false,
+              separate: true,
+              order: [['paidAt', 'DESC']],
+              limit: 1,
+            }
+          ]
+        }
+      ]
+    });
+
+    if (!user) return null;
+
+    const userJson = user.toJSON() as any;
+    const activeSubscription = userJson.subscriptionPlans?.find((sub: any) => sub.status === 'ACTIVE');
+    
+    let subscriptionStatus = null;
+    let isUpToDate = null;
+    let lastPayment = null;
+    let nextPaymentDate = null;
+
+    if (activeSubscription) {
+      subscriptionStatus = activeSubscription.status;
+      nextPaymentDate = activeSubscription.nextPaymentDate;
+      lastPayment = activeSubscription.payments?.[0] || null;
+      
+      if (nextPaymentDate) {
+        const nextPayment = new Date(nextPaymentDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (lastPayment) {
+          const lastPaymentDate = new Date(lastPayment.paidAt);
+          lastPaymentDate.setHours(0, 0, 0, 0);
+          isUpToDate = lastPaymentDate >= nextPayment;
+        } else {
+          isUpToDate = nextPayment >= today;
+        }
+      } else {
+        if (lastPayment) {
+          const lastPaymentDate = new Date(lastPayment.paidAt);
+          const today = new Date();
+          const daysSinceLastPayment = Math.floor((today.getTime() - lastPaymentDate.getTime()) / (1000 * 60 * 60 * 24));
+          isUpToDate = daysSinceLastPayment < 30;
+        } else {
+          isUpToDate = false;
+        }
+      }
+    }
+
+    return {
+      ...userJson,
+      subscription: activeSubscription ? {
+        id: activeSubscription.id,
+        status: subscriptionStatus,
+        startedAt: activeSubscription.startedAt,
+        nextPaymentDate: nextPaymentDate,
+        isUpToDate: isUpToDate,
+        lastPayment: lastPayment ? {
+          id: lastPayment.id,
+          amount: lastPayment.amount,
+          currency: lastPayment.currency,
+          paidAt: lastPayment.paidAt,
+        } : null,
+      } : null,
+    };
   },
-  async getOne(query) {
-    return await UserModel.findOne({ where: query });
+  async getOne(query, includePassword = false) {
+    const options: any = {
+      where: query,
+      include: [
+        {
+          model: SubscriptionPlan,
+          as: 'subscriptionPlans',
+          required: false,
+          include: [
+            {
+              model: Payment,
+              as: 'payments',
+              required: false,
+              separate: true,
+              order: [['paidAt', 'DESC']],
+              limit: 1,
+            }
+          ]
+        }
+      ]
+    };
+    if (!includePassword) {
+      options.attributes = { exclude: ['password'] };
+    }
+    
+    const user = await UserModel.findOne(options);
+    if (!user) return null;
+
+    const userJson = user.toJSON() as any;
+    const activeSubscription = userJson.subscriptionPlans?.find((sub: any) => sub.status === 'ACTIVE');
+    
+    let subscriptionStatus = null;
+    let isUpToDate = null;
+    let lastPayment = null;
+    let nextPaymentDate = null;
+
+    if (activeSubscription) {
+      subscriptionStatus = activeSubscription.status;
+      nextPaymentDate = activeSubscription.nextPaymentDate;
+      lastPayment = activeSubscription.payments?.[0] || null;
+      
+      if (nextPaymentDate) {
+        const nextPayment = new Date(nextPaymentDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (lastPayment) {
+          const lastPaymentDate = new Date(lastPayment.paidAt);
+          lastPaymentDate.setHours(0, 0, 0, 0);
+          isUpToDate = lastPaymentDate >= nextPayment;
+        } else {
+          isUpToDate = nextPayment >= today;
+        }
+      } else {
+        if (lastPayment) {
+          const lastPaymentDate = new Date(lastPayment.paidAt);
+          const today = new Date();
+          const daysSinceLastPayment = Math.floor((today.getTime() - lastPaymentDate.getTime()) / (1000 * 60 * 60 * 24));
+          isUpToDate = daysSinceLastPayment < 30;
+        } else {
+          isUpToDate = false;
+        }
+      }
+    }
+
+    return {
+      ...userJson,
+      subscription: activeSubscription ? {
+        id: activeSubscription.id,
+        status: subscriptionStatus,
+        startedAt: activeSubscription.startedAt,
+        nextPaymentDate: nextPaymentDate,
+        isUpToDate: isUpToDate,
+        lastPayment: lastPayment ? {
+          id: lastPayment.id,
+          amount: lastPayment.amount,
+          currency: lastPayment.currency,
+          paidAt: lastPayment.paidAt,
+        } : null,
+      } : null,
+    };
   },
 });

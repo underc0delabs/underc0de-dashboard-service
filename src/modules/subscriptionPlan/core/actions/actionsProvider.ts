@@ -5,6 +5,10 @@ import { GetOneSubscriptionPlanAction, IGetOneSubscriptionPlanAction } from "./G
 import { GetSubscriptionPlanByIdAction, IGetSubscriptionPlanByIdAction } from "./GetSubscriptionPlanByIdAction";
 import { IRemoveSubscriptionPlanAction, RemoveSubscriptionPlanAction } from "./RemoveSubscriptionPlanAction";
 import { ISaveSubscriptionPlanAction, SaveSubscriptionPlanAction } from "./SaveSubscriptionPlanAction";
+import { ISyncMercadoPagoSubscriptionsAction, SyncMercadoPagoSubscriptionsAction } from "./SyncMercadoPagoSubscriptionsAction";
+import { MercadoPagoSyncService } from "../../../../services/mercadopagoService/core/service/mercadoPagoSyncService";
+import { IPaymentRepository } from "../../../payment/core/repository/IPaymentRepository";
+import { IUserRepository } from "../../../users/core/repository/IMongoUserRepository";
 
 export interface ISubscriptionPlanActions {
   save: ISaveSubscriptionPlanAction;
@@ -13,9 +17,13 @@ export interface ISubscriptionPlanActions {
   getAll: IGetAllSubscriptionPlansAction;
   getOne: IGetOneSubscriptionPlanAction;
   getById: IGetSubscriptionPlanByIdAction;
+  syncMercadoPago: ISyncMercadoPagoSubscriptionsAction;
 }
 export const getSubscriptionPlanActions = (
-  SubscriptionPlanRepository: ISubscriptionPlanRepository
+  SubscriptionPlanRepository: ISubscriptionPlanRepository,
+  mercadoPagoSyncService: MercadoPagoSyncService,
+  paymentRepository: IPaymentRepository,
+  userRepository: IUserRepository
 ) => {
   const SubscriptionPlanActions: ISubscriptionPlanActions = {
     save: SaveSubscriptionPlanAction(SubscriptionPlanRepository),
@@ -24,6 +32,12 @@ export const getSubscriptionPlanActions = (
     getAll: GetAllSubscriptionPlansAction(SubscriptionPlanRepository),
     getById: GetSubscriptionPlanByIdAction(SubscriptionPlanRepository),
     getOne: GetOneSubscriptionPlanAction(SubscriptionPlanRepository),
+    syncMercadoPago: SyncMercadoPagoSubscriptionsAction(
+      mercadoPagoSyncService,
+      SubscriptionPlanRepository,
+      paymentRepository,
+      userRepository
+    ),
   };
   return SubscriptionPlanActions;
 };

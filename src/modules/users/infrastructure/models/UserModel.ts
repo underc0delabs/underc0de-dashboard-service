@@ -49,15 +49,6 @@ const User = sequelize.define('User', {
         type: DataTypes.DATE,
         allowNull: true
     },
-    vip: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false,
-        defaultValue: false
-    },
-    suscription: {
-        type: DataTypes.STRING,
-        allowNull: true
-    },
     status: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
@@ -66,6 +57,11 @@ const User = sequelize.define('User', {
     fcmToken: {
         type: DataTypes.STRING,
         allowNull: true
+    },
+    mpPayerId: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        unique: true,
     },
     createdAt: {
         type: DataTypes.DATE,

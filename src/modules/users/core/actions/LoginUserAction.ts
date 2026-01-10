@@ -12,14 +12,15 @@ export const LoginUserAction = (userRepository: IUserRepository, hashService: IH
         execute(credentials) {
           return new Promise(async (resolve, reject) => {
             try {
-              const user = await userRepository.getOne({email: credentials.email})
+              const user = await userRepository.getOne({email: credentials.email}, true)
               if (!user) throw new UserNotExistException()
               if (!user.status) throw new UserNotActiveException()
               const validPassword = hashService.compare(credentials.password, user.password);
               if (!validPassword) throw new WrongCredentialsException()
               const token = await generateJWT(user.id)
+              const { password, ...userWithoutPassword } = user;
               resolve({
-                user,
+                user: userWithoutPassword,
                 token
               })
             } catch (error) {

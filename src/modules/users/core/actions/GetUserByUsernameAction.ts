@@ -1,12 +1,16 @@
 import { IUserRepository } from "../repository/IMongoUserRepository";
 import { UserNotExistException } from "../exceptions/UserNotExistException";
+import { ISubscriptionPlanRepository } from "../../../subscriptionPlan/core/repository/ISubscriptionPlanRepository";
+import { IPaymentRepository } from "../../../payment/core/repository/IPaymentRepository";
 
 export interface IGetUserByUsernameAction {
   execute: (username: string) => Promise<any>;
 }
 
 export const GetUserByUsernameAction = (
-  UserRepository: IUserRepository
+  UserRepository: IUserRepository,
+  SubscriptionPlanRepository: ISubscriptionPlanRepository,
+  PaymentRepository: IPaymentRepository,
 ): IGetUserByUsernameAction => {
   return {
     execute(username) {
@@ -14,6 +18,8 @@ export const GetUserByUsernameAction = (
         try {
           const user = await UserRepository.getOne({ username: username });
           if (!user) throw new UserNotExistException();
+          const subscription = await SubscriptionPlanRepository.getOne({ userId: user.id });
+          const payments = await PaymentRepository.get({ userSubscriptionId: subscription.id });
           resolve({
             id: user.id,
             username: user.username,
@@ -24,13 +30,14 @@ export const GetUserByUsernameAction = (
             idNumber: user.idNumber,
             userType: user.userType,
             birthday: user.birthday,
-            vip: user.vip,
-            suscription: user.suscription,
+            vip: subscription.status === "ACTIVE",
+            suscription: subscription.status,
             status: user.status,
             fcmToken: user.fcmToken,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
             avatar: user.avatar,
+            payments: payments,
           });
         } catch (error) {
           reject(error);

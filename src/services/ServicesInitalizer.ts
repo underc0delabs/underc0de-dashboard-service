@@ -1,7 +1,9 @@
 import { DependencyManager } from "../dependencyManager"
-import { FirebaseNotificationService } from "./pushNotificationService/service/firebaseNotificationService";
+import { mercadoPagoServiceInitializer } from "./mercadopagoService/mercadoPagoServiceInitializer";
+import { pushNotificationModuleInitializer } from "./pushNotificationService/pushNotificationModuleInitializer";
 
 const ServicesInitializer = (dependencyManager:DependencyManager) => {
-    dependencyManager.register('firebaseService', FirebaseNotificationService);
+    pushNotificationModuleInitializer(dependencyManager);
+    mercadoPagoServiceInitializer(dependencyManager);
 }
 export default ServicesInitializer

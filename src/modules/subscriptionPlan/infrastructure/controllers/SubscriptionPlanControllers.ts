@@ -12,6 +12,7 @@ export const SubscriptionPlanControllers = ({
     remove,
     getAll,
     getById,
+    syncMercadoPago,
   }: ISubscriptionPlanActions) => {
     
   const errorResponses = createHashMap({
@@ -61,6 +62,16 @@ export const SubscriptionPlanControllers = ({
       getByIdExecution.then(subscriptionPlan => {
         SuccessResponse(res,200,message,subscriptionPlan)
       }).catch(error => {
+        errorResponses[error.name](res, error)
+      })
+    },
+    syncMercadoPago(req: Request, res: Response) {
+      const syncExecution = syncMercadoPago.execute()
+      syncExecution.then(result => {
+        const message = "Sincronización de Mercado Pago completada"
+        SuccessResponse(res, 200, message, result)
+      }).catch(error => {
+        console.log("error", error);
         errorResponses[error.name](res, error)
       })
     }
