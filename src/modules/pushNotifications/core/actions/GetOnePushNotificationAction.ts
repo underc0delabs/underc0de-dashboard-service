@@ -1,4 +1,4 @@
-import { IPushNotificationRepository } from "../repository/IPushNotificationRepository";
+import { IPushNotificationRepository } from "../repository/IPushNotificationRepository.js";
 export interface IGetOnePushNotificationAction {
     execute: (query:object) => Promise<any>
 }

@@ -1,11 +1,11 @@
-import { IMerchantRepository } from "../repository/IMerchantRepository";
-import { EditMerchantAction, IEditMerchantAction } from "./EditMerchantAction";
-import { GetAllMerchantsAction, IGetAllMerchantsAction } from "./GetAllMerchantsAction";
-import { GetOneMerchantAction, IGetOneMerchantAction } from "./GetOneMerchantAction";
-import { GetMerchantByIdAction, IGetMerchantByIdAction } from "./GetMerchantByIdAction";
-import { IRemoveMerchantAction, RemoveMerchantAction } from "./RemoveMerchantAction";
-import { ISaveMerchantAction, SaveMerchantAction } from "./SaveMerchantAction";
-import { IFileStorageService } from "../../infrastructure/services/FileStorageService";
+import { IMerchantRepository } from "../repository/IMerchantRepository.js";
+import { EditMerchantAction, IEditMerchantAction } from "./EditMerchantAction.js";
+import { GetAllMerchantsAction, IGetAllMerchantsAction } from "./GetAllMerchantsAction.js";
+import { GetOneMerchantAction, IGetOneMerchantAction } from "./GetOneMerchantAction.js";
+import { GetMerchantByIdAction, IGetMerchantByIdAction } from "./GetMerchantByIdAction.js";
+import { IRemoveMerchantAction, RemoveMerchantAction } from "./RemoveMerchantAction.js";
+import { ISaveMerchantAction, SaveMerchantAction } from "./SaveMerchantAction.js";
+import { IFileStorageService } from "../../infrastructure/services/FileStorageService.js";
 
 export interface IMerchantActions {
   save: ISaveMerchantAction;

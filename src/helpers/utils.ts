@@ -1,4 +1,4 @@
-const fs = require('fs')
+import fs from 'fs';
 
 export const mongoObjectNormalizer = (object:{[key:string]: any}) => {
     return JSON.parse(JSON.stringify(object))

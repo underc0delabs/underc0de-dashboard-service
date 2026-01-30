@@ -1,12 +1,12 @@
 import { Request, Response } from "express";
-import { ErrorResponse, SuccessResponse } from "../../../../helpers/api";
-import { createHashMap } from "../../../../helpers/utils";
-import { InvalidIdException } from "../../core/exceptions/InvalidIdException";
-import { UserNotActiveException } from "../../core/exceptions/UserNotActiveException";
-import { UserNotExistException } from "../../core/exceptions/UserNotExistException";
-import { WrongCredentialsException } from "../../core/exceptions/WrongCredentialsException";
-import { IAdminUserActions } from "../../core/actions/actionsProvider";
-import { decryptJWT } from "../../../../helpers/decrypt-jwt";
+import { ErrorResponse, SuccessResponse } from "../../../../helpers/api.js";
+import { createHashMap } from "../../../../helpers/utils.js";
+import { InvalidIdException } from "../../core/exceptions/InvalidIdException.js";
+import { UserNotActiveException } from "../../core/exceptions/UserNotActiveException.js";
+import { UserNotExistException } from "../../core/exceptions/UserNotExistException.js";
+import { WrongCredentialsException } from "../../core/exceptions/WrongCredentialsException.js";
+import { IAdminUserActions } from "../../core/actions/actionsProvider.js";
+import { decryptJWT } from "../../../../helpers/decrypt-jwt.js";
 const name = 'Usuario'
 const pronoun = 'o'
 export const UserControllers = ({

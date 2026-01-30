@@ -1,5 +1,5 @@
-import { UserNotExistException } from "../exceptions/UserNotExistException";
-import { IUserRepository } from "../repository/IMongoUserRepository";
+import { UserNotExistException } from "../exceptions/UserNotExistException.js";
+import { IUserRepository } from "../repository/IMongoUserRepository.js";
 export interface IGetUserByIdAction {
     execute: (id:string) => Promise<any>
 }

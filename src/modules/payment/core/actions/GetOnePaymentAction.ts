@@ -1,4 +1,4 @@
-import { IPaymentRepository } from "../repository/IPaymentRepository";
+import { IPaymentRepository } from "../repository/IPaymentRepository.js";
 export interface IGetOnePaymentAction {
     execute: (query:object) => Promise<any>
 }

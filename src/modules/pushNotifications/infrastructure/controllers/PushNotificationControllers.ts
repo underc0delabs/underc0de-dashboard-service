@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
-import { ErrorResponse, SuccessResponse } from "../../../../helpers/api";
-import { createHashMap } from "../../../../helpers/utils";
-import { IPushNotificationActions } from "../../core/actions/actionsProvider";
-import { InvalidIdException } from "../../core/exceptions/InvalidIdException";
-import { PushNotificationNotExistException } from "../../core/exceptions/PushNotificationNotExistException";
+import { ErrorResponse, SuccessResponse } from "../../../../helpers/api.js";
+import { createHashMap } from "../../../../helpers/utils.js";
+import { IPushNotificationActions } from "../../core/actions/actionsProvider.js";
+import { InvalidIdException } from "../../core/exceptions/InvalidIdException.js";
+import { PushNotificationNotExistException } from "../../core/exceptions/PushNotificationNotExistException.js";
 const name = 'Notificación push'
 const pronoun = 'a'
 export const PushNotificationControllers = ({
@@ -25,6 +25,10 @@ export const PushNotificationControllers = ({
         const message=`${name} cread${pronoun} correctamente`
         SuccessResponse(res,201,message,pushNotification)
       }).catch(error => {
+        console.error('Error en save push notification:', error instanceof Error ? error.message : error);
+        if (error instanceof Error && error.stack) {
+          console.error('Stack trace:', error.stack);
+        }
         errorResponses[error.name](res, error) 
       })
     },

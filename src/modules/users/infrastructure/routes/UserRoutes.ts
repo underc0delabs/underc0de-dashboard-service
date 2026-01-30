@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { DependencyManager } from "../../../../dependencyManager";
-import { IJwtValidator } from "../../../../middlewares/JwtValidator/core/IJwtValidator";
-import { getUserControllers } from "../controllers/controllersProvider";
+import { DependencyManager } from "../../../../dependencyManager.js";
+import { IJwtValidator } from "../../../../middlewares/JwtValidator/core/IJwtValidator.js";
+import { getUserControllers } from "../controllers/controllersProvider.js";
 
 const getUserRoutes = (dependencyManager: DependencyManager) => {
   const jwtValidator = getJwtValidator(dependencyManager);
@@ -24,7 +24,7 @@ const getUserRoutes = (dependencyManager: DependencyManager) => {
   userRouter.post(`/${path}`, [jwtValidator], save);
   userRouter.get(`/${path}`, [jwtValidator], get);
   userRouter.get(`/${path}/metrics`, [jwtValidator], getMetrics);
-  userRouter.post(`/${path}/fcm-token`, [jwtValidator], saveFcmToken);
+  userRouter.post(`/${path}/fcm-token`, saveFcmToken);
   userRouter.post(
     `/${path}/link-subscription`,
     linkSubscription

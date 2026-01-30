@@ -1,6 +1,6 @@
-import { ISubscriptionPlanRepository } from "../repository/ISubscriptionPlanRepository";
-import { SubscriptionPlanNotExistException } from "../exceptions/SubscriptionPlanNotExistException";
-import { InvalidIdException } from "../exceptions/InvalidIdException";
+import { ISubscriptionPlanRepository } from "../repository/ISubscriptionPlanRepository.js";
+import { SubscriptionPlanNotExistException } from "../exceptions/SubscriptionPlanNotExistException.js";
+import { InvalidIdException } from "../exceptions/InvalidIdException.js";
 
 export interface IRemoveSubscriptionPlanAction {
     execute: (id:string) => Promise<any>

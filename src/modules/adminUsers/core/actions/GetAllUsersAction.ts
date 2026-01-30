@@ -1,4 +1,4 @@
-import { IAdminUserRepository } from "../repository/IAdminUserRepository";
+import { IAdminUserRepository } from "../repository/IAdminUserRepository.js";
 export interface IGetAllUsersAction {
   execute: (query: any) => Promise<any>;
 }

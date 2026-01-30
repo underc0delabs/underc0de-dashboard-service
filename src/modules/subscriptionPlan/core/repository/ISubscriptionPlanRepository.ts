@@ -1,4 +1,4 @@
-import ISubscriptionPlan from "../entities/ISubscriptionPlan";
+import ISubscriptionPlan from "../entities/ISubscriptionPlan.js";
 
 export interface ISubscriptionPlanRepository {
     save: (subscriptionPlan: ISubscriptionPlan) => Promise<ISubscriptionPlan>,

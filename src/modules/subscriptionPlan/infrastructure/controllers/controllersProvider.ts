@@ -1,10 +1,10 @@
-import { DependencyManager } from "../../../../dependencyManager"
-import { getSubscriptionPlanActions } from "../../core/actions/actionsProvider"
-import { ISubscriptionPlanRepository } from "../../core/repository/ISubscriptionPlanRepository"
-import { SubscriptionPlanControllers } from "./SubscriptionPlanControllers"
-import { MercadoPagoSyncService } from "../../../../services/mercadopagoService/core/service/mercadoPagoSyncService"
-import { IPaymentRepository } from "../../../payment/core/repository/IPaymentRepository"
-import { IUserRepository } from "../../../users/core/repository/IMongoUserRepository"
+import { DependencyManager } from "../../../../dependencyManager.js"
+import { getSubscriptionPlanActions } from "../../core/actions/actionsProvider.js"
+import { ISubscriptionPlanRepository } from "../../core/repository/ISubscriptionPlanRepository.js"
+import { SubscriptionPlanControllers } from "./SubscriptionPlanControllers.js"
+import { MercadoPagoSyncService } from "../../../../services/mercadopagoService/core/service/mercadoPagoSyncService.js"
+import { IPaymentRepository } from "../../../payment/core/repository/IPaymentRepository.js"
+import { IUserRepository } from "../../../users/core/repository/IMongoUserRepository.js"
 
 
 export const getSubscriptionPlanControllers = (dependencyManager: DependencyManager) => {

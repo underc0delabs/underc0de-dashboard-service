@@ -1,10 +1,10 @@
-import { DependencyManager } from "../dependencyManager"
-import getUserRoutes from "../modules/users/infrastructure/routes/UserRoutes"
-import getAdminUserRoutes from "../modules/adminUsers/infrastructure/routes/UserRoutes"
-import getMerchantRoutes from "../modules/merchants/infrastructure/routes/MerchantRoutes"
-import getPushNotificationRoutes from "../modules/pushNotifications/infrastructure/routes/PushNotificationRoutes"
-import getSubscriptionPlanRoutes from "../modules/subscriptionPlan/infrastructure/routes/SubscriptionPlanRoutes"
-import getPaymentRoutes from "../modules/payment/infrastructure/routes/PaymentRoutes"
+import { DependencyManager } from "../dependencyManager.js"
+import getUserRoutes from "../modules/users/infrastructure/routes/UserRoutes.js"
+import getAdminUserRoutes from "../modules/adminUsers/infrastructure/routes/UserRoutes.js"
+import getMerchantRoutes from "../modules/merchants/infrastructure/routes/MerchantRoutes.js"
+import getPushNotificationRoutes from "../modules/pushNotifications/infrastructure/routes/PushNotificationRoutes.js"
+import getSubscriptionPlanRoutes from "../modules/subscriptionPlan/infrastructure/routes/SubscriptionPlanRoutes.js"
+import getPaymentRoutes from "../modules/payment/infrastructure/routes/PaymentRoutes.js"
 
 const prefix = '/api/v1'
 const ReduceRouters = (app: { use: (arg0: string, arg1: any) => void }, dependencyManager: DependencyManager) => {

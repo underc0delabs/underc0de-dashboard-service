@@ -1,4 +1,4 @@
-import configs from "../configs";
+import configs from "../configs.js";
 
 export const getFileUrl = (filePath: string | null | undefined): string | null => {
   if (!filePath) {

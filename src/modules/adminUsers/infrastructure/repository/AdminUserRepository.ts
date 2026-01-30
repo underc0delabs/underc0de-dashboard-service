@@ -1,7 +1,7 @@
-import configs from "../../../../configs";
-import IAdminUser from "../../core/entities/IAdminUser";
-import { IAdminUserRepository } from "../../core/repository/IAdminUserRepository";
-import AdminUserModel from "../models/AdminUserModel";
+import configs from "../../../../configs.js";
+import IAdminUser from "../../core/entities/IAdminUser.js";
+import { IAdminUserRepository } from "../../core/repository/IAdminUserRepository.js";
+import AdminUserModel from "../models/AdminUserModel.js";
 
 export const AdminUserRepository = (): IAdminUserRepository => ({
   async save(user) {

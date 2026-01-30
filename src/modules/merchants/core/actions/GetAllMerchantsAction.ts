@@ -1,4 +1,4 @@
-import { IMerchantRepository } from "../repository/IMerchantRepository";
+import { IMerchantRepository } from "../repository/IMerchantRepository.js";
 export interface IGetAllMerchantsAction {
     execute: (query:any) => Promise<any>
 }

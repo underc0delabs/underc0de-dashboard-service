@@ -1,7 +1,7 @@
-import { IPaymentRepository } from "../../core/repository/IPaymentRepository";
-import PaymentModel from "../models/PaymentModel";
-import configs from "../../../../configs";
-import IPayment from "../../core/entities/IPayment";
+import { IPaymentRepository } from "../../core/repository/IPaymentRepository.js";
+import PaymentModel from "../models/PaymentModel.js";
+import configs from "../../../../configs.js";
+import IPayment from "../../core/entities/IPayment.js";
 
 export const PaymentRepository = (): IPaymentRepository => ({
   async save(payment) {

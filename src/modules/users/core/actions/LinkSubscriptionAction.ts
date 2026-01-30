@@ -1,6 +1,6 @@
-import { IUserRepository } from "../repository/IMongoUserRepository";
-import { ISubscriptionPlanRepository } from "../../../subscriptionPlan/core/repository/ISubscriptionPlanRepository";
-import { IPaymentRepository } from "../../../payment/core/repository/IPaymentRepository";
+import { IUserRepository } from "../repository/IMongoUserRepository.js";
+import { ISubscriptionPlanRepository } from "../../../subscriptionPlan/core/repository/ISubscriptionPlanRepository.js";
+import { IPaymentRepository } from "../../../payment/core/repository/IPaymentRepository.js";
 
 export interface ILinkSubscriptionAction {
   execute: (body: { suscriptionCode: string; email: string }) => Promise<any>;

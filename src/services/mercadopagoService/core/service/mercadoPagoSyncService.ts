@@ -1,4 +1,4 @@
-import { MpPayment, MpSubscription } from "../types/mercadoPagoTypes";
+import { MpPayment, MpSubscription } from "../types/mercadoPagoTypes.js";
 
 export interface MercadoPagoSyncService {
   syncSubscriptions(): Promise<MpSubscription[]>;

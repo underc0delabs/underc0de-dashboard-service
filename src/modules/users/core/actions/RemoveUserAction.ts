@@ -1,6 +1,6 @@
-import { IUserRepository } from "../repository/IMongoUserRepository";
-import { UserNotExistException } from "../exceptions/UserNotExistException";
-import { InvalidIdException } from "../exceptions/InvalidIdException";
+import { IUserRepository } from "../repository/IMongoUserRepository.js";
+import { UserNotExistException } from "../exceptions/UserNotExistException.js";
+import { InvalidIdException } from "../exceptions/InvalidIdException.js";
 
 export interface IRemoveUserAction {
     execute: (id:string) => Promise<any>

@@ -1,6 +1,5 @@
-import { IHashService } from "../../core/services/IHashService"
-
-const bcryptjs = require('bcryptjs')
+import { IHashService } from "../../core/services/IHashService.js"
+import bcryptjs from 'bcryptjs';
 const salt = bcryptjs.genSaltSync()
 
 export const BcryptHashService = (): IHashService => ({

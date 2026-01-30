@@ -1,6 +1,6 @@
-import { IPaymentRepository } from "../repository/IPaymentRepository";
-import { PaymentNotExistException } from "../exceptions/PaymentNotExistException";
-import { InvalidIdException } from "../exceptions/InvalidIdException";
+import { IPaymentRepository } from "../repository/IPaymentRepository.js";
+import { PaymentNotExistException } from "../exceptions/PaymentNotExistException.js";
+import { InvalidIdException } from "../exceptions/InvalidIdException.js";
 
 export interface IRemovePaymentAction {
     execute: (id:string) => Promise<any>

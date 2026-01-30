@@ -1,10 +1,12 @@
-import { IPushNotificationRepository } from "../repository/IPushNotificationRepository";
-import { EditPushNotificationAction, IEditPushNotificationAction } from "./EditPushNotificationAction";
-import { GetAllPushNotificationsAction, IGetAllPushNotificationsAction } from "./GetAllPushNotificationsAction";
-import { GetOnePushNotificationAction, IGetOnePushNotificationAction } from "./GetOnePushNotificationAction";
-import { GetPushNotificationByIdAction, IGetPushNotificationByIdAction } from "./GetPushNotificationByIdAction";
-import { IRemovePushNotificationAction, RemovePushNotificationAction } from "./RemovePushNotificationAction";
-import { ISavePushNotificationAction, SavePushNotificationAction } from "./SavePushNotificationAction";
+import { IFirebaseService } from "../../../../services/pushNotificationService/core/iFirebaseService.js";
+import { IPushNotificationRepository } from "../repository/IPushNotificationRepository.js";
+import { EditPushNotificationAction, IEditPushNotificationAction } from "./EditPushNotificationAction.js";
+import { GetAllPushNotificationsAction, IGetAllPushNotificationsAction } from "./GetAllPushNotificationsAction.js";
+import { GetOnePushNotificationAction, IGetOnePushNotificationAction } from "./GetOnePushNotificationAction.js";
+import { GetPushNotificationByIdAction, IGetPushNotificationByIdAction } from "./GetPushNotificationByIdAction.js";
+import { IRemovePushNotificationAction, RemovePushNotificationAction } from "./RemovePushNotificationAction.js";
+import { ISavePushNotificationAction, SavePushNotificationAction } from "./SavePushNotificationAction.js";
+import { IUserRepository } from "../../../users/core/repository/IMongoUserRepository.js";
 
 export interface IPushNotificationActions {
   save: ISavePushNotificationAction;
@@ -15,10 +17,12 @@ export interface IPushNotificationActions {
   getById: IGetPushNotificationByIdAction;
 }
 export const getPushNotificationActions = (
-  PushNotificationRepository: IPushNotificationRepository
+  PushNotificationRepository: IPushNotificationRepository,
+  firebaseNotificationService: IFirebaseService,
+  userRepository: IUserRepository
 ) => {
   const PushNotificationActions: IPushNotificationActions = {
-    save: SavePushNotificationAction(PushNotificationRepository),
+    save: SavePushNotificationAction(PushNotificationRepository, firebaseNotificationService, userRepository),
     edit: EditPushNotificationAction(PushNotificationRepository),
     remove: RemovePushNotificationAction(PushNotificationRepository),
     getAll: GetAllPushNotificationsAction(PushNotificationRepository),

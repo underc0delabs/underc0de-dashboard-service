@@ -1,7 +1,7 @@
-import { MercadoPagoSyncService } from "../../../../services/mercadopagoService/core/service/mercadoPagoSyncService";
-import { ISubscriptionPlanRepository } from "../repository/ISubscriptionPlanRepository";
-import { IPaymentRepository } from "../../../payment/core/repository/IPaymentRepository";
-import { IUserRepository } from "../../../users/core/repository/IMongoUserRepository";
+import { MercadoPagoSyncService } from "../../../../services/mercadopagoService/core/service/mercadoPagoSyncService.js";
+import { ISubscriptionPlanRepository } from "../repository/ISubscriptionPlanRepository.js";
+import { IPaymentRepository } from "../../../payment/core/repository/IPaymentRepository.js";
+import { IUserRepository } from "../../../users/core/repository/IMongoUserRepository.js";
 
 export interface ISyncMercadoPagoSubscriptionsAction {
   execute: () => Promise<any>;

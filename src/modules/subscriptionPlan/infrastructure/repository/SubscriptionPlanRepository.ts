@@ -1,7 +1,7 @@
-import { ISubscriptionPlanRepository } from "../../core/repository/ISubscriptionPlanRepository";
-import SubscriptionPlanModel from "../models/SubscriptionPlanModel";
-import configs from "../../../../configs";
-import ISubscriptionPlan from "../../core/entities/ISubscriptionPlan";
+import { ISubscriptionPlanRepository } from "../../core/repository/ISubscriptionPlanRepository.js";
+import SubscriptionPlanModel from "../models/SubscriptionPlanModel.js";
+import configs from "../../../../configs.js";
+import ISubscriptionPlan from "../../core/entities/ISubscriptionPlan.js";
 
 export const SubscriptionPlanRepository = (): ISubscriptionPlanRepository => ({
   async save(subscriptionPlan) {

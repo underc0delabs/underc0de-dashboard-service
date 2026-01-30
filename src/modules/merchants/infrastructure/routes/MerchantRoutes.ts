@@ -1,8 +1,8 @@
 import { Router } from 'express'
-import { DependencyManager } from '../../../../dependencyManager'
-import { IJwtValidator } from '../../../../middlewares/JwtValidator/core/IJwtValidator'
-import { getMerchantControllers } from '../controllers/controllersProvider'
-import { uploadLogoMiddleware } from '../middlewares/uploadLogoMiddleware'
+import { DependencyManager } from '../../../../dependencyManager.js'
+import { IJwtValidator } from '../../../../middlewares/JwtValidator/core/IJwtValidator.js'
+import { getMerchantControllers } from '../controllers/controllersProvider.js'
+import { uploadLogoMiddleware } from '../middlewares/uploadLogoMiddleware.js'
 
 const getMerchantRoutes = (dependencyManager: DependencyManager) => {
     const jwtValidator = getJwtValidator(dependencyManager)

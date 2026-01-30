@@ -1,12 +1,12 @@
-import { DependencyManager } from "../../../../dependencyManager";
-import { getUserActions } from "../../core/actions/actionsProvider";
-import { IUserRepository } from "../../core/repository/IMongoUserRepository";
-import { IHashService } from "../../core/services/IHashService";
-import { UserControllers } from "./UserControllers";
-import { IMerchantRepository } from "../../../merchants/core/repository/IMerchantRepository";
-import { IPushNotificationRepository } from "../../../pushNotifications/core/repository/IPushNotificationRepository";
-import { ISubscriptionPlanRepository } from "../../../subscriptionPlan/core/repository/ISubscriptionPlanRepository";
-import { IPaymentRepository } from "../../../payment/core/repository/IPaymentRepository";
+import { DependencyManager } from "../../../../dependencyManager.js";
+import { getUserActions } from "../../core/actions/actionsProvider.js";
+import { IUserRepository } from "../../core/repository/IMongoUserRepository.js";
+import { IHashService } from "../../core/services/IHashService.js";
+import { UserControllers } from "./UserControllers.js";
+import { IMerchantRepository } from "../../../merchants/core/repository/IMerchantRepository.js";
+import { IPushNotificationRepository } from "../../../pushNotifications/core/repository/IPushNotificationRepository.js";
+import { ISubscriptionPlanRepository } from "../../../subscriptionPlan/core/repository/ISubscriptionPlanRepository.js";
+import { IPaymentRepository } from "../../../payment/core/repository/IPaymentRepository.js";
 
 export const getUserControllers = (dependencyManager: DependencyManager) => {
   const UserRepository = getUserRepository(dependencyManager);

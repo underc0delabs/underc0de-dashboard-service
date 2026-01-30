@@ -1,5 +1,5 @@
-import IPayment from "../entities/IPayment";
-import { IPaymentRepository } from "../repository/IPaymentRepository";
+import IPayment from "../entities/IPayment.js";
+import { IPaymentRepository } from "../repository/IPaymentRepository.js";
 
 export interface ISavePaymentAction {
   execute: (body: IPayment) => Promise<any>;

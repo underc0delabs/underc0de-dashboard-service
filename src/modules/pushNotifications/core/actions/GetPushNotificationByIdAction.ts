@@ -1,5 +1,5 @@
-import { PushNotificationNotExistException } from "../exceptions/PushNotificationNotExistException";
-import { IPushNotificationRepository } from "../repository/IPushNotificationRepository";
+import { PushNotificationNotExistException } from "../exceptions/PushNotificationNotExistException.js";
+import { IPushNotificationRepository } from "../repository/IPushNotificationRepository.js";
 export interface IGetPushNotificationByIdAction {
     execute: (id:string) => Promise<any>
 }

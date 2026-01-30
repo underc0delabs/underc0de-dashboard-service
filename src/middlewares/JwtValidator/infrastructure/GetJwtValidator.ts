@@ -1,9 +1,9 @@
 import { NextFunction, Request, Response } from "express";
-import configs from "../../../configs";
-import { IAdminUserRepository } from "../../../modules/adminUsers/core/repository/IAdminUserRepository";
-import { IJwtValidator } from "../../JwtValidator/core/IJwtValidator";
+import configs from "../../../configs.js";
+import { IAdminUserRepository } from "../../../modules/adminUsers/core/repository/IAdminUserRepository.js";
+import { IJwtValidator } from "../../JwtValidator/core/IJwtValidator.js";
 
-const jwt = require("jsonwebtoken");
+import jwt from "jsonwebtoken";
 const getJwtValidator = (UserAdminRepository: IAdminUserRepository): IJwtValidator => {
     const jwtValidator = async (req: Request, res: Response, next: NextFunction) => {
         const bearerHeader = req.header("authorization");

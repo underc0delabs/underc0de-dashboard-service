@@ -1,5 +1,5 @@
-import { DependencyManager } from "../../dependencyManager";
-import { PushNotificationRepository } from "./infrastructure/repository/PushNotificationRepository";
+import { DependencyManager } from "../../dependencyManager.js";
+import { PushNotificationRepository } from "./infrastructure/repository/PushNotificationRepository.js";
 
 export const PushNotificationModuleInitializer = (dependencyManager: DependencyManager) => {
     const pushNotificationRepository = PushNotificationRepository()

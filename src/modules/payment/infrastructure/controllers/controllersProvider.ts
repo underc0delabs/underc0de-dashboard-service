@@ -1,7 +1,7 @@
-import { DependencyManager } from "../../../../dependencyManager"
-import { getPaymentActions } from "../../core/actions/actionsProvider"
-import { IPaymentRepository } from "../../core/repository/IPaymentRepository"
-import { PaymentControllers } from "./PaymentControllers"
+import { DependencyManager } from "../../../../dependencyManager.js"
+import { getPaymentActions } from "../../core/actions/actionsProvider.js"
+import { IPaymentRepository } from "../../core/repository/IPaymentRepository.js"
+import { PaymentControllers } from "./PaymentControllers.js"
 
 
 export const getPaymentControllers = (dependencyManager: DependencyManager) => {

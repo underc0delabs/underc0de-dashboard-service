@@ -1,8 +1,8 @@
-import { DependencyManager } from "../../../../dependencyManager"
-import { getMerchantActions } from "../../core/actions/actionsProvider"
-import { IMerchantRepository } from "../../core/repository/IMerchantRepository"
-import { IFileStorageService } from "../services/FileStorageService"
-import { MerchantControllers } from "./MerchantControllers"
+import { DependencyManager } from "../../../../dependencyManager.js"
+import { getMerchantActions } from "../../core/actions/actionsProvider.js"
+import { IMerchantRepository } from "../../core/repository/IMerchantRepository.js"
+import { IFileStorageService } from "../services/FileStorageService.js"
+import { MerchantControllers } from "./MerchantControllers.js"
 
 
 export const getMerchantControllers = (dependencyManager: DependencyManager) => {

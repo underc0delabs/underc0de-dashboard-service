@@ -1,6 +1,6 @@
-import { IPushNotificationRepository } from "../repository/IPushNotificationRepository";
-import { PushNotificationNotExistException } from "../exceptions/PushNotificationNotExistException";
-import { InvalidIdException } from "../exceptions/InvalidIdException";
+import { IPushNotificationRepository } from "../repository/IPushNotificationRepository.js";
+import { PushNotificationNotExistException } from "../exceptions/PushNotificationNotExistException.js";
+import { InvalidIdException } from "../exceptions/InvalidIdException.js";
 
 export interface IRemovePushNotificationAction {
     execute: (id:string) => Promise<any>

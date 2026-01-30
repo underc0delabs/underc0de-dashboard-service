@@ -1,8 +1,8 @@
-import { IPushNotificationRepository } from "../../core/repository/IPushNotificationRepository";
-import PushNotificationModel from "../models/PushNotificationModel";
-import configs from "../../../../configs";
-import IPushNotification from "../../core/entities/IPushNotification";
-import AdminUserModel from "../../../adminUsers/infrastructure/models/AdminUserModel";
+import { IPushNotificationRepository } from "../../core/repository/IPushNotificationRepository.js";
+import PushNotificationModel from "../models/PushNotificationModel.js";
+import configs from "../../../../configs.js";
+import IPushNotification from "../../core/entities/IPushNotification.js";
+import AdminUserModel from "../../../adminUsers/infrastructure/models/AdminUserModel.js";
 
 export const PushNotificationRepository = (): IPushNotificationRepository => ({
   async save(pushNotification) {

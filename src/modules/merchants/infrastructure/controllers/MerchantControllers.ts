@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
-import { ErrorResponse, SuccessResponse } from "../../../../helpers/api";
-import { createHashMap } from "../../../../helpers/utils";
-import { IMerchantActions } from "../../core/actions/actionsProvider";
-import { InvalidIdException } from "../../core/exceptions/InvalidIdException";
-import { MerchantNotExistException } from "../../core/exceptions/MerchantNotExistException";
+import { ErrorResponse, SuccessResponse } from "../../../../helpers/api.js";
+import { createHashMap } from "../../../../helpers/utils.js";
+import { IMerchantActions } from "../../core/actions/actionsProvider.js";
+import { InvalidIdException } from "../../core/exceptions/InvalidIdException.js";
+import { MerchantNotExistException } from "../../core/exceptions/MerchantNotExistException.js";
 const name = 'Comercio'
 const pronoun = 'o'
 export const MerchantControllers = ({

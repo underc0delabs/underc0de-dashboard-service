@@ -1,4 +1,4 @@
-import IAdminUser from "../../core/entities/IAdminUser";
+import IAdminUser from "../../core/entities/IAdminUser.js";
 
 export interface IAdminUserRepository {
     save: (user:IAdminUser) => Promise<IAdminUser>,

@@ -7,3 +7,7 @@ node_modules
 !tsconfig.*.json
 firebase-adminsdk*.json
 *-firebase-adminsdk*.json
+build/
+logs/
+*.log
+.DS_Store

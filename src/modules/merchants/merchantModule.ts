@@ -1,6 +1,6 @@
-import { DependencyManager } from "../../dependencyManager";
-import { MerchantRepository } from "./infrastructure/repository/MerchantRepository";
-import { FileStorageService } from "./infrastructure/services/FileStorageService";
+import { DependencyManager } from "../../dependencyManager.js";
+import { MerchantRepository } from "./infrastructure/repository/MerchantRepository.js";
+import { FileStorageService } from "./infrastructure/services/FileStorageService.js";
 
 export const MerchantModuleInitializer = (dependencyManager: DependencyManager) => {
     const merchantRepository = MerchantRepository()

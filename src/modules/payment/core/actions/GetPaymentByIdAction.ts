@@ -1,5 +1,5 @@
-import { PaymentNotExistException } from "../exceptions/PaymentNotExistException";
-import { IPaymentRepository } from "../repository/IPaymentRepository";
+import { PaymentNotExistException } from "../exceptions/PaymentNotExistException.js";
+import { IPaymentRepository } from "../repository/IPaymentRepository.js";
 export interface IGetPaymentByIdAction {
     execute: (id:string) => Promise<any>
 }

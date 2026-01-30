@@ -1,26 +1,26 @@
-import { IUserRepository } from "../repository/IMongoUserRepository";
-import { IHashService } from "../services/IHashService";
-import { EditUserAction, IEditUserAction } from "./EditUserAction";
-import { GetAllUsersAction, IGetAllUsersAction } from "./GetAllUsersAction";
-import { GetOneUserAction, IGetOneUserAction } from "./GetOneUserAction";
-import { GetUserByIdAction, IGetUserByIdAction } from "./GetUserByIdAction";
-import { ILoginUserAction, LoginUserAction } from "./LoginUserAction";
-import { IRemoveUserAction, RemoveUserAction } from "./RemoveUserAction";
-import { ISaveUserAction, SaveUserAction } from "./SaveUserAction";
-import { ISaveFcmTokenAction, SaveFcmTokenAction } from "./SaveFcmTokenAction";
-import { IGetMetricsAction, GetMetricsAction } from "./GetMetricsAction";
-import { IMerchantRepository } from "../../../merchants/core/repository/IMerchantRepository";
+import { IUserRepository } from "../repository/IMongoUserRepository.js";
+import { IHashService } from "../services/IHashService.js";
+import { EditUserAction, IEditUserAction } from "./EditUserAction.js";
+import { GetAllUsersAction, IGetAllUsersAction } from "./GetAllUsersAction.js";
+import { GetOneUserAction, IGetOneUserAction } from "./GetOneUserAction.js";
+import { GetUserByIdAction, IGetUserByIdAction } from "./GetUserByIdAction.js";
+import { ILoginUserAction, LoginUserAction } from "./LoginUserAction.js";
+import { IRemoveUserAction, RemoveUserAction } from "./RemoveUserAction.js";
+import { ISaveUserAction, SaveUserAction } from "./SaveUserAction.js";
+import { ISaveFcmTokenAction, SaveFcmTokenAction } from "./SaveFcmTokenAction.js";
+import { IGetMetricsAction, GetMetricsAction } from "./GetMetricsAction.js";
+import { IMerchantRepository } from "../../../merchants/core/repository/IMerchantRepository.js";
 import {
   IGetUserByUsernameAction,
   GetUserByUsernameAction,
-} from "./GetUserByUsernameAction";
-import { IPushNotificationRepository } from "../../../pushNotifications/core/repository/IPushNotificationRepository";
+} from "./GetUserByUsernameAction.js";
+import { IPushNotificationRepository } from "../../../pushNotifications/core/repository/IPushNotificationRepository.js";
 import {
   ILinkSubscriptionAction,
   LinkSubscriptionAction,
-} from "./LinkSubscriptionAction";
-import { ISubscriptionPlanRepository } from "../../../subscriptionPlan/core/repository/ISubscriptionPlanRepository";
-import { IPaymentRepository } from "../../../payment/core/repository/IPaymentRepository";
+} from "./LinkSubscriptionAction.js";
+import { ISubscriptionPlanRepository } from "../../../subscriptionPlan/core/repository/ISubscriptionPlanRepository.js";
+import { IPaymentRepository } from "../../../payment/core/repository/IPaymentRepository.js";
 export interface IUserActions {
   save: ISaveUserAction;
   edit: IEditUserAction;

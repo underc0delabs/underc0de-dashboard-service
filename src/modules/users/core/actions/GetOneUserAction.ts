@@ -1,4 +1,4 @@
-import { IUserRepository } from "../repository/IMongoUserRepository";
+import { IUserRepository } from "../repository/IMongoUserRepository.js";
 export interface IGetOneUserAction {
     execute: (query:object) => Promise<any>
 }

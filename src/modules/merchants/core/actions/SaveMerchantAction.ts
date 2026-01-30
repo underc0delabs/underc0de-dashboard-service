@@ -1,6 +1,6 @@
-import IMerchant from "../entities/IMerchant";
-import { IMerchantRepository } from "../repository/IMerchantRepository";
-import { IFileStorageService } from "../../infrastructure/services/FileStorageService";
+import IMerchant from "../entities/IMerchant.js";
+import { IMerchantRepository } from "../repository/IMerchantRepository.js";
+import { IFileStorageService } from "../../infrastructure/services/FileStorageService.js";
 
 export interface ISaveMerchantAction {
   execute: (body: IMerchant, file?: Express.Multer.File) => Promise<any>;

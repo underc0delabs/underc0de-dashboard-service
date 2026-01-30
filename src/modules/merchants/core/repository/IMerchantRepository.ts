@@ -1,4 +1,4 @@
-import IMerchant from "../entities/IMerchant";
+import IMerchant from "../entities/IMerchant.js";
 
 export interface IMerchantRepository {
     save: (merchant: IMerchant) => Promise<IMerchant>,

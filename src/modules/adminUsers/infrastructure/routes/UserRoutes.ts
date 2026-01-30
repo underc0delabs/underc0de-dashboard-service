@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { DependencyManager } from "../../../../dependencyManager";
-import { IJwtValidator } from "../../../../middlewares/JwtValidator/core/IJwtValidator";
-import { getAdminUserControllers } from "../controllers/controllersProvider";
+import { DependencyManager } from "../../../../dependencyManager.js";
+import { IJwtValidator } from "../../../../middlewares/JwtValidator/core/IJwtValidator.js";
+import { getAdminUserControllers } from "../controllers/controllersProvider.js";
 
 const getAdminUserRoutes = (dependencyManager: DependencyManager) => {
   const jwtValidator = getJwtValidator(dependencyManager);

@@ -1,20 +1,20 @@
-import { IUserRepository } from "../../../users/core/repository/IMongoUserRepository";
-import { IAdminUserRepository } from "../repository/IAdminUserRepository";
-import { IHashService } from "../services/IHashService";
-import { EditAdminUserAction, IEditAdminUserAction } from "./EditUserAction";
-import { GetAllUsersAction, IGetAllUsersAction } from "./GetAllUsersAction";
-import { GetOneUserAction, IGetOneUserAction } from "./GetOneUserAction";
+import { IUserRepository } from "../../../users/core/repository/IMongoUserRepository.js";
+import { IAdminUserRepository } from "../repository/IAdminUserRepository.js";
+import { IHashService } from "../services/IHashService.js";
+import { EditAdminUserAction, IEditAdminUserAction } from "./EditUserAction.js";
+import { GetAllUsersAction, IGetAllUsersAction } from "./GetAllUsersAction.js";
+import { GetOneUserAction, IGetOneUserAction } from "./GetOneUserAction.js";
 import {
   GetAdminUserByIdAction,
   IGetAdminUserByIdAction,
-} from "./GetUserByIdAction";
+} from "./GetUserByIdAction.js";
 import {
   GetUsersMetricsAction,
   IGetUsersMetricsAction,
-} from "./GetUsersMetricsAction";
-import { ILoginUserAction, LoginUserAction } from "./LoginUserAction";
-import { IRemoveAdminUserAction, RemoveUserAction } from "./RemoveUserAction";
-import { ISaveUserAction, SaveUserAction } from "./SaveUserAction";
+} from "./GetUsersMetricsAction.js";
+import { ILoginUserAction, LoginUserAction } from "./LoginUserAction.js";
+import { IRemoveAdminUserAction, RemoveUserAction } from "./RemoveUserAction.js";
+import { ISaveUserAction, SaveUserAction } from "./SaveUserAction.js";
 
 export interface IAdminUserActions {
   save: ISaveUserAction;

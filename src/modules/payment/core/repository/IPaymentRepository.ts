@@ -1,4 +1,4 @@
-import IPayment from "../entities/IPayment";
+import IPayment from "../entities/IPayment.js";
 
 export interface IPaymentRepository {
     save: (payment: IPayment) => Promise<IPayment>,

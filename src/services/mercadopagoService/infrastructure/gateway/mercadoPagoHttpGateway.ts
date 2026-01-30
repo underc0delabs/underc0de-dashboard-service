@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from "axios";
-import { MercadoPagoGateway } from "../../core/gateway/mercadoPagoGateway";
+import { MercadoPagoGateway } from "../../core/gateway/mercadoPagoGateway.js";
 
 const MP_BASE_URL = "https://api.mercadopago.com";
 

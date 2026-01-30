@@ -1,6 +1,6 @@
-import { IMerchantRepository } from "../repository/IMerchantRepository";
-import { MerchantNotExistException } from "../exceptions/MerchantNotExistException";
-import { InvalidIdException } from "../exceptions/InvalidIdException";
+import { IMerchantRepository } from "../repository/IMerchantRepository.js";
+import { MerchantNotExistException } from "../exceptions/MerchantNotExistException.js";
+import { InvalidIdException } from "../exceptions/InvalidIdException.js";
 
 export interface IRemoveMerchantAction {
     execute: (id:string) => Promise<any>

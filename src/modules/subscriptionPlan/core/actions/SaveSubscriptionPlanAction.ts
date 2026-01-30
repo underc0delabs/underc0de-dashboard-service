@@ -1,5 +1,5 @@
-import ISubscriptionPlan from "../entities/ISubscriptionPlan";
-import { ISubscriptionPlanRepository } from "../repository/ISubscriptionPlanRepository";
+import ISubscriptionPlan from "../entities/ISubscriptionPlan.js";
+import { ISubscriptionPlanRepository } from "../repository/ISubscriptionPlanRepository.js";
 
 export interface ISaveSubscriptionPlanAction {
   execute: (body: ISubscriptionPlan) => Promise<any>;

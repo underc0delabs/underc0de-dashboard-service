@@ -1,5 +1,5 @@
-import { SubscriptionPlanNotExistException } from "../exceptions/SubscriptionPlanNotExistException";
-import { ISubscriptionPlanRepository } from "../repository/ISubscriptionPlanRepository";
+import { SubscriptionPlanNotExistException } from "../exceptions/SubscriptionPlanNotExistException.js";
+import { ISubscriptionPlanRepository } from "../repository/ISubscriptionPlanRepository.js";
 export interface IGetSubscriptionPlanByIdAction {
     execute: (id:string) => Promise<any>
 }

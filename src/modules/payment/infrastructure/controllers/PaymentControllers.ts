@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
-import { ErrorResponse, SuccessResponse } from "../../../../helpers/api";
-import { createHashMap } from "../../../../helpers/utils";
-import { IPaymentActions } from "../../core/actions/actionsProvider";
-import { InvalidIdException } from "../../core/exceptions/InvalidIdException";
-import { PaymentNotExistException } from "../../core/exceptions/PaymentNotExistException";
+import { ErrorResponse, SuccessResponse } from "../../../../helpers/api.js";
+import { createHashMap } from "../../../../helpers/utils.js";
+import { IPaymentActions } from "../../core/actions/actionsProvider.js";
+import { InvalidIdException } from "../../core/exceptions/InvalidIdException.js";
+import { PaymentNotExistException } from "../../core/exceptions/PaymentNotExistException.js";
 const name = 'Pago'
 const pronoun = 'o'
 export const PaymentControllers = ({

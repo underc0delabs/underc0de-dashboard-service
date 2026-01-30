@@ -1,4 +1,4 @@
-import { sequelize } from "../../../../server/DbConnection";
+import { sequelize } from "../../../../server/DbConnection.js";
 import { DataTypes } from "sequelize";
 
 const Payment = sequelize.define("Payment", {

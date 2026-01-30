@@ -1,5 +1,5 @@
-import { MerchantNotExistException } from "../exceptions/MerchantNotExistException";
-import { IMerchantRepository } from "../repository/IMerchantRepository";
+import { MerchantNotExistException } from "../exceptions/MerchantNotExistException.js";
+import { IMerchantRepository } from "../repository/IMerchantRepository.js";
 export interface IGetMerchantByIdAction {
     execute: (id:string) => Promise<any>
 }

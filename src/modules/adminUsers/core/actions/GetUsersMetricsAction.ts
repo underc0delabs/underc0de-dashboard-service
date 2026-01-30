@@ -1,8 +1,8 @@
-import IUser from "../../../users/core/entities/IUser";
-import { IUserRepository } from "../../../users/core/repository/IMongoUserRepository";
-import { UserNotExistException } from "../exceptions/UserNotExistException";
-import { IAdminUserRepository } from "../repository/IAdminUserRepository";
-import { UserUnauthorizedException } from "../exceptions/UserUnauthorizedException";
+import IUser from "../../../users/core/entities/IUser.js";
+import { IUserRepository } from "../../../users/core/repository/IMongoUserRepository.js";
+import { UserNotExistException } from "../exceptions/UserNotExistException.js";
+import { IAdminUserRepository } from "../repository/IAdminUserRepository.js";
+import { UserUnauthorizedException } from "../exceptions/UserUnauthorizedException.js";
 
 export interface IGetUsersMetricsAction {
   execute: (userAdminId: string) => Promise<any>;

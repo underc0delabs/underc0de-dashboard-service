@@ -1,9 +1,9 @@
-import { DependencyManager } from "../../../../dependencyManager"
-import { IUserRepository } from "../../../users/core/repository/IMongoUserRepository"
-import { getAdminUserActions } from "../../core/actions/actionsProvider"
-import { IAdminUserRepository } from "../../core/repository/IAdminUserRepository"
-import { IHashService } from "../../core/services/IHashService"
-import { UserControllers } from "./UserControllers"
+import { DependencyManager } from "../../../../dependencyManager.js"
+import { IUserRepository } from "../../../users/core/repository/IMongoUserRepository.js"
+import { getAdminUserActions } from "../../core/actions/actionsProvider.js"
+import { IAdminUserRepository } from "../../core/repository/IAdminUserRepository.js"
+import { IHashService } from "../../core/services/IHashService.js"
+import { UserControllers } from "./UserControllers.js"
 
 
 export const getAdminUserControllers = (dependencyManager: DependencyManager) => {

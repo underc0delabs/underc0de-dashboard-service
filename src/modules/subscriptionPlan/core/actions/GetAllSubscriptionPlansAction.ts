@@ -1,4 +1,4 @@
-import { ISubscriptionPlanRepository } from "../repository/ISubscriptionPlanRepository";
+import { ISubscriptionPlanRepository } from "../repository/ISubscriptionPlanRepository.js";
 export interface IGetAllSubscriptionPlansAction {
     execute: (query:any) => Promise<any>
 }

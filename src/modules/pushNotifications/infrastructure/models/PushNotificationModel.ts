@@ -1,6 +1,6 @@
-import { sequelize } from "../../../../server/DbConnection";
+import { sequelize } from "../../../../server/DbConnection.js";
 import { DataTypes } from "sequelize";
-import AdminUser from "../../../adminUsers/infrastructure/models/AdminUserModel";
+import AdminUser from "../../../adminUsers/infrastructure/models/AdminUserModel.js";
 
 const PushNotification = sequelize.define('PushNotification', {
     id: {

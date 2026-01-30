@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import configs from '../configs';
+import configs from '../configs.js';
 
 export const decryptJWT = (authorizationHeader: string) => {
   try {

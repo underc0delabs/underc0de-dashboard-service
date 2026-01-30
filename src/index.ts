@@ -1,31 +1,39 @@
 import { Application } from "express";
-import { DependencyManager } from "./dependencyManager";
-import MiddlewaresInitializer from "./middlewares/MidlewaresInitalizer";
-import ModulesInitializer from "./modules/ModulesInitializer";
-import ConnectToDatabase from "./server/DbConnection";
-import ConfigureServerMiddlewares from "./server/MiddlewaresConfig";
-import ReduceRouters from "./server/RoutesReducer";
-import InitializeServer from "./server/ServerInitializer";
-import ServicesInitializer from "./services/ServicesInitalizer";
-import { startMercadoPagoSyncCron } from "./jobs/mercadoPagoSync.cron";
-import "./modules/modelsRelations";
+import { DependencyManager } from "./dependencyManager.js";
+import MiddlewaresInitializer from "./middlewares/MidlewaresInitalizer.js";
+import ModulesInitializer from "./modules/ModulesInitializer.js";
+import ConnectToDatabase from "./server/DbConnection.js";
+import ConfigureServerMiddlewares from "./server/MiddlewaresConfig.js";
+import ReduceRouters from "./server/RoutesReducer.js";
+import InitializeServer, { StartServer } from "./server/ServerInitializer.js";
+import ServicesInitializer from "./services/ServicesInitalizer.js";
+import { startMercadoPagoSyncCron } from "./jobs/mercadoPagoSync.cron.js";
+import "./modules/modelsRelations.js";
+import { initializeFirebaseAdmin } from "./services/pushNotificationService/service/firebaseAdmin.js";
 
-const dependencyManager = new DependencyManager()
 
-const app:Application = InitializeServer()
+try {
+    const dependencyManager = new DependencyManager()
 
-ConnectToDatabase()
+    try {
+        initializeFirebaseAdmin()
+    } catch (error) {
+        console.error('Error al inicializar Firebase Admin:', error instanceof Error ? error.message : error)
+    }
 
-ConfigureServerMiddlewares(app)
+    const app:Application = InitializeServer()
+    ConnectToDatabase()
+    ConfigureServerMiddlewares(app)
 
-ServicesInitializer(dependencyManager)
+    ServicesInitializer(dependencyManager)
+    ModulesInitializer(dependencyManager)
+    MiddlewaresInitializer(dependencyManager)
+    ReduceRouters(app,dependencyManager)
+    startMercadoPagoSyncCron(dependencyManager)
 
-ModulesInitializer(dependencyManager)
-
-MiddlewaresInitializer(dependencyManager)
-
-ReduceRouters(app,dependencyManager)
-
-startMercadoPagoSyncCron(dependencyManager)
-
-app.get("/health", (_req, res) => res.status(200).send("ok"));
+    app.get("/health", (_req, res) => res.status(200).send("ok"))
+    StartServer(app)
+} catch (error) {
+    console.error('Error fatal al inicializar el servidor:', error instanceof Error ? error.message : error)
+    process.exit(1)
+}

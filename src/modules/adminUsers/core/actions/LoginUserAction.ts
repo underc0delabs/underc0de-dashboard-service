@@ -1,9 +1,9 @@
-import { IAdminUserRepository } from "../repository/IAdminUserRepository";
-import generateJWT from "../../../../helpers/generate-jwt";
-import { IHashService } from "../services/IHashService";
-import { UserNotExistException } from "../exceptions/UserNotExistException";
-import { UserNotActiveException } from "../exceptions/UserNotActiveException";
-import { WrongCredentialsException } from "../exceptions/WrongCredentialsException";
+import { IAdminUserRepository } from "../repository/IAdminUserRepository.js";
+import generateJWT from "../../../../helpers/generate-jwt.js";
+import { IHashService } from "../services/IHashService.js";
+import { UserNotExistException } from "../exceptions/UserNotExistException.js";
+import { UserNotActiveException } from "../exceptions/UserNotActiveException.js";
+import { WrongCredentialsException } from "../exceptions/WrongCredentialsException.js";
 export interface ILoginUserAction {
   execute: (credentials: { email: string; password: string }) => Promise<any>;
 }

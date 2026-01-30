@@ -1,10 +1,10 @@
-import { IPaymentRepository } from "../repository/IPaymentRepository";
-import { EditPaymentAction, IEditPaymentAction } from "./EditPaymentAction";
-import { GetAllPaymentsAction, IGetAllPaymentsAction } from "./GetAllPaymentsAction";
-import { GetOnePaymentAction, IGetOnePaymentAction } from "./GetOnePaymentAction";
-import { GetPaymentByIdAction, IGetPaymentByIdAction } from "./GetPaymentByIdAction";
-import { IRemovePaymentAction, RemovePaymentAction } from "./RemovePaymentAction";
-import { ISavePaymentAction, SavePaymentAction } from "./SavePaymentAction";
+import { IPaymentRepository } from "../repository/IPaymentRepository.js";
+import { EditPaymentAction, IEditPaymentAction } from "./EditPaymentAction.js";
+import { GetAllPaymentsAction, IGetAllPaymentsAction } from "./GetAllPaymentsAction.js";
+import { GetOnePaymentAction, IGetOnePaymentAction } from "./GetOnePaymentAction.js";
+import { GetPaymentByIdAction, IGetPaymentByIdAction } from "./GetPaymentByIdAction.js";
+import { IRemovePaymentAction, RemovePaymentAction } from "./RemovePaymentAction.js";
+import { ISavePaymentAction, SavePaymentAction } from "./SavePaymentAction.js";
 
 export interface IPaymentActions {
   save: ISavePaymentAction;

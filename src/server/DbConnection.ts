@@ -1,4 +1,4 @@
-import configs from "../configs";
+import configs from "../configs.js";
 import { Sequelize } from "sequelize";
 
 const getSSLConfig = () => {
@@ -48,30 +48,12 @@ export const sequelize = new Sequelize(
 );
 
 const ConnectToDatabase = () => {
-  console.log("Attempting to connect to database with config:", {
-    host: configs.db.host,
-    port: configs.db.port,
-    database: configs.db.database,
-    username: configs.db.username,
-    env: configs.env,
-    ssl: getSSLConfig()
-  });
-
   sequelize
     .authenticate()
-    .then(() => {
-      console.info("✅ Database connection has been established successfully!");
-      console.log("Connected to:", {
-        host: configs.db.host,
-        database: configs.db.database,
-        ssl: getSSLConfig().ssl ? 'enabled' : 'disabled'
-      });
-    })
     .catch((err) => {
-      console.error("❌ Unable to connect to the database:");
-      console.error("Error details:", err.message);
+      console.error("Error al conectar a la base de datos:", err.message);
       if (err.original) {
-        console.error("Original error:", err.original.message);
+        console.error("Error original:", err.original.message);
       }
     });
 };

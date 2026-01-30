@@ -1,6 +1,6 @@
-import { DependencyManager } from "../../dependencyManager";
-import { MongoUserRepository } from "./infrastructure/repository/MongoUserRepository";
-import { BcryptHashService } from "./infrastructure/services/BcryptHashService";
+import { DependencyManager } from "../../dependencyManager.js";
+import { MongoUserRepository } from "./infrastructure/repository/MongoUserRepository.js";
+import { BcryptHashService } from "./infrastructure/services/BcryptHashService.js";
 
 export const UserModuleInitializer = (dependencyManager: DependencyManager) => {
     const userRepository = MongoUserRepository()

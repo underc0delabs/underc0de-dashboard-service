@@ -1,4 +1,4 @@
-import IPushNotification from "../entities/IPushNotification";
+import IPushNotification from "../entities/IPushNotification.js";
 
 export interface IPushNotificationRepository {
     save: (pushNotification: IPushNotification) => Promise<IPushNotification>,

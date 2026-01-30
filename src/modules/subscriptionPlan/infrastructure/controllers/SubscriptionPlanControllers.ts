@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
-import { ErrorResponse, SuccessResponse } from "../../../../helpers/api";
-import { createHashMap } from "../../../../helpers/utils";
-import { ISubscriptionPlanActions } from "../../core/actions/actionsProvider";
-import { InvalidIdException } from "../../core/exceptions/InvalidIdException";
-import { SubscriptionPlanNotExistException } from "../../core/exceptions/SubscriptionPlanNotExistException";
+import { ErrorResponse, SuccessResponse } from "../../../../helpers/api.js";
+import { createHashMap } from "../../../../helpers/utils.js";
+import { ISubscriptionPlanActions } from "../../core/actions/actionsProvider.js";
+import { InvalidIdException } from "../../core/exceptions/InvalidIdException.js";
+import { SubscriptionPlanNotExistException } from "../../core/exceptions/SubscriptionPlanNotExistException.js";
 const name = 'Plan de suscripción'
 const pronoun = 'o'
 export const SubscriptionPlanControllers = ({

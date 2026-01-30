@@ -1,6 +1,6 @@
-import { DependencyManager } from "../../dependencyManager";
-import { IAdminUserRepository } from "../../modules/adminUsers/core/repository/IAdminUserRepository";
-import getJwtValidator from "./infrastructure/GetJwtValidator";
+import { DependencyManager } from "../../dependencyManager.js";
+import { IAdminUserRepository } from "../../modules/adminUsers/core/repository/IAdminUserRepository.js";
+import getJwtValidator from "./infrastructure/GetJwtValidator.js";
 
 const JwtMiddlewareInitializer = (dependencyManager: DependencyManager) => {
     const jwtValidator = getJwtValidator(getUserRepository(dependencyManager))

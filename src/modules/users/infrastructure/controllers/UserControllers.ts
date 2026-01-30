@@ -1,11 +1,11 @@
 import { Request, Response } from "express";
-import { ErrorResponse, SuccessResponse } from "../../../../helpers/api";
-import { createHashMap } from "../../../../helpers/utils";
-import { IUserActions } from "../../core/actions/actionsProvider";
-import { InvalidIdException } from "../../core/exceptions/InvalidIdException";
-import { UserNotActiveException } from "../../core/exceptions/UserNotActiveException";
-import { UserNotExistException } from "../../core/exceptions/UserNotExistException";
-import { WrongCredentialsException } from "../../core/exceptions/WrongCredentialsException";
+import { ErrorResponse, SuccessResponse } from "../../../../helpers/api.js";
+import { createHashMap } from "../../../../helpers/utils.js";
+import { IUserActions } from "../../core/actions/actionsProvider.js";
+import { InvalidIdException } from "../../core/exceptions/InvalidIdException.js";
+import { UserNotActiveException } from "../../core/exceptions/UserNotActiveException.js";
+import { UserNotExistException } from "../../core/exceptions/UserNotExistException.js";
+import { WrongCredentialsException } from "../../core/exceptions/WrongCredentialsException.js";
 const name = "Usuario";
 const pronoun = "o";
 export const UserControllers = ({

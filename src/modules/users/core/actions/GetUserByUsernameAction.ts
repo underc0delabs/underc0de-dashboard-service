@@ -1,7 +1,7 @@
-import { IUserRepository } from "../repository/IMongoUserRepository";
-import { UserNotExistException } from "../exceptions/UserNotExistException";
-import { ISubscriptionPlanRepository } from "../../../subscriptionPlan/core/repository/ISubscriptionPlanRepository";
-import { IPaymentRepository } from "../../../payment/core/repository/IPaymentRepository";
+import { IUserRepository } from "../repository/IMongoUserRepository.js";
+import { UserNotExistException } from "../exceptions/UserNotExistException.js";
+import { ISubscriptionPlanRepository } from "../../../subscriptionPlan/core/repository/ISubscriptionPlanRepository.js";
+import { IPaymentRepository } from "../../../payment/core/repository/IPaymentRepository.js";
 
 export interface IGetUserByUsernameAction {
   execute: (username: string) => Promise<any>;

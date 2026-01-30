@@ -1,9 +1,9 @@
-import { IUserRepository } from "../../core/repository/IMongoUserRepository";
-import UserModel from "../models/UserModel";
-import configs from "../../../../configs";
-import IUser from "../../core/entities/IUser";
-import SubscriptionPlan from "../../../subscriptionPlan/infrastructure/models/SubscriptionPlanModel";
-import Payment from "../../../payment/infrastructure/models/PaymentModel";
+import { IUserRepository } from "../../core/repository/IMongoUserRepository.js";
+import UserModel from "../models/UserModel.js";
+import configs from "../../../../configs.js";
+import IUser from "../../core/entities/IUser.js";
+import SubscriptionPlan from "../../../subscriptionPlan/infrastructure/models/SubscriptionPlanModel.js";
+import Payment from "../../../payment/infrastructure/models/PaymentModel.js";
 
 export const MongoUserRepository = (): IUserRepository => ({
   async save(user) {

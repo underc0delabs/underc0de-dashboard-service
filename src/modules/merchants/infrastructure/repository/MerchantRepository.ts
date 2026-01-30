@@ -1,8 +1,8 @@
-import { IMerchantRepository } from "../../core/repository/IMerchantRepository";
-import MerchantModel from "../models/MerchantModel";
-import configs from "../../../../configs";
-import IMerchant from "../../core/entities/IMerchant";
-import { getFileUrl } from "../../../../helpers/file-url";
+import { IMerchantRepository } from "../../core/repository/IMerchantRepository.js";
+import MerchantModel from "../models/MerchantModel.js";
+import configs from "../../../../configs.js";
+import IMerchant from "../../core/entities/IMerchant.js";
+import { getFileUrl } from "../../../../helpers/file-url.js";
 
 export const MerchantRepository = (): IMerchantRepository => ({
   async save(merchant) {

@@ -1,7 +1,7 @@
 import { Router } from 'express'
-import { DependencyManager } from '../../../../dependencyManager'
-import { IJwtValidator } from '../../../../middlewares/JwtValidator/core/IJwtValidator'
-import { getSubscriptionPlanControllers } from '../controllers/controllersProvider'
+import { DependencyManager } from '../../../../dependencyManager.js'
+import { IJwtValidator } from '../../../../middlewares/JwtValidator/core/IJwtValidator.js'
+import { getSubscriptionPlanControllers } from '../controllers/controllersProvider.js'
 
 const getSubscriptionPlanRoutes = (dependencyManager: DependencyManager) => {
     const jwtValidator = getJwtValidator(dependencyManager)

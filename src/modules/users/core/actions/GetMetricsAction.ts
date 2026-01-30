@@ -1,6 +1,6 @@
-import { IUserRepository } from "../repository/IMongoUserRepository";
-import { IMerchantRepository } from "../../../merchants/core/repository/IMerchantRepository";
-import { IPushNotificationRepository } from "../../../pushNotifications/core/repository/IPushNotificationRepository";
+import { IUserRepository } from "../repository/IMongoUserRepository.js";
+import { IMerchantRepository } from "../../../merchants/core/repository/IMerchantRepository.js";
+import { IPushNotificationRepository } from "../../../pushNotifications/core/repository/IPushNotificationRepository.js";
 
 export interface IGetMetricsAction {
   execute: () => Promise<any>;

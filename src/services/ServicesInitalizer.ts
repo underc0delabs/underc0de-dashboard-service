@@ -1,6 +1,6 @@
-import { DependencyManager } from "../dependencyManager"
-import { mercadoPagoServiceInitializer } from "./mercadopagoService/mercadoPagoServiceInitializer";
-import { pushNotificationModuleInitializer } from "./pushNotificationService/pushNotificationModuleInitializer";
+import { DependencyManager } from "../dependencyManager.js"
+import { mercadoPagoServiceInitializer } from "./mercadopagoService/mercadoPagoServiceInitializer.js";
+import { pushNotificationModuleInitializer } from "./pushNotificationService/pushNotificationModuleInitializer.js";
 
 const ServicesInitializer = (dependencyManager:DependencyManager) => {
     pushNotificationModuleInitializer(dependencyManager);

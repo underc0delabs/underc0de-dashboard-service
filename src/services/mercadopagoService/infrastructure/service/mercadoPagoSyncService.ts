@@ -1,7 +1,7 @@
-import { MercadoPagoSyncService as IMercadoPagoSyncService } from "../../core/service/mercadoPagoSyncService";
-import { MercadoPagoGateway } from "../../core/gateway/mercadoPagoGateway";
-import { MpSubscription } from "../../core/types/mercadoPagoTypes";
-import { MpPayment } from "../../core/types/mercadoPagoTypes";
+import { MercadoPagoSyncService as IMercadoPagoSyncService } from "../../core/service/mercadoPagoSyncService.js";
+import { MercadoPagoGateway } from "../../core/gateway/mercadoPagoGateway.js";
+import { MpSubscription } from "../../core/types/mercadoPagoTypes.js";
+import { MpPayment } from "../../core/types/mercadoPagoTypes.js";
 
 export const MercadoPagoSyncService = (
     gateway: MercadoPagoGateway

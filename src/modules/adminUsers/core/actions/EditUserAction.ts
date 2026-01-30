@@ -1,6 +1,6 @@
-import IAdminUser from "../entities/IAdminUser";
-import { IAdminUserRepository } from "../repository/IAdminUserRepository";
-import { IHashService } from "../services/IHashService";
+import IAdminUser from "../entities/IAdminUser.js";
+import { IAdminUserRepository } from "../repository/IAdminUserRepository.js";
+import { IHashService } from "../services/IHashService.js";
 
 export interface IEditAdminUserAction {
   execute: (body: IAdminUser, id: string) => Promise<any>;

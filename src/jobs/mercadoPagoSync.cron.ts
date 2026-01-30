@@ -1,10 +1,10 @@
 import cron from "node-cron";
-import { DependencyManager } from "../dependencyManager";
-import { getSubscriptionPlanActions } from "../modules/subscriptionPlan/core/actions/actionsProvider";
-import { ISubscriptionPlanRepository } from "../modules/subscriptionPlan/core/repository/ISubscriptionPlanRepository";
-import { MercadoPagoSyncService } from "../services/mercadopagoService/core/service/mercadoPagoSyncService";
-import { IPaymentRepository } from "../modules/payment/core/repository/IPaymentRepository";
-import { IUserRepository } from "../modules/users/core/repository/IMongoUserRepository";
+import { DependencyManager } from "../dependencyManager.js";
+import { getSubscriptionPlanActions } from "../modules/subscriptionPlan/core/actions/actionsProvider.js";
+import { ISubscriptionPlanRepository } from "../modules/subscriptionPlan/core/repository/ISubscriptionPlanRepository.js";
+import { MercadoPagoSyncService } from "../services/mercadopagoService/core/service/mercadoPagoSyncService.js";
+import { IPaymentRepository } from "../modules/payment/core/repository/IPaymentRepository.js";
+import { IUserRepository } from "../modules/users/core/repository/IMongoUserRepository.js";
 
 export function startMercadoPagoSyncCron(dependencyManager: DependencyManager) {
   cron.schedule(

@@ -1,6 +1,6 @@
-import IUser from "../entities/IUser";
-import { IUserRepository } from "../repository/IMongoUserRepository";
-import { IHashService } from "../services/IHashService";
+import IUser from "../entities/IUser.js";
+import { IUserRepository } from "../repository/IMongoUserRepository.js";
+import { IHashService } from "../services/IHashService.js";
 
 export interface ISaveUserAction {
   execute: (body: IUser) => Promise<any>;

@@ -1,7 +1,7 @@
-import { IUserRepository } from "../repository/IMongoUserRepository";
+import { IUserRepository } from "../repository/IMongoUserRepository.js";
 
 export interface ISaveFcmTokenAction {
-  execute: (body: { fcmToken: string; userId: string }) => Promise<any>;
+  execute: (body: { token: string; userId: string }) => Promise<any>;
 }
 
 export const SaveFcmTokenAction = (
@@ -15,8 +15,8 @@ export const SaveFcmTokenAction = (
           if (!user) {
             reject(new Error("User not found"));
           }
-          user.fcmToken = body.fcmToken;
-          await UserRepository.save(user);
+          user.fcmToken = body.token;
+          await UserRepository.edit(user, user.id);
           resolve(user);
         } catch (error) {
           reject(error);

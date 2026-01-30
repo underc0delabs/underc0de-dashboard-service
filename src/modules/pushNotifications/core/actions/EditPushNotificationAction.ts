@@ -1,5 +1,5 @@
-import IPushNotification from "../entities/IPushNotification";
-import { IPushNotificationRepository } from "../repository/IPushNotificationRepository";
+import IPushNotification from "../entities/IPushNotification.js";
+import { IPushNotificationRepository } from "../repository/IPushNotificationRepository.js";
 
 export interface IEditPushNotificationAction {
   execute: (body: IPushNotification, id: string) => Promise<any>;
