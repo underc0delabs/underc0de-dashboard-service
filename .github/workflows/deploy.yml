@@ -86,7 +86,8 @@ jobs:
               nvm use 16 2>/dev/null || nvm use 18 2>/dev/null || nvm use 20 2>/dev/null || true
             fi
             echo "Node: $(node -v)"
+            export NODE_ENV=production
             npm ci --omit=dev
-            npx sequelize-cli db:migrate --config sequelize.config.cjs || true
-            pm2 restart underc0de-dashboard-service || pm2 start build/index.js --name underc0de-dashboard-service
+            npx sequelize-cli db:migrate --config sequelize.config.cjs --env production || true
+            pm2 restart underc0de-dashboard-service --update-env || pm2 start build/index.js --name underc0de-dashboard-service
             pm2 save
