@@ -54,7 +54,7 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || 5929 }}
-          source: "build/,package.json,package-lock.json,migrations/,ecosystem.config.js,sequelize.config.cjs,.sequelizerc"
+          source: "build/,package.json,package-lock.json,migrations/,seeders/,ecosystem.config.js,sequelize.config.cjs,.sequelizerc"
           target: ${{ secrets.VPS_APP_PATH }}
       
       - name: Copy .env to VPS
@@ -88,7 +88,8 @@ jobs:
             echo "Node: $(node -v)"
             export NODE_ENV=production
             npm ci --omit=dev
-            rm -f migrations/*.js
+            rm -f migrations/*.js seeders/*.js
             npx sequelize-cli db:migrate --config sequelize.config.cjs --env production || true
+            npx sequelize-cli db:seed:all --config sequelize.config.cjs --env production || true
             pm2 restart underc0de-dashboard-service --update-env || pm2 start build/index.js --name underc0de-dashboard-service
             pm2 save
