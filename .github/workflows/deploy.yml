@@ -88,6 +88,7 @@ jobs:
             echo "Node: $(node -v)"
             export NODE_ENV=production
             npm ci --omit=dev
+            rm -f migrations/*.js
             npx sequelize-cli db:migrate --config sequelize.config.cjs --env production || true
             pm2 restart underc0de-dashboard-service --update-env || pm2 start build/index.js --name underc0de-dashboard-service
             pm2 save
