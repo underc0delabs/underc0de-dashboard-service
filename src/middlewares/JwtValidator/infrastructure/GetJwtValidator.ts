@@ -27,8 +27,18 @@ const getJwtValidator = (UserAdminRepository: IAdminUserRepository): IJwtValidat
           })
         }
 
+        const secret = configs.secret_key;
+        if (!secret) {
+          return res.status(500).json({
+            status: 500,
+            success: false,
+            msg: "Configuración de JWT no disponible",
+            type: 'auth'
+          });
+        }
         try {
-          const { id } = jwt.verify(token, configs.secret_key);
+          const decoded = jwt.verify(token, secret) as { id: string };
+          const { id } = decoded;
           //leer user
           const user = await UserAdminRepository.getById(id);
           //si el user existe

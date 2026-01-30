@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - master
 
 jobs:
   deploy:
@@ -36,6 +35,9 @@ jobs:
           port: ${{ secrets.VPS_PORT || 5929 }}
           script: |
             cd ${{ secrets.VPS_APP_PATH }}
+            if [ ! -d .git ]; then
+              git clone ${{ secrets.GIT_REPO_URL }} .
+            fi
             git pull origin main
             npm ci --production
             npm run build
