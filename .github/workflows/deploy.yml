@@ -80,10 +80,10 @@ jobs:
             APP_PATH="${{ secrets.VPS_APP_PATH }}"
             if [ -z "$APP_PATH" ]; then echo "Error: VPS_APP_PATH secret is empty"; exit 1; fi
             cd "$APP_PATH"
-            # Usar Node 20/18 si nvm está instalado
+            # Usar nvm: intentar Node 16 primero (CentOS 7), luego 18, luego 20
             if [ -s "$HOME/.nvm/nvm.sh" ]; then
               . "$HOME/.nvm/nvm.sh"
-              nvm use 20 2>/dev/null || nvm use 18 2>/dev/null || nvm use 16 2>/dev/null || true
+              nvm use 16 2>/dev/null || nvm use 18 2>/dev/null || nvm use 20 2>/dev/null || true
             fi
             echo "Node: $(node -v)"
             npm ci --omit=dev
