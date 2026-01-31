@@ -9,8 +9,9 @@ const InitializeServer = () => {
 
 const StartServer = (app: express.Application) => {
     const port = app.get('port')
-    app.listen(port, () => {
-        console.log(`Servidor iniciado en puerto ${port}`)
+    const host = process.env.HOST || '0.0.0.0'
+    app.listen(port, host, () => {
+        console.log(`Servidor iniciado en ${host}:${port}`)
     }).on('error', (err: NodeJS.ErrnoException) => {
         if (err.code === 'EADDRINUSE') {
             console.error(`Puerto ${port} ya está en uso`)
