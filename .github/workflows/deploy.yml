@@ -69,14 +69,19 @@ jobs:
           target: ${{ secrets.VPS_APP_PATH }}
 
       - name: Create Firebase credentials file
-        if: secrets.FIREBASE_CREDENTIALS_JSON != ''
+        id: create-firebase
         env:
           FIREBASE_CREDENTIALS_JSON: ${{ secrets.FIREBASE_CREDENTIALS_JSON }}
         run: |
-          printf '%s' "$FIREBASE_CREDENTIALS_JSON" > underc0de-f1e15-39bd5639c220.json
+          if [ -n "$FIREBASE_CREDENTIALS_JSON" ]; then
+            printf '%s' "$FIREBASE_CREDENTIALS_JSON" > underc0de-f1e15-39bd5639c220.json
+            echo "created=true" >> $GITHUB_OUTPUT
+          else
+            echo "created=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Copy Firebase credentials to VPS
-        if: secrets.FIREBASE_CREDENTIALS_JSON != ''
+        if: steps.create-firebase.outputs.created == 'true'
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
