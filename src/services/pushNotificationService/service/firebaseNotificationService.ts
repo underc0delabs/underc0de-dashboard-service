@@ -14,7 +14,16 @@ export const firebaseNotificationService = (): IFirebaseService => {
       }
 
       try {
-        const messaging = firebaseMessaging();
+        let messaging;
+        try {
+          messaging = firebaseMessaging();
+        } catch (initError) {
+          console.warn(
+            "Push notification omitida: Firebase no está inicializado (credenciales faltantes o inválidas).",
+            initError instanceof Error ? initError.message : initError
+          );
+          return;
+        }
         
         // Según documentación oficial de Firebase, usar sendEachForMulticast para múltiples tokens
         // y send() para un solo token es más eficiente

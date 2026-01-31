@@ -11,13 +11,16 @@ export const initializeFirebaseAdmin = () => {
   }
 
   try {
-    const serviceAccountPath = path.join(
-      process.cwd(),
-      "underc0de-f1e15-39bd5639c220.json"
-    );
+    const serviceAccountPath =
+      process.env.FIREBASE_SERVICE_ACCOUNT_PATH ||
+      process.env.GOOGLE_APPLICATION_CREDENTIALS ||
+      path.join(process.cwd(), "underc0de-f1e15-39bd5639c220.json");
 
     if (!fs.existsSync(serviceAccountPath)) {
-      throw new Error(`Archivo de credenciales de Firebase no encontrado en: ${serviceAccountPath}`);
+      console.warn(
+        `Firebase: credenciales no encontradas en ${serviceAccountPath}. Push notifications deshabilitadas. Para habilitar, define FIREBASE_SERVICE_ACCOUNT_PATH o coloca el JSON en el directorio de la app.`
+      );
+      return;
     }
 
     // Eliminar cualquier app existente para evitar conflictos
@@ -63,7 +66,7 @@ export const initializeFirebaseAdmin = () => {
     if (error instanceof Error && error.stack) {
       console.error("Stack trace:", error.stack);
     }
-    throw error;
+    console.warn("El servidor continuará sin push notifications.");
   }
 };
 
