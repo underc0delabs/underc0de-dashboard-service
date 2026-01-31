@@ -11,14 +11,18 @@ export const initializeFirebaseAdmin = () => {
   }
 
   try {
-    const serviceAccountPath =
-      process.env.FIREBASE_SERVICE_ACCOUNT_PATH ||
-      process.env.GOOGLE_APPLICATION_CREDENTIALS ||
-      path.join(process.cwd(), "underc0de-f1e15-39bd5639c220.json");
+    const defaultName = "underc0de-f1e15-39bd5639c220.json";
+    const candidates = [
+      process.env.FIREBASE_SERVICE_ACCOUNT_PATH,
+      process.env.GOOGLE_APPLICATION_CREDENTIALS,
+      path.join(process.cwd(), defaultName),
+      path.join(process.cwd(), "build", defaultName),
+    ].filter(Boolean) as string[];
+    const serviceAccountPath = candidates.find((p) => fs.existsSync(p));
 
-    if (!fs.existsSync(serviceAccountPath)) {
+    if (!serviceAccountPath) {
       console.warn(
-        `Firebase: credenciales no encontradas en ${serviceAccountPath}. Push notifications deshabilitadas. Para habilitar, define FIREBASE_SERVICE_ACCOUNT_PATH o coloca el JSON en el directorio de la app.`
+        `Firebase: credenciales no encontradas (buscado en raíz y build/). Push notifications deshabilitadas. Para habilitar, define FIREBASE_SERVICE_ACCOUNT_PATH o coloca ${defaultName} en la raíz o en build/.`
       );
       return;
     }

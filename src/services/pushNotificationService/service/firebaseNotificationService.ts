@@ -5,7 +5,7 @@ import { firebaseMessaging } from "./firebaseAdmin.js";
 export const firebaseNotificationService = (): IFirebaseService => {
   return {
     async sendNotification(title, message, tokens) {
-      /*const validTokens = tokens.filter(
+      const validTokens = tokens.filter(
         (t) => typeof t === "string" && t.trim() !== ""
       );
 
@@ -92,7 +92,7 @@ export const firebaseNotificationService = (): IFirebaseService => {
           throw new Error('Error de autenticación de Firebase. Verifica que la cuenta de servicio tenga permisos de Cloud Messaging API y que las credenciales sean válidas.');
         }
         throw error;
-      } */
+      }
     },
   };
 };

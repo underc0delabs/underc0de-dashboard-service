@@ -7,7 +7,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon",
-    "build": "tsc",
+    "build": "tsc && (cp underc0de-f1e15-39bd5639c220.json build/ 2>/dev/null || true)",
     "start": "node build/index.js",
     "start:prod": "NODE_ENV=production node build/index.js",
     "docker:up": "docker-compose up -d",

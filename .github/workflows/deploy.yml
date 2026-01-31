@@ -67,6 +67,24 @@ jobs:
           port: ${{ secrets.VPS_PORT || 5929 }}
           source: ".env"
           target: ${{ secrets.VPS_APP_PATH }}
+
+      - name: Create Firebase credentials file
+        if: secrets.FIREBASE_CREDENTIALS_JSON != ''
+        env:
+          FIREBASE_CREDENTIALS_JSON: ${{ secrets.FIREBASE_CREDENTIALS_JSON }}
+        run: |
+          printf '%s' "$FIREBASE_CREDENTIALS_JSON" > underc0de-f1e15-39bd5639c220.json
+
+      - name: Copy Firebase credentials to VPS
+        if: secrets.FIREBASE_CREDENTIALS_JSON != ''
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 5929 }}
+          source: "underc0de-f1e15-39bd5639c220.json"
+          target: ${{ secrets.VPS_APP_PATH }}
       
       - name: Deploy on VPS
         uses: appleboy/ssh-action@v1.0.3
