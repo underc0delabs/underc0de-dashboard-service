@@ -15,12 +15,12 @@ import { initializeFirebaseAdmin } from "./services/pushNotificationService/serv
 try {
     const dependencyManager = new DependencyManager()
 
-    try {
+   /* try {
         initializeFirebaseAdmin()
     } catch (error) {
         console.error('Error al inicializar Firebase Admin:', error instanceof Error ? error.message : error)
     }
-
+*/
     const app:Application = InitializeServer()
     ConnectToDatabase()
     ConfigureServerMiddlewares(app)
