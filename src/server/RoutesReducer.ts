@@ -5,6 +5,7 @@ import getMerchantRoutes from "../modules/merchants/infrastructure/routes/Mercha
 import getPushNotificationRoutes from "../modules/pushNotifications/infrastructure/routes/PushNotificationRoutes.js"
 import getSubscriptionPlanRoutes from "../modules/subscriptionPlan/infrastructure/routes/SubscriptionPlanRoutes.js"
 import getPaymentRoutes from "../modules/payment/infrastructure/routes/PaymentRoutes.js"
+import { CronRoutes } from "../routes/CronRoutes.js"
 
 const prefix = '/api/v1'
 const ReduceRouters = (app: { use: (arg0: string, arg1: any) => void }, dependencyManager: DependencyManager) => {
@@ -14,6 +15,7 @@ const ReduceRouters = (app: { use: (arg0: string, arg1: any) => void }, dependen
     app.use(prefix, getPushNotificationRoutes(dependencyManager))
     app.use(prefix, getSubscriptionPlanRoutes(dependencyManager))
     app.use(prefix, getPaymentRoutes(dependencyManager))
+    app.use(prefix + '/cron', CronRoutes(dependencyManager))
 }
 
 export default ReduceRouters
