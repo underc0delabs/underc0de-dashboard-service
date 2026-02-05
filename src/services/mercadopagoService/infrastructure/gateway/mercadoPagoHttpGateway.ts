@@ -122,7 +122,7 @@ export const MercadoPagoHttpGateway = (): MercadoPagoGateway => {
           "auto_recurring": {
             "frequency": 1,
             "frequency_type": "months",
-            "transaction_amount": transactionAmount,
+            "transaction_amount": transactionAmount || process.env.MERCADO_PAGO_PRICE,
             "currency_id": "ARS"
           },
           "back_url": "https://api.underc0de.net/api/v1",
