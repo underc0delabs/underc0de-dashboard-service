@@ -1,5 +1,14 @@
 import dotenv from 'dotenv';
-dotenv.config({ quiet: true });
+import path from 'path';
+
+// Cargar .env.local en desarrollo, .env en producción
+const envFile = process.env.NODE_ENV === 'production' ? '.env' : '.env.local';
+const result = dotenv.config({ path: path.resolve(process.cwd(), envFile), override: true });
+
+if (result.error) {
+    console.warn(`⚠️  No se pudo cargar ${envFile}, intentando con .env`);
+    dotenv.config({ override: true });
+}
 
 const configs = {
     api: {

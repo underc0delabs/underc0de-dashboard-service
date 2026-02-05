@@ -25,3 +25,9 @@ export interface MpPayment {
   date_approved?: string;
   date_created?: string;
 }
+
+export interface MpPreapproval {
+  id: string;
+  init_point: string;
+  status: string;
+}

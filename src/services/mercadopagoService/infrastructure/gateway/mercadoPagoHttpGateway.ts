@@ -113,9 +113,31 @@ export const MercadoPagoHttpGateway = (): MercadoPagoGateway => {
       return [];
     }
   };
+  const createPreapproval = async (userEmail: string, transactionAmount: number) => {
+    try {
+      const response = await client.post("/preapproval",
+        {
+          "reason": "Membresía Underc0de PRO",
+          "payer_email": userEmail,
+          "auto_recurring": {
+            "frequency": 1,
+            "frequency_type": "months",
+            "transaction_amount": transactionAmount,
+            "currency_id": "ARS"
+          },
+          "back_url": process.env.MP_BACK_URL,
+          "notification_url": process.env.MP_WEBHOOK_URL,
+        }
+      );
+      return response.data
+    } catch (error: any) {
+      throw error;
+    }
+  };
 
   return {
     getSuscriptions,
     getPaymentsByPreapprovalId,
+    createPreapproval,
   };
 };

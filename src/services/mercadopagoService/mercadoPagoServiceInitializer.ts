@@ -6,4 +6,5 @@ export const mercadoPagoServiceInitializer = (dependencyManager: DependencyManag
     const mercadoPagoGateway = MercadoPagoHttpGateway();
     const mercadoPagoSyncService = MercadoPagoSyncService(mercadoPagoGateway);
     dependencyManager.register('mercadoPagoSyncService', mercadoPagoSyncService);
+    dependencyManager.register('mercadoPagoGateway', mercadoPagoGateway);
 }

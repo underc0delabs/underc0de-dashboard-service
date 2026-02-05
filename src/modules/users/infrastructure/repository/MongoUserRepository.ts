@@ -238,7 +238,6 @@ export const MongoUserRepository = (): IUserRepository => ({
     if (!includePassword) {
       options.attributes = { exclude: ['password'] };
     }
-    
     const user = await UserModel.findOne(options);
     if (!user) return null;
 

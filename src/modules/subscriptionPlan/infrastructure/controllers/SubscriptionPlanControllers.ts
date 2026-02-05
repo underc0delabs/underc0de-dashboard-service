@@ -13,6 +13,8 @@ export const SubscriptionPlanControllers = ({
     getAll,
     getById,
     syncMercadoPago,
+    createSubscription,
+    confirmSubscription,
   }: ISubscriptionPlanActions) => {
     
   const errorResponses = createHashMap({
@@ -20,8 +22,8 @@ export const SubscriptionPlanControllers = ({
     [InvalidIdException.name]:(res:Response, error: Error) => ErrorResponse(res,error,400),
   }, (res:Response, error: Error,) => ErrorResponse(res,error)) as any
   return {
-    save(req: Request, res: Response) {
-      const saveExecution = save.execute(req.body)
+    createSubscription(req: Request, res: Response) {
+      const saveExecution = createSubscription.execute(req.body)
       saveExecution.then(subscriptionPlan => {
         const message=`${name} cread${pronoun} correctamente`
         SuccessResponse(res,201,message,subscriptionPlan)
@@ -72,6 +74,15 @@ export const SubscriptionPlanControllers = ({
         SuccessResponse(res, 200, message, result)
       }).catch(error => {
         console.log("error", error);
+        errorResponses[error.name](res, error)
+      })
+    },
+    confirmSubscription(req: Request, res: Response) {
+      const confirmExecution = confirmSubscription.execute(req.body)
+      confirmExecution.then(result => {
+        const message = "Suscripción confirmada"
+        SuccessResponse(res, 200, message, result)
+      }).catch(error => {
         errorResponses[error.name](res, error)
       })
     }

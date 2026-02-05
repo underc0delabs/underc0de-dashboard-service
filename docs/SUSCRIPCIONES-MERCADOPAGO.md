@@ -1,6 +1,6 @@
 # Sistema de Suscripciones con MercadoPago
 
-Este documento explica cómo funciona el sistema de suscripciones recurrentes con MercadoPago.
+Este documento explica cómo funciona el sistema de suscripciones recurrentes con MercadoPago usando la tabla `SubscriptionPlans` existente.
 
 ## 📋 Variables de Entorno Requeridas
 
@@ -85,22 +85,24 @@ Recibe notificaciones automáticas de MercadoPago cuando cambia el estado de una
 **Público:** No requiere autenticación (MercadoPago lo llama directamente)
 
 **Eventos Manejados:**
-- `authorized`: Usuario se suscribió correctamente → `is_pro = true`
-- `cancelled`: Usuario canceló la suscripción → `is_pro = false`
+- `authorized`: Usuario se suscribió correctamente → `is_pro = true`, `status = ACTIVE`
+- `cancelled`: Usuario canceló la suscripción → `is_pro = false`, `status = CANCELLED`
 - `paused`: Suscripción pausada → `is_pro = false`
 
 ---
 
 ## 🗄️ Modelo de Base de Datos
 
-### Tabla: `UserSubscriptions`
+### Tabla: `SubscriptionPlans` (Existente)
 
 | Campo            | Tipo   | Descripción                                    |
 |------------------|--------|------------------------------------------------|
-| id               | UUID   | Identificador único                            |
+| id               | INT    | Identificador único (autoincremental)          |
 | userId           | INT    | FK → Users.id                                  |
-| mpPreapprovalId  | STRING | ID de preapproval en MercadoPago               |
-| status           | ENUM   | pending, authorized, paused, cancelled         |
+| mpPreapprovalId  | STRING | ID de preapproval en MercadoPago (unique)      |
+| status           | ENUM   | ACTIVE, CANCELLED                              |
+| startedAt        | DATE   | Fecha de inicio de la suscripción              |
+| nextPaymentDate  | DATE   | Fecha del próximo pago                         |
 | createdAt        | DATE   | Fecha de creación                              |
 | updatedAt        | DATE   | Fecha de actualización                         |
 
@@ -117,7 +119,7 @@ Recibe notificaciones automáticas de MercadoPago cuando cambia el estado de una
 1. **Usuario solicita suscripción:**
    - App móvil llama a `POST /subscriptions/create`
    - Backend crea preapproval en MercadoPago
-   - Backend guarda registro en `UserSubscriptions` con estado `pending`
+   - Backend guarda registro en `SubscriptionPlans` con estado `CANCELLED` (pending)
    - Backend devuelve `init_point` a la app
 
 2. **Usuario completa el pago:**
@@ -128,8 +130,8 @@ Recibe notificaciones automáticas de MercadoPago cuando cambia el estado de una
 3. **MercadoPago notifica al backend:**
    - MercadoPago envía evento al webhook
    - Backend consulta estado en API de MercadoPago
-   - Backend actualiza `UserSubscription.status`
-   - Si `status === 'authorized'` → `User.is_pro = true`
+   - Backend actualiza `SubscriptionPlans.status`
+   - Si `status === 'authorized'` → `User.is_pro = true` y `SubscriptionPlans.status = ACTIVE`
 
 4. **Usuario usa funciones PRO:**
    - App consulta `User.is_pro` para habilitar features
@@ -180,7 +182,7 @@ curl -X POST http://localhost:3002/api/v1/webhook/mercadopago \
 - Reinicia PM2: `pm2 restart underc0de-dashboard-service`
 
 ### Error: "El usuario ya tiene una suscripción activa"
-- El usuario ya tiene una suscripción `authorized` o `pending`
+- El usuario ya tiene una suscripción con `status = ACTIVE`
 - Cancela la suscripción actual antes de crear una nueva
 
 ### Webhook no se ejecuta:
@@ -200,9 +202,8 @@ npm run migrate:up
 pm2 restart underc0de-dashboard-service
 ```
 
-Las migraciones crean:
+La migración crea:
 - Campo `is_pro` en tabla `Users`
-- Tabla `UserSubscriptions` completa
 
 ---
 
@@ -213,3 +214,20 @@ Las migraciones crean:
 3. **Seguridad:** Nunca expongas `MP_ACCESS_TOKEN` en el frontend
 4. **Webhook público:** El endpoint `/webhook/mercadopago` DEBE ser público (sin JWT)
 5. **Idempotencia:** MercadoPago puede reenviar el mismo evento múltiples veces
+6. **Arquitectura DDD:** El código sigue la arquitectura existente con Actions, Controllers y Routes
+
+---
+
+## 📂 Archivos Creados/Modificados
+
+### Nuevos Archivos:
+- `src/modules/subscriptionPlan/core/actions/CreateSubscriptionAction.ts`
+- `src/modules/subscriptionPlan/core/actions/HandleWebhookAction.ts`
+- `migrations/20260204000001-add-is-pro-to-users.cjs`
+
+### Archivos Modificados:
+- `src/modules/subscriptionPlan/core/actions/actionsProvider.ts`
+- `src/modules/subscriptionPlan/infrastructure/controllers/SubscriptionPlanControllers.ts`
+- `src/modules/subscriptionPlan/infrastructure/routes/SubscriptionPlanRoutes.ts`
+- `src/modules/users/infrastructure/models/UserModel.ts`
+- `.env.example`
