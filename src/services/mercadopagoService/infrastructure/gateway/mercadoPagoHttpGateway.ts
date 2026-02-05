@@ -125,8 +125,8 @@ export const MercadoPagoHttpGateway = (): MercadoPagoGateway => {
             "transaction_amount": transactionAmount,
             "currency_id": "ARS"
           },
-          "back_url": process.env.MP_BACK_URL,
-          "notification_url": process.env.MP_WEBHOOK_URL,
+          "back_url": "https://api.underc0de.net/api/v1",
+          "notification_url": "https://api.underc0de.net/api/v1/webhook/mercadopago"
         }
       );
       return response.data
