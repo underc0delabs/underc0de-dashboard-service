@@ -5,6 +5,8 @@ import { MercadoPagoSyncService } from "../services/mercadopagoService/core/serv
 import { IPaymentRepository } from "../modules/payment/core/repository/IPaymentRepository.js";
 import { IUserRepository } from "../modules/users/core/repository/IMongoUserRepository.js";
 import { getSubscriptionPlanActions } from "../modules/subscriptionPlan/core/actions/actionsProvider.js";
+import { IEnvironmentRepository } from "../modules/environments/core/repository/IEnvironmentRepository.js";
+import { MercadoPagoGateway } from "../services/mercadopagoService/core/gateway/mercadoPagoGateway.js";
 
 export const CronRoutes = (dependencyManager: DependencyManager) => {
   const router = Router();
@@ -12,18 +14,39 @@ export const CronRoutes = (dependencyManager: DependencyManager) => {
   router.post("/mercadopago-sync", async (req: Request, res: Response) => {
     try {
       console.log("[MP SYNC MANUAL] Iniciando sincronización manual...");
-      
-      const subscriptionPlanRepository = dependencyManager.resolve("subscriptionPlanRepository") as ISubscriptionPlanRepository;
-      const mercadoPagoSyncService = dependencyManager.resolve("mercadoPagoSyncService") as MercadoPagoSyncService;
-      const paymentRepository = dependencyManager.resolve("paymentRepository") as IPaymentRepository;
-      const userRepository = dependencyManager.resolve("userRepository") as IUserRepository;
-      
-      const subscriptionPlanActions = getSubscriptionPlanActions(subscriptionPlanRepository, mercadoPagoSyncService, paymentRepository, userRepository);
-      
+
+      const subscriptionPlanRepository = dependencyManager.resolve(
+        "subscriptionPlanRepository",
+      ) as ISubscriptionPlanRepository;
+      const mercadoPagoSyncService = dependencyManager.resolve(
+        "mercadoPagoSyncService",
+      ) as MercadoPagoSyncService;
+      const paymentRepository = dependencyManager.resolve(
+        "paymentRepository",
+      ) as IPaymentRepository;
+      const userRepository = dependencyManager.resolve(
+        "userRepository",
+      ) as IUserRepository;
+      const mercadoPagoGateway = dependencyManager.resolve(
+        "mercadoPagoGateway",
+      ) as MercadoPagoGateway;
+      const environmentRepository = dependencyManager.resolve(
+        "environmentRepository",
+      ) as IEnvironmentRepository;
+
+      const subscriptionPlanActions = getSubscriptionPlanActions(
+        subscriptionPlanRepository,
+        mercadoPagoSyncService,
+        paymentRepository,
+        userRepository,
+        mercadoPagoGateway,
+        environmentRepository,
+      );
+
       await subscriptionPlanActions.syncMercadoPago.execute();
-      
+
       console.log("[MP SYNC MANUAL] Sincronización completada exitosamente");
-      
+
       res.status(200).json({
         status: 200,
         success: true,
@@ -35,7 +58,10 @@ export const CronRoutes = (dependencyManager: DependencyManager) => {
       res.status(500).json({
         status: 500,
         success: false,
-        msg: error instanceof Error ? error.message : "Error al ejecutar sincronización",
+        msg:
+          error instanceof Error
+            ? error.message
+            : "Error al ejecutar sincronización",
         result: null,
       });
     }
