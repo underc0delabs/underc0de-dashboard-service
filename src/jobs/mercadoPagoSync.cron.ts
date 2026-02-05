@@ -5,6 +5,8 @@ import { ISubscriptionPlanRepository } from "../modules/subscriptionPlan/core/re
 import { MercadoPagoSyncService } from "../services/mercadopagoService/core/service/mercadoPagoSyncService.js";
 import { IPaymentRepository } from "../modules/payment/core/repository/IPaymentRepository.js";
 import { IUserRepository } from "../modules/users/core/repository/IMongoUserRepository.js";
+import { MercadoPagoGateway } from "../services/mercadopagoService/core/gateway/mercadoPagoGateway.js";
+import { IEnvironmentRepository } from "../modules/environments/core/repository/IEnvironmentRepository.js";
 
 export function startMercadoPagoSyncCron(dependencyManager: DependencyManager) {
   cron.schedule(
@@ -23,11 +25,19 @@ export function startMercadoPagoSyncCron(dependencyManager: DependencyManager) {
         const userRepository = dependencyManager.resolve(
           "userRepository"
         ) as IUserRepository;
+        const mercadoPagoGateway = dependencyManager.resolve(
+          "mercadoPagoGateway"
+        ) as MercadoPagoGateway;
+        const environmentRepository = dependencyManager.resolve(
+          "environmentRepository"
+        ) as IEnvironmentRepository;
         const subscriptionPlanActions = getSubscriptionPlanActions(
           subscriptionPlanRepository,
           mercadoPagoSyncService,
           paymentRepository,
-          userRepository
+          userRepository,
+          mercadoPagoGateway,
+          environmentRepository
         );
         await subscriptionPlanActions.syncMercadoPago.execute();
       } catch (error) {
