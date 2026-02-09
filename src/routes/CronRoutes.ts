@@ -12,6 +12,61 @@ import { MercadoPagoGateway } from "../services/mercadopagoService/core/gateway/
 export const CronRoutes = (dependencyManager: DependencyManager) => {
   const router = Router();
 
+  /** Debug: llama a MP preapproval/search y devuelve la respuesta cruda para diagnosticar 403 */
+  router.get("/mercadopago-debug", async (_req: Request, res: Response) => {
+    const token = process.env.MP_ACCESS_TOKEN;
+    if (!token?.trim()) {
+      return res.status(400).json({
+        success: false,
+        msg: "Falta MP_ACCESS_TOKEN en el entorno",
+        result: null,
+      });
+    }
+    try {
+      const { data, status } = await axios.get(
+        "https://api.mercadopago.com/preapproval/search",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          params: { limit: 1, offset: 0 },
+          timeout: 10000,
+          validateStatus: () => true,
+        }
+      );
+      const ok = status >= 200 && status < 300;
+      return res.status(ok ? 200 : status).json({
+        success: ok,
+        msg: ok ? "MercadoPago respondió OK" : "MercadoPago devolvió error",
+        result: {
+          httpStatus: status,
+          mpBody: data,
+          hint:
+            status === 403
+              ? "403 = token sin permiso para este recurso, o suscripciones no habilitadas en la app de MP"
+              : undefined,
+        },
+      });
+    } catch (err) {
+      const e = err as any;
+      const status = e.response?.status ?? 500;
+      const body = e.response?.data;
+      return res.status(status).json({
+        success: false,
+        msg: e.message || "Error al llamar a MercadoPago",
+        result: {
+          httpStatus: status,
+          mpBody: body,
+          hint:
+            status === 403
+              ? "Revisá en el panel de MP: Credenciales de producción, permisos de la app (suscripciones), que el token sea de la misma app"
+              : undefined,
+        },
+      });
+    }
+  });
+
   router.post("/mercadopago-sync", async (req: Request, res: Response) => {
     try {
       console.log("[MP SYNC MANUAL] Iniciando sincronización manual...");
@@ -61,14 +116,16 @@ export const CronRoutes = (dependencyManager: DependencyManager) => {
         error instanceof Error
           ? error.message
           : "Error al ejecutar sincronización";
+      let mpBody: unknown = null;
       if (axios.isAxiosError(error) && error.response) {
         status = error.response.status;
+        mpBody = error.response.data;
         const mpMsg =
-          error.response.data?.message ??
-          error.response.data?.error ??
-          error.response.data?.description;
+          (error.response.data as any)?.message ??
+          (error.response.data as any)?.error ??
+          (error.response.data as any)?.description;
         if (status === 403) {
-          msg = `MercadoPago rechazó la solicitud (403). Revisá que MP_ACCESS_TOKEN en producción sea válido y tenga permisos de lectura. ${mpMsg ? `Detalle: ${mpMsg}` : ""}`;
+          msg = `MercadoPago rechazó la solicitud (403). Revisá MP_ACCESS_TOKEN y permisos de la app. ${mpMsg ? `Detalle: ${mpMsg}` : ""}`;
         } else if (mpMsg) {
           msg = `MercadoPago: ${mpMsg}`;
         }
@@ -78,7 +135,7 @@ export const CronRoutes = (dependencyManager: DependencyManager) => {
         status: httpStatus,
         success: false,
         msg,
-        result: null,
+        result: mpBody ? { mpResponse: mpBody } : null,
       });
     }
   });

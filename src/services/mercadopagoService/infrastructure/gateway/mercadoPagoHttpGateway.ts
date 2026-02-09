@@ -47,6 +47,17 @@ export const MercadoPagoHttpGateway = (): MercadoPagoGateway => {
       }
       return all;
     } catch (error: any) {
+      if (error.response) {
+        const status = error.response.status;
+        const body = error.response.data;
+        console.error("[MP Gateway] preapproval/search failed", {
+          status,
+          statusText: error.response.statusText,
+          data: body,
+          hasToken: Boolean(process.env.MP_ACCESS_TOKEN),
+          tokenPrefix: process.env.MP_ACCESS_TOKEN?.slice(0, 15) ?? "(none)",
+        });
+      }
       throw error;
     }
   };
