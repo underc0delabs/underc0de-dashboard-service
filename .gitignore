@@ -11,3 +11,6 @@ build/
 logs/
 *.log
 .DS_Store
+
+.env.local
+node_modules/
