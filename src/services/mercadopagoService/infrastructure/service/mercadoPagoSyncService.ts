@@ -10,6 +10,8 @@ export const MercadoPagoSyncService = (
       syncSubscriptions: async (): Promise<MpSubscription[]> => {
        return await gateway.getSuscriptions();  
       },
+      getPreapprovalById: (preapprovalId: string) =>
+        gateway.getPreapprovalById(preapprovalId),
       syncPayments: async (
         subscription: MpSubscription
       ): Promise<MpPayment[]> => {

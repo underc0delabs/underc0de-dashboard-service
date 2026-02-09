@@ -61,6 +61,16 @@ export const MercadoPagoHttpGateway = (): MercadoPagoGateway => {
       throw error;
     }
   };
+  const getPreapprovalById = async (preapprovalId: string) => {
+    try {
+      const { data } = await client.get(`/preapproval/${preapprovalId}`);
+      return data as import("../../core/gateway/mercadoPagoGateway.js").MpPreapprovalDetail;
+    } catch (err: any) {
+      if (err.response?.status === 404) return null;
+      throw err;
+    }
+  };
+
   const getPaymentsByPreapprovalId = async (preapprovalId: string) => {
     try {
       const { data: preapproval } = await client.get(
@@ -148,6 +158,7 @@ export const MercadoPagoHttpGateway = (): MercadoPagoGateway => {
 
   return {
     getSuscriptions,
+    getPreapprovalById,
     getPaymentsByPreapprovalId,
     createPreapproval,
   };

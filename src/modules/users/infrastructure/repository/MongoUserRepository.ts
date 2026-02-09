@@ -38,6 +38,7 @@ export const MongoUserRepository = (): IUserRepository => ({
       'status',
       'fcmToken',
       'mpPayerId',
+      'is_pro',
       'createdAt',
       'updatedAt',
     ];
@@ -116,6 +117,7 @@ export const MongoUserRepository = (): IUserRepository => ({
 
       return {
         ...userJson,
+        vip: !!(activeSubscription?.status === "ACTIVE" || userJson.is_pro),
         subscription: activeSubscription ? {
           id: activeSubscription.id,
           status: subscriptionStatus,

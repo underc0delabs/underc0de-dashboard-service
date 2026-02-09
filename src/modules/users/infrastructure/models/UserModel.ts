@@ -63,6 +63,11 @@ const User = sequelize.define('User', {
         allowNull: true,
         unique: true,
     },
+    is_pro: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+        defaultValue: false,
+    },
     createdAt: {
         type: DataTypes.DATE,
         allowNull: false,
