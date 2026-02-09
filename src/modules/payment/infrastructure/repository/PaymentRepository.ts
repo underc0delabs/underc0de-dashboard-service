@@ -5,7 +5,8 @@ import IPayment from "../../core/entities/IPayment.js";
 
 export const PaymentRepository = (): IPaymentRepository => ({
   async save(payment) {
-    const newPayment = await PaymentModel.create(payment as any);
+    const { id, ...data } = payment as any;
+    const newPayment = await PaymentModel.create(data);
     return newPayment.toJSON() as IPayment;
   },
   async edit(payment, id) {
