@@ -1,3 +1,4 @@
+import axios from "axios";
 import { Router, Request, Response } from "express";
 import { DependencyManager } from "../dependencyManager.js";
 import { ISubscriptionPlanRepository } from "../modules/subscriptionPlan/core/repository/ISubscriptionPlanRepository.js";
@@ -55,13 +56,28 @@ export const CronRoutes = (dependencyManager: DependencyManager) => {
       });
     } catch (error) {
       console.error("[MP SYNC MANUAL] Error:", error);
-      res.status(500).json({
-        status: 500,
+      let status = 500;
+      let msg =
+        error instanceof Error
+          ? error.message
+          : "Error al ejecutar sincronización";
+      if (axios.isAxiosError(error) && error.response) {
+        status = error.response.status;
+        const mpMsg =
+          error.response.data?.message ??
+          error.response.data?.error ??
+          error.response.data?.description;
+        if (status === 403) {
+          msg = `MercadoPago rechazó la solicitud (403). Revisá que MP_ACCESS_TOKEN en producción sea válido y tenga permisos de lectura. ${mpMsg ? `Detalle: ${mpMsg}` : ""}`;
+        } else if (mpMsg) {
+          msg = `MercadoPago: ${mpMsg}`;
+        }
+      }
+      const httpStatus = status === 403 ? 403 : 500;
+      res.status(httpStatus).json({
+        status: httpStatus,
         success: false,
-        msg:
-          error instanceof Error
-            ? error.message
-            : "Error al ejecutar sincronización",
+        msg,
         result: null,
       });
     }
