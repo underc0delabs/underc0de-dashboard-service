@@ -1,3 +1,4 @@
+import { Sequelize } from "sequelize";
 import { IUserRepository } from "../../core/repository/IMongoUserRepository.js";
 import UserModel from "../models/UserModel.js";
 import configs from "../../../../configs.js";
@@ -137,6 +138,17 @@ export const MongoUserRepository = (): IUserRepository => ({
     return {
       users: usersWithSubscriptionInfo,
     };
+  },
+  async getOneByEmailIgnoreCase(email: string) {
+    if (!email?.trim()) return null;
+    const user = await UserModel.findOne({
+      where: Sequelize.where(
+        Sequelize.fn("LOWER", Sequelize.col("email")),
+        email.trim().toLowerCase()
+      ),
+      attributes: { exclude: ["password"] },
+    });
+    return user ? (user.toJSON() as any) : null;
   },
   async getById(id) {
     const user = await UserModel.findByPk(id, {

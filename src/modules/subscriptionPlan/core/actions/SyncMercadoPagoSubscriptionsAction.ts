@@ -33,9 +33,7 @@ export const SyncMercadoPagoSubscriptionsAction = (
             (mpSub as any).payer_email?.trim?.() ||
             (await mercadoPagoSyncService.getPreapprovalById(preapprovalId))?.payer_email?.trim?.();
           if (payerEmail) {
-            const normalized = payerEmail.toLowerCase();
-            user = await userRepository.getOne({ email: normalized });
-            if (!user) user = await userRepository.getOne({ email: payerEmail });
+            user = await userRepository.getOneByEmailIgnoreCase(payerEmail);
           }
         }
         const existing = await subscriptionPlanRepository.getOne({
@@ -64,19 +62,29 @@ export const SyncMercadoPagoSubscriptionsAction = (
 
         const effectiveUserId = subscriptionPayload.userId;
         if (effectiveUserId != null) {
-          const userToUpdate = await userRepository.getById(
+          const [affectedRows] = (await userRepository.edit(
+            {
+              is_pro: subscriptionPayload.status === "ACTIVE",
+              mpPayerId: String(mpSub.payer_id),
+            } as any,
             String(effectiveUserId)
-          );
-          if (userToUpdate) {
-            await userRepository.edit(
-              {
-                ...(userToUpdate as any),
-                is_pro: subscriptionPayload.status === "ACTIVE",
-                mpPayerId: String(mpSub.payer_id),
-              } as any,
-              String(effectiveUserId)
-            );
+          )) as [number];
+          if (affectedRows === 0) {
+            console.warn("[MP SYNC] No se encontró usuario para actualizar (id inexistente)", {
+              userId: effectiveUserId,
+              preapprovalId,
+            });
+          } else {
+            console.log("[MP SYNC] Usuario actualizado", {
+              userId: effectiveUserId,
+              is_pro: subscriptionPayload.status === "ACTIVE",
+            });
           }
+        } else {
+          console.warn("[MP SYNC] Suscripción sin userId (no se encontró usuario por mpPayerId ni por email)", {
+            preapprovalId,
+            payer_id: mpSub.payer_id,
+          });
         }
 
         const mpPayments =
