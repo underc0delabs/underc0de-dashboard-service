@@ -5,7 +5,8 @@ import ISubscriptionPlan from "../../core/entities/ISubscriptionPlan.js";
 
 export const SubscriptionPlanRepository = (): ISubscriptionPlanRepository => ({
   async save(subscriptionPlan) {
-    const newSubscriptionPlan = await SubscriptionPlanModel.create(subscriptionPlan as any);
+    const { id, ...data } = subscriptionPlan as any;
+    const newSubscriptionPlan = await SubscriptionPlanModel.create(data);
     return newSubscriptionPlan.toJSON() as ISubscriptionPlan;
   },
   async edit(subscriptionPlan, id) {
