@@ -63,6 +63,10 @@ const User = sequelize.define('User', {
         allowNull: true,
         unique: true,
     },
+    mercadopago_email: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
     is_pro: {
         type: DataTypes.BOOLEAN,
         allowNull: true,

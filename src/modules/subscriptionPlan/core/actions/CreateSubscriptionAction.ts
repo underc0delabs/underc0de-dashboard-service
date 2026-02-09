@@ -53,14 +53,18 @@ export const CreateSubscriptionAction = (
         if (!user) throw new Error("Usuario no encontrado");
 
         const collectorEmail = process.env.MERCADO_PAGO_COLLECTOR_EMAIL?.trim().toLowerCase();
-        const isCollector = collectorEmail && userData.email?.trim().toLowerCase() === collectorEmail;
+        const mpEmail = (user as any).mercadopago_email?.trim?.() || userData.email;
+        const isCollector =
+          collectorEmail &&
+          (userData.email?.trim().toLowerCase() === collectorEmail ||
+            (user as any).mercadopago_email?.trim?.().toLowerCase() === collectorEmail);
 
         if (isCollector) {
           return grantOwnerSubscription(user, subscriptionPlanRepository, userRepository);
         }
 
         const transactionAmount = await environmentRepository.getByKey("MERCADO_PAGO_PRICE") || process.env.MERCADO_PAGO_PRICE;
-        const response = await mercadoPagoGateway.createPreapproval(userData.email, Number(transactionAmount));
+        const response = await mercadoPagoGateway.createPreapproval(mpEmail, Number(transactionAmount));
         const { id, init_point, status } = response;
         await subscriptionPlanRepository.save({
           userId: user.id,

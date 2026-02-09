@@ -33,7 +33,9 @@ export const SyncMercadoPagoSubscriptionsAction = (
             (mpSub as any).payer_email?.trim?.() ||
             (await mercadoPagoSyncService.getPreapprovalById(preapprovalId))?.payer_email?.trim?.();
           if (payerEmail) {
-            user = await userRepository.getOneByEmailIgnoreCase(payerEmail);
+            user =
+              (await userRepository.getOneByEmailIgnoreCase(payerEmail)) ??
+              (await userRepository.getOneByMercadopagoEmailIgnoreCase(payerEmail));
           }
         }
         const existing = await subscriptionPlanRepository.getOne({

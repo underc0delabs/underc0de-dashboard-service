@@ -39,6 +39,7 @@ export const MongoUserRepository = (): IUserRepository => ({
       'status',
       'fcmToken',
       'mpPayerId',
+      'mercadopago_email',
       'is_pro',
       'createdAt',
       'updatedAt',
@@ -144,6 +145,17 @@ export const MongoUserRepository = (): IUserRepository => ({
     const user = await UserModel.findOne({
       where: Sequelize.where(
         Sequelize.fn("LOWER", Sequelize.col("email")),
+        email.trim().toLowerCase()
+      ),
+      attributes: { exclude: ["password"] },
+    });
+    return user ? (user.toJSON() as any) : null;
+  },
+  async getOneByMercadopagoEmailIgnoreCase(email: string) {
+    if (!email?.trim()) return null;
+    const user = await UserModel.findOne({
+      where: Sequelize.where(
+        Sequelize.fn("LOWER", Sequelize.col("mercadopago_email")),
         email.trim().toLowerCase()
       ),
       attributes: { exclude: ["password"] },

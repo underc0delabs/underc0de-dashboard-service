@@ -12,5 +12,6 @@ export default interface IUser {
     suscription?: string,
     status?: boolean,
     fcmToken?: string,
-    mpPayerId?: number
+    mpPayerId?: number,
+    mercadopago_email?: string,
 }
