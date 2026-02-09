@@ -19,7 +19,9 @@ export const GetUserByUsernameAction = (
           const user = await UserRepository.getOne({ username: username });
           if (!user) throw new UserNotExistException();
           const subscription = await SubscriptionPlanRepository.getOne({ userId: user.id });
-          const payments = await PaymentRepository.get({ userSubscriptionId: subscription.id });
+          const payments = subscription
+            ? await PaymentRepository.get({ userSubscriptionId: subscription.id })
+            : [];
           resolve({
             id: user.id,
             username: user.username,
@@ -30,8 +32,8 @@ export const GetUserByUsernameAction = (
             idNumber: user.idNumber,
             userType: user.userType,
             birthday: user.birthday,
-            vip: subscription.status === "ACTIVE",
-            suscription: subscription.status,
+            vip: subscription?.status === "ACTIVE",
+            suscription: subscription?.status ?? null,
             status: user.status,
             fcmToken: user.fcmToken,
             createdAt: user.createdAt,

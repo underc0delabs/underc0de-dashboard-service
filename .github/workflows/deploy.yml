@@ -9,7 +9,9 @@ jobs:
   deploy:
     name: Deploy to VPS
     runs-on: ubuntu-latest
-    
+    # Deshabilitado: deploy manual. Para reactivar, quitar la línea siguiente.
+    if: false
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
