@@ -34,7 +34,7 @@ const getUserRoutes = (dependencyManager: DependencyManager) => {
   );
   userRouter.get(`/${path}/:id`, [jwtValidator], getById);
   userRouter.get(`/${path}/get-by-username/:username`, getByUsername);
-  userRouter.patch(`/${path}/:id`, [jwtValidator, allowOnlySelfOrAdmin], edit);
+  userRouter.patch(`/${path}/:id`, edit);
   userRouter.delete(`/${path}/:id`, [jwtValidator], remove);
   return userRouter;
 };
