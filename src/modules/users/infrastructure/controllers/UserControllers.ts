@@ -15,6 +15,7 @@ export const UserControllers = ({
   getAll,
   getById,
   login,
+  refreshToken,
   saveFcmToken,
   getMetrics,
   getByUsername,
@@ -98,6 +99,16 @@ export const UserControllers = ({
         })
         .catch((error) => {
           errorResponses[error.name](res, error);
+        });
+    },
+    refreshToken(req: Request, res: Response) {
+      refreshToken
+        .execute(req.body)
+        .then((result) => {
+          SuccessResponse(res, 200, "Token renovado", result);
+        })
+        .catch((error) => {
+          ErrorResponse(res, error instanceof Error ? error : new Error("Refresh token no válido o expirado"), 401);
         });
     },
     saveFcmToken(req: Request, res: Response) {

@@ -19,8 +19,14 @@ import {
   ILinkSubscriptionAction,
   LinkSubscriptionAction,
 } from "./LinkSubscriptionAction.js";
+import {
+  IRefreshTokenAction,
+  RefreshTokenAction,
+} from "./RefreshTokenAction.js";
+import { IRefreshTokenRepository } from "../repository/IRefreshTokenRepository.js";
 import { ISubscriptionPlanRepository } from "../../../subscriptionPlan/core/repository/ISubscriptionPlanRepository.js";
 import { IPaymentRepository } from "../../../payment/core/repository/IPaymentRepository.js";
+
 export interface IUserActions {
   save: ISaveUserAction;
   edit: IEditUserAction;
@@ -29,6 +35,7 @@ export interface IUserActions {
   getOne: IGetOneUserAction;
   getById: IGetUserByIdAction;
   login: ILoginUserAction;
+  refreshToken: IRefreshTokenAction;
   saveFcmToken: ISaveFcmTokenAction;
   getMetrics: IGetMetricsAction;
   getByUsername: IGetUserByUsernameAction;
@@ -37,6 +44,7 @@ export interface IUserActions {
 export const getUserActions = (
   UserRepository: IUserRepository,
   hashService: IHashService,
+  refreshTokenRepository: IRefreshTokenRepository,
   merchantsRepository: IMerchantRepository,
   notificationsRepository: IPushNotificationRepository,
   subscriptionPlanRepository: ISubscriptionPlanRepository,
@@ -49,7 +57,8 @@ export const getUserActions = (
     getAll: GetAllUsersAction(UserRepository),
     getById: GetUserByIdAction(UserRepository),
     getOne: GetOneUserAction(UserRepository),
-    login: LoginUserAction(UserRepository, hashService),
+    login: LoginUserAction(UserRepository, hashService, refreshTokenRepository),
+    refreshToken: RefreshTokenAction(refreshTokenRepository, UserRepository),
     saveFcmToken: SaveFcmTokenAction(UserRepository),
     getMetrics: GetMetricsAction(
       UserRepository,

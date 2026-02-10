@@ -25,7 +25,9 @@ export const LoginUserAction = (
             user.password
           );
           if (!validPassword) throw new WrongCredentialsException();
-          const token = await generateJWT(user.id);
+          // Admin: JWT sin refresh, larga duración (30 días). No usa access_token_expires_seconds.
+          const ADMIN_TOKEN_EXPIRES_SECONDS = 60 * 60 * 24 * 30;
+          const token = await generateJWT(user.id, ADMIN_TOKEN_EXPIRES_SECONDS);
           resolve({
             user: {
               id: user.id,

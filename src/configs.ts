@@ -26,6 +26,9 @@ const configs = {
         port: process.env.DB_PORT,
     },
     secret_key: process.env.SECRETPRIVATEKEY,
+    forum_jwt_secret: process.env.FORUM_JWT_SECRET || process.env.SMF_JWT_SECRET,
+    access_token_expires_seconds: Number(process.env.ACCESS_TOKEN_EXPIRES_IN) || 900,
+    refresh_token_expires_days: Number(process.env.REFRESH_TOKEN_EXPIRES_DAYS) || 7,
     env: process.env.NODE_ENV || 'development',
 }
 

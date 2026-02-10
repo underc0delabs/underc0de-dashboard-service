@@ -6,11 +6,13 @@ import { UserControllers } from "./UserControllers.js";
 import { IMerchantRepository } from "../../../merchants/core/repository/IMerchantRepository.js";
 import { IPushNotificationRepository } from "../../../pushNotifications/core/repository/IPushNotificationRepository.js";
 import { ISubscriptionPlanRepository } from "../../../subscriptionPlan/core/repository/ISubscriptionPlanRepository.js";
+import { IRefreshTokenRepository } from "../../core/repository/IRefreshTokenRepository.js";
 import { IPaymentRepository } from "../../../payment/core/repository/IPaymentRepository.js";
 
 export const getUserControllers = (dependencyManager: DependencyManager) => {
   const UserRepository = getUserRepository(dependencyManager);
   const hashService = getHashService(dependencyManager);
+  const refreshTokenRepository = getRefreshTokenRepository(dependencyManager);
   const merchantsRepository = getMerchantsRepository(dependencyManager);
   const notificationsRepository = getNotificationsRepository(dependencyManager);
   const subscriptionPlanRepository = getSubscriptionPlanRepository(dependencyManager);
@@ -18,12 +20,19 @@ export const getUserControllers = (dependencyManager: DependencyManager) => {
   const UserActions = getUserActions(
     UserRepository,
     hashService,
+    refreshTokenRepository,
     merchantsRepository,
     notificationsRepository,
     subscriptionPlanRepository,
     paymentRepository
   );
   return UserControllers(UserActions);
+};
+
+const getRefreshTokenRepository = (dependencyManager: DependencyManager) => {
+  return dependencyManager.resolve(
+    "refreshTokenRepository"
+  ) as IRefreshTokenRepository;
 };
 
 const getUserRepository = (dependencyManager: DependencyManager) => {

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { DependencyManager } from "../../../../dependencyManager.js";
+import { allowOnlySelfOrAdmin } from "../../../../middlewares/AllowOnlySelfOrAdmin.js";
 import { IJwtValidator } from "../../../../middlewares/JwtValidator/core/IJwtValidator.js";
 import { getUserControllers } from "../controllers/controllersProvider.js";
 
@@ -12,6 +13,7 @@ const getUserRoutes = (dependencyManager: DependencyManager) => {
     get,
     getById,
     login,
+    refreshToken,
     saveFcmToken,
     getMetrics,
     getByUsername,
@@ -21,6 +23,7 @@ const getUserRoutes = (dependencyManager: DependencyManager) => {
   const path = "users";
 
   userRouter.post(`/login`, login);
+  userRouter.post(`/${path}/refresh-token`, refreshToken);
   userRouter.post(`/${path}`, [jwtValidator], save);
   userRouter.get(`/${path}`, [jwtValidator], get);
   userRouter.get(`/${path}/metrics`, [jwtValidator], getMetrics);
@@ -31,7 +34,7 @@ const getUserRoutes = (dependencyManager: DependencyManager) => {
   );
   userRouter.get(`/${path}/:id`, [jwtValidator], getById);
   userRouter.get(`/${path}/get-by-username/:username`, getByUsername);
-  userRouter.patch(`/${path}/:id`, [jwtValidator], edit);
+  userRouter.patch(`/${path}/:id`, [jwtValidator, allowOnlySelfOrAdmin], edit);
   userRouter.delete(`/${path}/:id`, [jwtValidator], remove);
   return userRouter;
 };
