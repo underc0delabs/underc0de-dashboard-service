@@ -15,6 +15,7 @@ const getJwtValidator = (
   const jwtValidator = async (req: Request, res: Response, next: NextFunction) => {
     const bearerHeader = req.header("authorization");
     if (!bearerHeader) {
+      console.warn("[Auth] 401: No hay header Authorization");
       return res.status(401).json({
         status: 401,
         success: false,
@@ -87,6 +88,7 @@ const getJwtValidator = (
     try {
       if (await tryDashboardToken()) return;
       if (await tryForumToken()) return;
+      console.warn("[Auth] 401: Token no válido (no es token del dashboard ni del foro)");
       return res.status(401).json({
         status: 401,
         success: false,
