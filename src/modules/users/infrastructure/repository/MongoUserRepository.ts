@@ -6,13 +6,14 @@ import IUser from "../../core/entities/IUser.js";
 import SubscriptionPlan from "../../../subscriptionPlan/infrastructure/models/SubscriptionPlanModel.js";
 import Payment from "../../../payment/infrastructure/models/PaymentModel.js";
 
-/** Evita duplicar apellido cuando name ya lo incluye (ej. name="Juan Pérez", lastname="Pérez" -> "Juan Pérez") */
+/** Un solo nombre para mostrar: evita duplicar (name ya incluye apellido, o name === lastname). */
 const fullNameWithoutDuplicate = (name?: string | null, lastname?: string | null): string => {
   const n = (name ?? "").trim();
   const l = (lastname ?? "").trim();
   if (!n) return l;
   if (!l) return n;
-  if (n.endsWith(l)) return n;
+  if (n === l) return n;
+  if (l && n.endsWith(l)) return n;
   return `${n} ${l}`.trim();
 };
 

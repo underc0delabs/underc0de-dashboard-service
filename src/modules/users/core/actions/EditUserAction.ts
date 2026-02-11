@@ -38,12 +38,22 @@ const buildUpdatePayload = (body: any, hashService: IHashService): Record<string
   return payload;
 };
 
-/** Acepta "ACTIVE"|"CANCELLED" o "Activa"|"Activo"|"Cancelada"|"Inactiva" etc. */
-const normalizeSubscriptionStatus = (v: string | null | undefined): "ACTIVE" | "CANCELLED" | null => {
-  if (v == null || typeof v !== "string") return null;
-  const u = v.trim().toUpperCase();
+/** Acepta "ACTIVE"|"CANCELLED", "Activa"|"Cancelada", o objeto { value/label/status } del front. */
+const normalizeSubscriptionStatus = (v: unknown): "ACTIVE" | "CANCELLED" | null => {
+  const str =
+    typeof v === "string"
+      ? v
+      : v && typeof v === "object" && "value" in (v as any)
+        ? (v as any).value
+        : v && typeof v === "object" && "label" in (v as any)
+          ? (v as any).label
+          : v && typeof v === "object" && "status" in (v as any)
+            ? (v as any).status
+            : null;
+  if (str == null || typeof str !== "string") return null;
+  const u = String(str).trim().toUpperCase();
   if (u === "ACTIVE" || u === "ACTIVA" || u === "ACTIVO") return "ACTIVE";
-  if (u === "CANCELLED" || u === "CANCELADA" || u === "CANCELADO" || u === "INACTIVA") return "CANCELLED";
+  if (u === "CANCELLED" || u === "CANCELADA" || u === "CANCELADO" || u === "INACTIVA" || u === "INACTIVE") return "CANCELLED";
   return null;
 };
 
@@ -61,8 +71,14 @@ export const EditUserAction = (
         try {
           const rawBody = body || {};
           const subscriptionStatus = normalizeSubscriptionStatus(
-            rawBody.subscriptionStatus ?? rawBody.suscription ?? rawBody.subscription
+            (rawBody as any).subscriptionStatus ??
+              (rawBody as any).suscription ??
+              (rawBody as any).subscription ??
+              (rawBody as any).estadoSuscripcion
           );
+          if (subscriptionStatus !== null) {
+            console.log("[EditUser] Actualizando suscripción", { userId: id, subscriptionStatus, rawSubscription: (rawBody as any).subscription ?? (rawBody as any).subscriptionStatus ?? (rawBody as any).suscription });
+          }
 
           const payload = buildUpdatePayload(rawBody, hashService);
           if (subscriptionStatus !== null) {
@@ -75,13 +91,54 @@ export const EditUserAction = (
           }
 
           if (subscriptionStatus !== null) {
-            const subscription = await subscriptionPlanRepository.getOne({ userId: id });
-            if (subscription) {
-              const subId = (subscription as any).id;
-              await subscriptionPlanRepository.edit(
-                { status: subscriptionStatus } as any,
-                String(subId)
-              );
+            const userIdNum = Number(id);
+            const firstDayNextMonth = (() => {
+              const d = new Date();
+              d.setMonth(d.getMonth() + 1);
+              d.setDate(1);
+              d.setHours(0, 0, 0, 0);
+              return d;
+            })();
+
+            /** Suscripción más reciente del usuario (get ordena por createdAt DESC) */
+            const { subscriptionPlans } = await subscriptionPlanRepository.get({
+              userId: userIdNum,
+              page_count: 1,
+              page_number: 0,
+            });
+            let subscription = subscriptionPlans?.[0] ?? null;
+            const adminPreapprovalId = `admin-${id}`;
+            if (!subscription && subscriptionStatus === "ACTIVE") {
+              subscription = await subscriptionPlanRepository.getOne({ mpPreapprovalId: adminPreapprovalId });
+            }
+
+            if (subscriptionStatus === "ACTIVE") {
+              if (subscription) {
+                const subId = (subscription as any).id;
+                await subscriptionPlanRepository.edit(
+                  {
+                    status: "ACTIVE",
+                    nextPaymentDate: firstDayNextMonth,
+                  } as any,
+                  String(subId)
+                );
+              } else {
+                await subscriptionPlanRepository.save({
+                  userId: userIdNum,
+                  status: "ACTIVE",
+                  startedAt: new Date(),
+                  nextPaymentDate: firstDayNextMonth,
+                  mpPreapprovalId: adminPreapprovalId,
+                } as any);
+              }
+            } else {
+              if (subscription) {
+                const subId = (subscription as any).id;
+                await subscriptionPlanRepository.edit(
+                  { status: "CANCELLED" } as any,
+                  String(subId)
+                );
+              }
             }
           }
 

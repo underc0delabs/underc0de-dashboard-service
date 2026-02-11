@@ -24,7 +24,7 @@ export const GetUserByUsernameAction = (
             : [];
           const n = (user.name ?? "").trim();
           const l = ((user as any).lastname ?? "").trim();
-          const fullName = !l ? n : n.endsWith(l) ? n : `${n} ${l}`.trim() || n;
+          const fullName = !l ? n : n === l ? n : n.endsWith(l) ? n : `${n} ${l}`.trim() || n;
           resolve({
             id: user.id,
             username: user.username,
