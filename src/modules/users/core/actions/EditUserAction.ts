@@ -70,14 +70,15 @@ export const EditUserAction = (
       return new Promise(async (resolve, reject) => {
         try {
           const rawBody = body || {};
-          const subscriptionStatus = normalizeSubscriptionStatus(
+          const rawSub =
             (rawBody as any).subscriptionStatus ??
-              (rawBody as any).suscription ??
-              (rawBody as any).subscription ??
-              (rawBody as any).estadoSuscripcion
-          );
+            (rawBody as any).suscription ??
+            (rawBody as any).subscription ??
+            (rawBody as any).Subscription ??
+            (rawBody as any).estadoSuscripcion;
+          const subscriptionStatus = normalizeSubscriptionStatus(rawSub);
           if (subscriptionStatus !== null) {
-            console.log("[EditUser] Actualizando suscripción", { userId: id, subscriptionStatus, rawSubscription: (rawBody as any).subscription ?? (rawBody as any).subscriptionStatus ?? (rawBody as any).suscription });
+            console.log("[EditUser] Actualizando suscripción", { userId: id, subscriptionStatus, rawSubscription: rawSub });
           }
 
           const payload = buildUpdatePayload(rawBody, hashService);
@@ -101,12 +102,22 @@ export const EditUserAction = (
             })();
 
             /** Suscripción más reciente del usuario (get ordena por createdAt DESC) */
-            const { subscriptionPlans } = await subscriptionPlanRepository.get({
-              userId: userIdNum,
-              page_count: 1,
-              page_number: 0,
-            });
-            let subscription = subscriptionPlans?.[0] ?? null;
+            let subscription: any = null;
+            try {
+              const result = await subscriptionPlanRepository.get({
+                userId: userIdNum,
+                page_count: 5,
+                page_number: 0,
+              });
+              const plans = (result as any).subscriptionPlans ?? [];
+              subscription = Array.isArray(plans) ? plans[0] : null;
+              if (subscription && typeof subscription.toJSON === "function") {
+                subscription = subscription.toJSON();
+              }
+            } catch (e) {
+              console.warn("[EditUser] Error al buscar suscripciones", e);
+            }
+
             const adminPreapprovalId = `admin-${id}`;
             if (!subscription && subscriptionStatus === "ACTIVE") {
               subscription = await subscriptionPlanRepository.getOne({ mpPreapprovalId: adminPreapprovalId });
@@ -122,6 +133,7 @@ export const EditUserAction = (
                   } as any,
                   String(subId)
                 );
+                console.log("[EditUser] Suscripción actualizada a ACTIVE", { userId: id, subscriptionId: subId });
               } else {
                 await subscriptionPlanRepository.save({
                   userId: userIdNum,
@@ -130,6 +142,7 @@ export const EditUserAction = (
                   nextPaymentDate: firstDayNextMonth,
                   mpPreapprovalId: adminPreapprovalId,
                 } as any);
+                console.log("[EditUser] Suscripción creada (admin)", { userId: id, mpPreapprovalId: adminPreapprovalId });
               }
             } else {
               if (subscription) {
@@ -138,6 +151,7 @@ export const EditUserAction = (
                   { status: "CANCELLED" } as any,
                   String(subId)
                 );
+                console.log("[EditUser] Suscripción actualizada a CANCELLED", { userId: id, subscriptionId: subId });
               }
             }
           }
