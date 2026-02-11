@@ -52,7 +52,7 @@ export const getUserActions = (
 ) => {
   const UserActions: IUserActions = {
     save: SaveUserAction(UserRepository, hashService),
-    edit: EditUserAction(UserRepository, hashService),
+    edit: EditUserAction(UserRepository, hashService, subscriptionPlanRepository),
     remove: RemoveUserAction(UserRepository),
     getAll: GetAllUsersAction(UserRepository),
     getById: GetUserByIdAction(UserRepository),

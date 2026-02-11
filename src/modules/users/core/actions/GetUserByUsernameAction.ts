@@ -22,11 +22,15 @@ export const GetUserByUsernameAction = (
           const payments = subscription
             ? await PaymentRepository.get({ userSubscriptionId: subscription.id })
             : [];
+          const n = (user.name ?? "").trim();
+          const l = ((user as any).lastname ?? "").trim();
+          const fullName = !l ? n : n.endsWith(l) ? n : `${n} ${l}`.trim() || n;
           resolve({
             id: user.id,
             username: user.username,
             name: user.name,
             lastname: user.lastname,
+            fullName: fullName || n,
             phone: user.phone,
             email: user.email,
             idNumber: user.idNumber,
@@ -38,7 +42,7 @@ export const GetUserByUsernameAction = (
             fcmToken: user.fcmToken,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
-            avatar: user.avatar,
+            avatar: (user as any).avatar,
             payments: payments,
           });
         } catch (error) {

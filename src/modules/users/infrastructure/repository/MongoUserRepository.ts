@@ -6,6 +6,16 @@ import IUser from "../../core/entities/IUser.js";
 import SubscriptionPlan from "../../../subscriptionPlan/infrastructure/models/SubscriptionPlanModel.js";
 import Payment from "../../../payment/infrastructure/models/PaymentModel.js";
 
+/** Evita duplicar apellido cuando name ya lo incluye (ej. name="Juan Pérez", lastname="Pérez" -> "Juan Pérez") */
+const fullNameWithoutDuplicate = (name?: string | null, lastname?: string | null): string => {
+  const n = (name ?? "").trim();
+  const l = (lastname ?? "").trim();
+  if (!n) return l;
+  if (!l) return n;
+  if (n.endsWith(l)) return n;
+  return `${n} ${l}`.trim();
+};
+
 export const MongoUserRepository = (): IUserRepository => ({
   async save(user) {
     const newUser = await UserModel.create(user as any);
@@ -119,6 +129,7 @@ export const MongoUserRepository = (): IUserRepository => ({
 
       return {
         ...userJson,
+        fullName: fullNameWithoutDuplicate(userJson.name, userJson.lastname),
         vip: !!(activeSubscription?.status === "ACTIVE" || userJson.is_pro),
         subscription: activeSubscription ? {
           id: activeSubscription.id,
@@ -225,6 +236,7 @@ export const MongoUserRepository = (): IUserRepository => ({
 
     return {
       ...userJson,
+      fullName: fullNameWithoutDuplicate(userJson.name, userJson.lastname),
       subscription: activeSubscription ? {
         id: activeSubscription.id,
         status: subscriptionStatus,
