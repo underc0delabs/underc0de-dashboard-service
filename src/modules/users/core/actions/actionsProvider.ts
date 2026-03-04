@@ -14,6 +14,10 @@ import {
   IGetUserByUsernameAction,
   GetUserByUsernameAction,
 } from "./GetUserByUsernameAction.js";
+import {
+  IGetCurrentUserAction,
+  GetCurrentUserAction,
+} from "./GetCurrentUserAction.js";
 import { IPushNotificationRepository } from "../../../pushNotifications/core/repository/IPushNotificationRepository.js";
 import {
   ILinkSubscriptionAction,
@@ -39,6 +43,7 @@ export interface IUserActions {
   saveFcmToken: ISaveFcmTokenAction;
   getMetrics: IGetMetricsAction;
   getByUsername: IGetUserByUsernameAction;
+  getCurrentUser: IGetCurrentUserAction;
   linkSubscription: ILinkSubscriptionAction;
 }
 export const getUserActions = (
@@ -66,6 +71,11 @@ export const getUserActions = (
       notificationsRepository
     ),
     getByUsername: GetUserByUsernameAction(
+      UserRepository,
+      subscriptionPlanRepository,
+      paymentRepository
+    ),
+    getCurrentUser: GetCurrentUserAction(
       UserRepository,
       subscriptionPlanRepository,
       paymentRepository

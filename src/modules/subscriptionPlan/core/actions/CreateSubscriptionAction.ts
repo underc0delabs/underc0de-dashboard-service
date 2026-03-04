@@ -76,8 +76,15 @@ export const CreateSubscriptionAction = (
           return grantOwnerSubscription(user, subscriptionPlanRepository, userRepository);
         }
 
-        const transactionAmountRaw = await environmentRepository.getByKey("MERCADO_PAGO_PRICE") || process.env.MERCADO_PAGO_PRICE;
-        if (transactionAmountRaw === undefined || transactionAmountRaw === null || String(transactionAmountRaw).trim() === "") {
+        let transactionAmountRaw: string | number | undefined;
+        try {
+          const envRow = await environmentRepository.getByKey("MERCADO_PAGO_PRICE");
+          transactionAmountRaw = envRow?.value;
+        } catch {
+          transactionAmountRaw = undefined;
+        }
+        transactionAmountRaw = transactionAmountRaw ?? process.env.MERCADO_PAGO_PRICE;
+        if (transactionAmountRaw == null || String(transactionAmountRaw).trim() === "") {
           throw new Error("MERCADO_PAGO_PRICE no está configurado. Configuralo en Environments o en la variable de entorno.");
         }
         const transactionAmount = Number(transactionAmountRaw);

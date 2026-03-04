@@ -28,8 +28,12 @@ export const LoginUserAction = (
     execute(credentials) {
       return new Promise(async (resolve, reject) => {
         try {
+          const email = credentials?.email?.trim?.();
+          if (!email) {
+            throw new WrongCredentialsException();
+          }
           const user = await userRepository.getOne(
-            { email: credentials.email },
+            { email },
             true
           );
           if (!user) throw new UserNotExistException();

@@ -15,7 +15,12 @@ export const LinkSubscriptionAction = (
     execute: (body) => {
       return new Promise(async (resolve, reject) => {
         try {
-          const userResult = await UserRepository.get({ email: body.email });
+          const email = body?.email?.trim?.();
+          if (!email) {
+            reject(new Error("El email es obligatorio para vincular la suscripción"));
+            return;
+          }
+          const userResult = await UserRepository.get({ email });
           if (!userResult || !userResult.users || userResult.users.length === 0) {
             reject(new Error("User not found"));
             return;

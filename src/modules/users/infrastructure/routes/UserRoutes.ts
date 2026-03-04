@@ -17,6 +17,7 @@ const getUserRoutes = (dependencyManager: DependencyManager) => {
     saveFcmToken,
     getMetrics,
     getByUsername,
+    getMe,
     linkSubscription,
   } = getUserControllers(dependencyManager);
   const userRouter = Router();
@@ -32,9 +33,10 @@ const getUserRoutes = (dependencyManager: DependencyManager) => {
     `/${path}/link-subscription`,
     linkSubscription
   );
-  userRouter.get(`/${path}/:id`, [jwtValidator], getById);
   userRouter.get(`/${path}/get-by-username/:username`, getByUsername);
-  userRouter.patch(`/${path}/:id`, edit);
+  userRouter.get(`/${path}/me`, [jwtValidator], getMe);
+  userRouter.get(`/${path}/:id`, [jwtValidator], getById);
+  userRouter.patch(`/${path}/:id`, [jwtValidator, allowOnlySelfOrAdmin], edit);
   userRouter.delete(`/${path}/:id`, [jwtValidator], remove);
   return userRouter;
 };

@@ -254,8 +254,20 @@ export const MongoUserRepository = (): IUserRepository => ({
     };
   },
   async getOne(query, includePassword = false) {
+    const sanitizedWhere: any = {};
+    if (query && typeof query === 'object') {
+      Object.keys(query).forEach((key) => {
+        const val = query[key];
+        if (val !== undefined && val !== null) {
+          sanitizedWhere[key] = val;
+        }
+      });
+    }
+    if (Object.keys(sanitizedWhere).length === 0) {
+      return null;
+    }
     const options: any = {
-      where: query,
+      where: sanitizedWhere,
       include: [
         {
           model: SubscriptionPlan,

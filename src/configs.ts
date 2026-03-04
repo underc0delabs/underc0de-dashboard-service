@@ -27,6 +27,7 @@ const configs = {
     },
     secret_key: process.env.SECRETPRIVATEKEY,
     forum_jwt_secret: process.env.FORUM_JWT_SECRET || process.env.SMF_JWT_SECRET,
+    forum_api_url: process.env.FORUM_API_URL || 'https://underc0de.org/foro/extern/api.php',
     access_token_expires_seconds: Number(process.env.ACCESS_TOKEN_EXPIRES_IN) || 900,
     refresh_token_expires_days: Number(process.env.REFRESH_TOKEN_EXPIRES_DAYS) || 7,
     env: process.env.NODE_ENV || 'development',

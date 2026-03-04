@@ -19,6 +19,7 @@ export const UserControllers = ({
   saveFcmToken,
   getMetrics,
   getByUsername,
+  getCurrentUser,
   linkSubscription,
 }: IUserActions) => {
   const errorResponses = createHashMap(
@@ -141,6 +142,21 @@ export const UserControllers = ({
       const getByUsernameExecution = getByUsername.execute(req.params.username);
       const message = "Usuario obtenido correctamente";
       getByUsernameExecution
+        .then((user: any) => {
+          SuccessResponse(res, 200, message, user);
+        })
+        .catch((error: any) => {
+          errorResponses[error.name](res, error);
+        });
+    },
+    getMe(req: Request, res: Response) {
+      const auth = (req as any).auth as { id: string } | undefined;
+      if (!auth?.id) {
+        return ErrorResponse(res, new Error("No autorizado"), 401);
+      }
+      const getMeExecution = getCurrentUser.execute(auth.id);
+      const message = "Usuario obtenido correctamente";
+      getMeExecution
         .then((user: any) => {
           SuccessResponse(res, 200, message, user);
         })
