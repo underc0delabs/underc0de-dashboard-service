@@ -1,18 +1,21 @@
 import { IUserRepository } from "../repository/IMongoUserRepository.js";
 export interface IGetAllUsersAction {
-    execute: (query:any) => Promise<any>
+  execute: (query: any) => Promise<any>;
 }
-export const GetAllUsersAction = (UserRepository: IUserRepository):IGetAllUsersAction => {
-    return {
-        execute(query) {
-            return new Promise(async (resolve, reject) => {
-                try {
-                  const users = await UserRepository.get(query)
-                  resolve(users)
-                } catch (error) {
-                  reject(error)
-                }
-              })
-        },
-    }
-}
+export const GetAllUsersAction = (
+  UserRepository: IUserRepository,
+): IGetAllUsersAction => {
+  return {
+    execute(query) {
+      return new Promise(async (resolve, reject) => {
+        try {
+          const users = await UserRepository.get(query);
+          resolve(users);
+        } catch (error) {
+          console.error("[GetAllUsersAction] Error getting all users", error);
+          reject(error);
+        }
+      });
+    },
+  };
+};

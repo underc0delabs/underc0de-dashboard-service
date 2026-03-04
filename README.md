@@ -173,6 +173,23 @@ src/
 └── middlewares/           # Middlewares de Express
 ```
 
+## Suscripción Pro (MercadoPago)
+
+### Variables de entorno requeridas
+
+- **MP_ACCESS_TOKEN**: Token de acceso de MercadoPago (producción o sandbox)
+- **MP_BACK_URL**: URL donde MP redirige al usuario tras el pago (ej. `https://underc0de.net/success`). La app móvil detecta esta redirección en el WebView.
+- **MP_WEBHOOK_URL**: URL pública donde MercadoPago notifica pagos en tiempo real. Debe ser `https://<tu-dominio>/api/v1/webhook/mercadopago`. Configurala también en el panel de MercadoPago.
+- **MERCADO_PAGO_COLLECTOR_EMAIL**: Email del vendedor (usuarios con este email reciben Pro sin pagar)
+- **MERCADO_PAGO_PRICE**: Precio de la suscripción (o configurar en Environments)
+
+### Flujo de activación Pro
+
+1. **Creación**: La app llama `POST /subscriptions/create` → backend crea preapproval en MP y devuelve `init_point`.
+2. **Pago**: Usuario paga en checkout MP (WebView). MP redirige a `MP_BACK_URL`.
+3. **Activación en tiempo real**: MP envía POST a `MP_WEBHOOK_URL` → backend actualiza suscripción y marca usuario como Pro.
+4. **Fallback**: Un cron diario (3:00 AM) ejecuta `SyncMercadoPagoSubscriptionsAction` para sincronizar datos desde MP por si el webhook falla.
+
 ## Solución de Problemas
 
 ### Error: "Please install pg package manually"

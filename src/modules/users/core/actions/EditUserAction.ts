@@ -77,10 +77,6 @@ export const EditUserAction = (
             (rawBody as any).Subscription ??
             (rawBody as any).estadoSuscripcion;
           const subscriptionStatus = normalizeSubscriptionStatus(rawSub);
-          if (subscriptionStatus !== null) {
-            console.log("[EditUser] Actualizando suscripción", { userId: id, subscriptionStatus, rawSubscription: rawSub });
-          }
-
           const payload = buildUpdatePayload(rawBody, hashService);
           if (subscriptionStatus !== null) {
             payload.is_pro = subscriptionStatus === "ACTIVE";
@@ -100,7 +96,7 @@ export const EditUserAction = (
               d.setHours(0, 0, 0, 0);
               return d;
             })();
-
+            
             /** Suscripción más reciente del usuario (get ordena por createdAt DESC) */
             let subscription: any = null;
             try {
@@ -133,7 +129,6 @@ export const EditUserAction = (
                   } as any,
                   String(subId)
                 );
-                console.log("[EditUser] Suscripción actualizada a ACTIVE", { userId: id, subscriptionId: subId });
               } else {
                 await subscriptionPlanRepository.save({
                   userId: userIdNum,
@@ -142,7 +137,6 @@ export const EditUserAction = (
                   nextPaymentDate: firstDayNextMonth,
                   mpPreapprovalId: adminPreapprovalId,
                 } as any);
-                console.log("[EditUser] Suscripción creada (admin)", { userId: id, mpPreapprovalId: adminPreapprovalId });
               }
             } else {
               if (subscription) {
@@ -151,11 +145,10 @@ export const EditUserAction = (
                   { status: "CANCELLED" } as any,
                   String(subId)
                 );
-                console.log("[EditUser] Suscripción actualizada a CANCELLED", { userId: id, subscriptionId: subId });
               }
             }
           }
-
+          
           const result = await UserRepository.getById(id);
           resolve(result);
         } catch (error) {

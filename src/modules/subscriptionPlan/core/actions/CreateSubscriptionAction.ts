@@ -6,6 +6,16 @@ import { IEnvironmentRepository } from "../../../environments/core/repository/IE
 
 const OWNER_PREAPPROVAL_PREFIX = "owner-";
 
+/**
+ * Maps MercadoPago status to SubscriptionPlan ENUM (ACTIVE | CANCELLED).
+ * MP returns "authorized" when paid, "pending" when awaiting payment. Pending maps to CANCELLED
+ * until webhook/sync updates to ACTIVE after payment.
+ */
+const mapMpStatusToModel = (mpStatus: string): "ACTIVE" | "CANCELLED" => {
+  if (String(mpStatus || "").toLowerCase() === "authorized") return "ACTIVE";
+  return "CANCELLED";
+};
+
 const grantOwnerSubscription = async (
   user: any,
   subscriptionPlanRepository: ISubscriptionPlanRepository,
@@ -37,7 +47,7 @@ const grantOwnerSubscription = async (
 };
 
 export interface ICreateSubscriptionAction {
-  execute: (user: {email: string}) => Promise<any>;
+  execute: (userData: { userId: string }) => Promise<any>;
 }
 
 export const CreateSubscriptionAction = (
@@ -47,28 +57,36 @@ export const CreateSubscriptionAction = (
   environmentRepository: IEnvironmentRepository
 ): ICreateSubscriptionAction => {
   return {
-    execute: async (userData: {email: string}) => {
+    execute: async (userData: { userId: string }) => {
       try {
-        const user = await userRepository.getOne({ email: userData.email });
+        const user = await userRepository.getById(userData.userId);
         if (!user) throw new Error("Usuario no encontrado");
 
+        const userEmail = (user as any).email?.trim?.();
+        if (!userEmail) throw new Error("El usuario no tiene email asociado");
+
         const collectorEmail = process.env.MERCADO_PAGO_COLLECTOR_EMAIL?.trim().toLowerCase();
-        const mpEmail = (user as any).mercadopago_email?.trim?.() || userData.email;
+        const mpEmail = (user as any).mercadopago_email?.trim?.() || userEmail;
         const isCollector =
           collectorEmail &&
-          (userData.email?.trim().toLowerCase() === collectorEmail ||
+          (userEmail.toLowerCase() === collectorEmail ||
             (user as any).mercadopago_email?.trim?.().toLowerCase() === collectorEmail);
 
         if (isCollector) {
           return grantOwnerSubscription(user, subscriptionPlanRepository, userRepository);
         }
 
-        const transactionAmount = await environmentRepository.getByKey("MERCADO_PAGO_PRICE") || process.env.MERCADO_PAGO_PRICE;
-        const response = await mercadoPagoGateway.createPreapproval(mpEmail, Number(transactionAmount));
+        const transactionAmountRaw = await environmentRepository.getByKey("MERCADO_PAGO_PRICE") || process.env.MERCADO_PAGO_PRICE;
+        if (transactionAmountRaw === undefined || transactionAmountRaw === null || String(transactionAmountRaw).trim() === "") {
+          throw new Error("MERCADO_PAGO_PRICE no está configurado. Configuralo en Environments o en la variable de entorno.");
+        }
+        const transactionAmount = Number(transactionAmountRaw);
+        const response = await mercadoPagoGateway.createPreapproval(mpEmail, transactionAmount);
         const { id, init_point, status } = response;
+        const modelStatus = mapMpStatusToModel(status);
         await subscriptionPlanRepository.save({
           userId: user.id,
-          status: status,
+          status: modelStatus,
           startedAt: new Date(),
           expiresAt: new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000),
           mpPreapprovalId: id,
@@ -83,7 +101,7 @@ export const CreateSubscriptionAction = (
         if (axios.isAxiosError(error)) {
           const msg = String(error.response?.data?.message ?? error.response?.data?.error ?? error.message);
           if (/payer and collector cannot be the same/i.test(msg)) {
-            const user = await userRepository.getOne({ email: userData.email });
+            const user = await userRepository.getById(userData.userId);
             if (user) {
               return grantOwnerSubscription(user, subscriptionPlanRepository, userRepository);
             }

@@ -4,6 +4,9 @@ import { createHashMap } from "../../../../helpers/utils.js";
 import { ISubscriptionPlanActions } from "../../core/actions/actionsProvider.js";
 import { InvalidIdException } from "../../core/exceptions/InvalidIdException.js";
 import { SubscriptionPlanNotExistException } from "../../core/exceptions/SubscriptionPlanNotExistException.js";
+
+const SUBSCRIPTION_SUCCESS_HTML = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Pago completado</title></head><body style="font-family:sans-serif;text-align:center;padding:2rem;"><h1>Pago completado</h1><p>Podés cerrar esta ventana.</p></body></html>`;
+
 const name = 'Plan de suscripción'
 const pronoun = 'o'
 export const SubscriptionPlanControllers = ({
@@ -23,7 +26,11 @@ export const SubscriptionPlanControllers = ({
   }, (res:Response, error: Error,) => ErrorResponse(res,error)) as any
   return {
     createSubscription(req: Request, res: Response) {
-      const saveExecution = createSubscription.execute(req.body)
+      const auth = (req as any).auth;
+      if (!auth?.id) {
+        return ErrorResponse(res, new Error("No hay token en la petición") as any, 401);
+      }
+      const saveExecution = createSubscription.execute({ userId: auth.id });
       saveExecution.then(subscriptionPlan => {
         const message=`${name} cread${pronoun} correctamente`
         SuccessResponse(res,201,message,subscriptionPlan)
@@ -73,7 +80,6 @@ export const SubscriptionPlanControllers = ({
         const message = "Sincronización de Mercado Pago completada"
         SuccessResponse(res, 200, message, result)
       }).catch(error => {
-        console.log("error", error);
         errorResponses[error.name](res, error)
       })
     },
@@ -85,6 +91,18 @@ export const SubscriptionPlanControllers = ({
       }).catch(error => {
         errorResponses[error.name](res, error)
       })
+    },
+    handleWebhook(req: Request, res: Response) {
+      confirmSubscription.execute(req.body)
+        .then(() => res.status(200).json({ received: true }))
+        .catch((error) => {
+          console.error('[webhook/mercadopago] Error processing webhook:', error?.message ?? error);
+          res.status(200).json({ received: true });
+        });
+    },
+    subscriptionSuccess(_req: Request, res: Response) {
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.status(200).send(SUBSCRIPTION_SUCCESS_HTML);
     }
   }
 }

@@ -40,6 +40,7 @@ export const GetUserByUsernameAction = (
             suscription: subscription?.status ?? null,
             status: user.status,
             fcmToken: user.fcmToken,
+            mercadopago_email: (user as any).mercadopago_email ?? null,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
             avatar: (user as any).avatar,
