@@ -188,6 +188,11 @@ const getJwtValidator = (
       if (await tryForumTokenViaApi()) return;
       if (tryAppKeyAuth()) return;
 
+      const appSecret = (configs as any).app_auth_secret as string | null;
+      const appKeyHeader = req.header("x-app-auth-key")?.trim?.();
+      const userIdHeader = req.header("x-user-id")?.trim?.();
+      console.log("[Auth] 401", req.method, req.path, "| APP_SECRET=", !!appSecret, "X-App-Auth-Key=", !!appKeyHeader, "X-User-Id=", userIdHeader || "vacío");
+
       const isExpired = lastError?.name === "TokenExpiredError";
       const hasForumSecret = Boolean(forumSecret?.trim());
       const hasForumApi = Boolean((configs as any).forum_api_url?.trim());
