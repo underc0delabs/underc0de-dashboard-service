@@ -26,9 +26,26 @@ export const SyncMercadoPagoSubscriptionsAction = (
 
       for (const mpSub of mpSubscriptions) {
         const preapprovalId = String(mpSub.id);
-        const payerEmail =
+        let payerEmail =
           (mpSub as any).payer_email?.trim?.() ||
-          (await mercadoPagoSyncService.getPreapprovalById(preapprovalId))?.payer_email?.trim?.();
+          (mpSub as any).payer_email_address?.trim?.();
+        if (!payerEmail) {
+          const detail = await mercadoPagoSyncService.getPreapprovalById(preapprovalId);
+          payerEmail = (
+            (detail as any)?.payer_email ||
+            (detail as any)?.payer_email_address ||
+            (detail as any)?.payer?.email
+          )?.trim?.();
+        }
+
+        const mpPayments = await mercadoPagoSyncService.syncPayments(mpSub);
+        if (!payerEmail && mpPayments?.length) {
+          const firstPayment = mpPayments[0] as any;
+          payerEmail = (
+            firstPayment?.payer?.email ||
+            firstPayment?.payer_email
+          )?.trim?.();
+        }
 
         let user = mpSub.payer_id
           ? await userRepository.getOne({ mpPayerId: String(mpSub.payer_id) })
@@ -91,12 +108,9 @@ export const SyncMercadoPagoSubscriptionsAction = (
           console.warn("[MP SYNC] Suscripción sin userId (no se encontró usuario por mpPayerId ni por email)", {
             preapprovalId,
             payer_id: mpSub.payer_id,
-            payer_email: payerEmail || "(no disponible - llamar getPreapprovalById)",
+            payer_email: payerEmail || "(no disponible)",
           });
         }
-
-        const mpPayments =
-          await mercadoPagoSyncService.syncPayments(mpSub);
 
         for (const mpPayment of mpPayments) {
           const mpPaymentId = String(mpPayment.id);
