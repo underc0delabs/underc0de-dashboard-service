@@ -2,12 +2,13 @@ import { Router } from "express";
 import { DependencyManager } from "../../../../dependencyManager.js";
 import { allowOnlySelfOrAdmin } from "../../../../middlewares/AllowOnlySelfOrAdmin.js";
 import { IJwtValidator } from "../../../../middlewares/JwtValidator/core/IJwtValidator.js";
-import { appKeyAuth } from "../../../../middlewares/AppKeyAuth.js";
+import { jwtOrAppKeyAuth } from "../../../../middlewares/JwtOrAppKeyAuth.js";
+import { requireAdmin } from "../../../../middlewares/RequireAdmin.js";
 import { getUserControllers } from "../controllers/controllersProvider.js";
 
 const getUserRoutes = (dependencyManager: DependencyManager) => {
   const jwtValidator = getJwtValidator(dependencyManager);
-  const authMeOrPatch = [appKeyAuth];
+  const authMeOrPatch = [jwtOrAppKeyAuth(jwtValidator), allowOnlySelfOrAdmin];
   const {
     save,
     edit,
@@ -38,6 +39,7 @@ const getUserRoutes = (dependencyManager: DependencyManager) => {
   userRouter.get(`/${path}/get-by-username/:username`, getByUsername);
   userRouter.get(`/${path}/me`, authMeOrPatch, getMe);
   userRouter.get(`/${path}/:id`, [jwtValidator], getById);
+  userRouter.patch(`/admin/${path}/:id`, [jwtValidator, requireAdmin], edit);
   userRouter.patch(`/${path}/:id`, authMeOrPatch, edit);
   userRouter.delete(`/${path}/:id`, [jwtValidator], remove);
   return userRouter;

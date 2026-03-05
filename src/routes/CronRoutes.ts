@@ -67,77 +67,56 @@ export const CronRoutes = (dependencyManager: DependencyManager) => {
     }
   });
 
-  router.post("/mercadopago-sync", async (req: Request, res: Response) => {
-    try {
-      console.log("[MP SYNC MANUAL] Iniciando sincronización manual...");
+  router.post("/mercadopago-sync", (req: Request, res: Response) => {
+    const startedAt = new Date().toISOString();
+    console.log("[MP SYNC] Iniciando sincronización en background...");
 
-      const subscriptionPlanRepository = dependencyManager.resolve(
-        "subscriptionPlanRepository",
-      ) as ISubscriptionPlanRepository;
-      const mercadoPagoSyncService = dependencyManager.resolve(
-        "mercadoPagoSyncService",
-      ) as MercadoPagoSyncService;
-      const paymentRepository = dependencyManager.resolve(
-        "paymentRepository",
-      ) as IPaymentRepository;
-      const userRepository = dependencyManager.resolve(
-        "userRepository",
-      ) as IUserRepository;
-      const mercadoPagoGateway = dependencyManager.resolve(
-        "mercadoPagoGateway",
-      ) as MercadoPagoGateway;
-      const environmentRepository = dependencyManager.resolve(
-        "environmentRepository",
-      ) as IEnvironmentRepository;
+    const subscriptionPlanRepository = dependencyManager.resolve(
+      "subscriptionPlanRepository",
+    ) as ISubscriptionPlanRepository;
+    const mercadoPagoSyncService = dependencyManager.resolve(
+      "mercadoPagoSyncService",
+    ) as MercadoPagoSyncService;
+    const paymentRepository = dependencyManager.resolve(
+      "paymentRepository",
+    ) as IPaymentRepository;
+    const userRepository = dependencyManager.resolve(
+      "userRepository",
+    ) as IUserRepository;
+    const mercadoPagoGateway = dependencyManager.resolve(
+      "mercadoPagoGateway",
+    ) as MercadoPagoGateway;
+    const environmentRepository = dependencyManager.resolve(
+      "environmentRepository",
+    ) as IEnvironmentRepository;
 
-      const subscriptionPlanActions = getSubscriptionPlanActions(
-        subscriptionPlanRepository,
-        mercadoPagoSyncService,
-        paymentRepository,
-        userRepository,
-        mercadoPagoGateway,
-        environmentRepository,
-      );
+    const subscriptionPlanActions = getSubscriptionPlanActions(
+      subscriptionPlanRepository,
+      mercadoPagoSyncService,
+      paymentRepository,
+      userRepository,
+      mercadoPagoGateway,
+      environmentRepository,
+    );
 
-      await subscriptionPlanActions.syncMercadoPago.execute();
+    res.status(202).json({
+      status: 202,
+      success: true,
+      msg: "Sincronización iniciada. Se procesará en background.",
+      result: { startedAt },
+    });
 
-      console.log("[MP SYNC MANUAL] Sincronización completada exitosamente");
-
-      res.status(200).json({
-        status: 200,
-        success: true,
-        msg: "Sincronización de MercadoPago completada exitosamente",
-        result: { timestamp: new Date().toISOString() },
-      });
-    } catch (error) {
-      console.error("[MP SYNC MANUAL] Error:", error);
-      let status = 500;
-      let msg =
-        error instanceof Error
-          ? error.message
-          : "Error al ejecutar sincronización";
-      let mpBody: unknown = null;
-      if (axios.isAxiosError(error) && error.response) {
-        status = error.response.status;
-        mpBody = error.response.data;
-        const mpMsg =
-          (error.response.data as any)?.message ??
-          (error.response.data as any)?.error ??
-          (error.response.data as any)?.description;
-        if (status === 403) {
-          msg = `MercadoPago rechazó la solicitud (403). Revisá MP_ACCESS_TOKEN y permisos de la app. ${mpMsg ? `Detalle: ${mpMsg}` : ""}`;
-        } else if (mpMsg) {
-          msg = `MercadoPago: ${mpMsg}`;
+    subscriptionPlanActions.syncMercadoPago
+      .execute()
+      .then(() => {
+        console.log("[MP SYNC] Sincronización en background completada.");
+      })
+      .catch((error: any) => {
+        console.error("[MP SYNC] Error en background:", error?.message ?? error);
+        if (axios.isAxiosError(error) && error.response?.data) {
+          console.error("[MP SYNC] MP response:", JSON.stringify(error.response.data).slice(0, 300));
         }
-      }
-      const httpStatus = status === 403 ? 403 : 500;
-      res.status(httpStatus).json({
-        status: httpStatus,
-        success: false,
-        msg,
-        result: mpBody ? { mpResponse: mpBody } : null,
       });
-    }
   });
 
   return router;
