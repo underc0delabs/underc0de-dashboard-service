@@ -9,6 +9,20 @@ import { getSubscriptionPlanActions } from "../modules/subscriptionPlan/core/act
 import { IEnvironmentRepository } from "../modules/environments/core/repository/IEnvironmentRepository.js";
 import { MercadoPagoGateway } from "../services/mercadopagoService/core/gateway/mercadoPagoGateway.js";
 
+type SyncStatus = "idle" | "running" | "completed" | "failed";
+
+interface MercadoPagoSyncState {
+  status: SyncStatus;
+  startedAt?: string;
+  finishedAt?: string;
+  subscriptionsCreated?: number;
+  subscriptionsUpdated?: number;
+  paymentsSaved?: number;
+  error?: string;
+}
+
+let mercadopagoSyncState: MercadoPagoSyncState = { status: "idle" };
+
 export const CronRoutes = (dependencyManager: DependencyManager) => {
   const router = Router();
 
@@ -67,8 +81,18 @@ export const CronRoutes = (dependencyManager: DependencyManager) => {
     }
   });
 
+  router.get("/mercadopago-sync/status", (_req: Request, res: Response) => {
+    return res.status(200).json({
+      status: 200,
+      success: true,
+      msg: "Estado del sync MercadoPago",
+      result: mercadopagoSyncState,
+    });
+  });
+
   router.post("/mercadopago-sync", (req: Request, res: Response) => {
     const startedAt = new Date().toISOString();
+    mercadopagoSyncState = { status: "running", startedAt };
     console.log("[MP SYNC] Iniciando sincronización en background...");
 
     const subscriptionPlanRepository = dependencyManager.resolve(
@@ -108,10 +132,30 @@ export const CronRoutes = (dependencyManager: DependencyManager) => {
 
     subscriptionPlanActions.syncMercadoPago
       .execute()
-      .then(() => {
-        console.log("[MP SYNC] Sincronización en background completada.");
+      .then((result: any) => {
+        const finishedAt = new Date().toISOString();
+        mercadopagoSyncState = {
+          status: "completed",
+          startedAt,
+          finishedAt,
+          subscriptionsCreated: result?.subscriptionsCreated ?? 0,
+          subscriptionsUpdated: result?.subscriptionsUpdated ?? 0,
+          paymentsSaved: result?.paymentsSaved ?? 0,
+        };
+        console.log("[MP SYNC] Sincronización completada.", {
+          subscriptionsCreated: result?.subscriptionsCreated ?? 0,
+          subscriptionsUpdated: result?.subscriptionsUpdated ?? 0,
+          paymentsSaved: result?.paymentsSaved ?? 0,
+          duration: `${((Date.now() - new Date(startedAt).getTime()) / 1000).toFixed(1)}s`,
+        });
       })
       .catch((error: any) => {
+        mercadopagoSyncState = {
+          status: "failed",
+          startedAt,
+          finishedAt: new Date().toISOString(),
+          error: error?.message ?? String(error),
+        };
         console.error("[MP SYNC] Error en background:", error?.message ?? error);
         if (axios.isAxiosError(error) && error.response?.data) {
           console.error("[MP SYNC] MP response:", JSON.stringify(error.response.data).slice(0, 300));
