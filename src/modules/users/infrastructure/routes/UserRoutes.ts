@@ -2,10 +2,12 @@ import { Router } from "express";
 import { DependencyManager } from "../../../../dependencyManager.js";
 import { allowOnlySelfOrAdmin } from "../../../../middlewares/AllowOnlySelfOrAdmin.js";
 import { IJwtValidator } from "../../../../middlewares/JwtValidator/core/IJwtValidator.js";
+import { appKeyAuth } from "../../../../middlewares/AppKeyAuth.js";
 import { getUserControllers } from "../controllers/controllersProvider.js";
 
 const getUserRoutes = (dependencyManager: DependencyManager) => {
   const jwtValidator = getJwtValidator(dependencyManager);
+  const authMeOrPatch = [appKeyAuth];
   const {
     save,
     edit,
@@ -34,9 +36,9 @@ const getUserRoutes = (dependencyManager: DependencyManager) => {
     linkSubscription
   );
   userRouter.get(`/${path}/get-by-username/:username`, getByUsername);
-  userRouter.get(`/${path}/me`, [jwtValidator], getMe);
+  userRouter.get(`/${path}/me`, authMeOrPatch, getMe);
   userRouter.get(`/${path}/:id`, [jwtValidator], getById);
-  userRouter.patch(`/${path}/:id`, [jwtValidator, allowOnlySelfOrAdmin], edit);
+  userRouter.patch(`/${path}/:id`, authMeOrPatch, edit);
   userRouter.delete(`/${path}/:id`, [jwtValidator], remove);
   return userRouter;
 };
