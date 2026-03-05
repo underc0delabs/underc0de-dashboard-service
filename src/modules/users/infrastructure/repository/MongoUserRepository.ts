@@ -19,7 +19,9 @@ const fullNameWithoutDuplicate = (name?: string | null, lastname?: string | null
 
 export const MongoUserRepository = (): IUserRepository => ({
   async save(user) {
-    const newUser = await UserModel.create(user as any);
+    const payload = { ...(user as object) };
+    delete (payload as any).id;
+    const newUser = await UserModel.create(payload as any);
     const userJson = newUser.toJSON() as any;
     delete userJson.password;
     return userJson as IUser;
