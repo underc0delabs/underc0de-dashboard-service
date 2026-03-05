@@ -159,9 +159,7 @@ const getJwtValidator = (
       const appSecret = (configs as any).app_auth_secret as string | null;
       const key = req.header("x-app-auth-key")?.trim?.();
       const userId = req.header("x-user-id")?.trim?.();
-      if (appSecret && (key || userId)) {
-        console.warn("[Auth] app-key intento:", req.method, req.path, "key=", !!key, "userId=", userId || "(vacío)");
-      }
+      console.warn("[Auth] app-key check:", req.method, req.path, "secretOk=", !!appSecret, "key=", !!key, "userId=", userId || "(vacío)");
       if (!appSecret) {
         if (key || userId) console.warn("[Auth] app-key: APP_AUTH_SECRET no configurado (headers recibidos:", !!key, !!userId, ")");
         return false;
