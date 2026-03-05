@@ -16,6 +16,7 @@ export const SyncMercadoPagoSubscriptionsAction = (
   return {
     execute: async () => {
       const mpSubscriptions = await mercadoPagoSyncService.syncSubscriptions();
+      console.log("[MP SYNC] Suscripciones desde MP:", mpSubscriptions.length);
       if (!mpSubscriptions.length) {
         return { success: true, synced: 0 };
       }
@@ -25,18 +26,17 @@ export const SyncMercadoPagoSubscriptionsAction = (
 
       for (const mpSub of mpSubscriptions) {
         const preapprovalId = String(mpSub.id);
+        const payerEmail =
+          (mpSub as any).payer_email?.trim?.() ||
+          (await mercadoPagoSyncService.getPreapprovalById(preapprovalId))?.payer_email?.trim?.();
+
         let user = mpSub.payer_id
           ? await userRepository.getOne({ mpPayerId: String(mpSub.payer_id) })
           : null;
-        if (!user) {
-          const payerEmail =
-            (mpSub as any).payer_email?.trim?.() ||
-            (await mercadoPagoSyncService.getPreapprovalById(preapprovalId))?.payer_email?.trim?.();
-          if (payerEmail) {
-            user =
-              (await userRepository.getOneByEmailIgnoreCase(payerEmail)) ??
-              (await userRepository.getOneByMercadopagoEmailIgnoreCase(payerEmail));
-          }
+        if (!user && payerEmail) {
+          user =
+            (await userRepository.getOneByEmailIgnoreCase(payerEmail)) ??
+            (await userRepository.getOneByMercadopagoEmailIgnoreCase(payerEmail));
         }
         const existing = await subscriptionPlanRepository.getOne({
           mpPreapprovalId: preapprovalId,
@@ -64,11 +64,16 @@ export const SyncMercadoPagoSubscriptionsAction = (
 
         const effectiveUserId = subscriptionPayload.userId;
         if (effectiveUserId != null) {
+          const userUpdatePayload: Record<string, unknown> = {
+            is_pro: subscriptionPayload.status === "ACTIVE",
+            mpPayerId: String(mpSub.payer_id),
+          };
+          const hasMercadopagoEmail = (user as any)?.mercadopago_email?.trim?.();
+          if (payerEmail && !hasMercadopagoEmail) {
+            userUpdatePayload.mercadopago_email = payerEmail;
+          }
           const [affectedRows] = (await userRepository.edit(
-            {
-              is_pro: subscriptionPayload.status === "ACTIVE",
-              mpPayerId: String(mpSub.payer_id),
-            } as any,
+            userUpdatePayload as any,
             String(effectiveUserId)
           )) as [number];
           if (affectedRows === 0) {
@@ -86,6 +91,7 @@ export const SyncMercadoPagoSubscriptionsAction = (
           console.warn("[MP SYNC] Suscripción sin userId (no se encontró usuario por mpPayerId ni por email)", {
             preapprovalId,
             payer_id: mpSub.payer_id,
+            payer_email: payerEmail || "(no disponible - llamar getPreapprovalById)",
           });
         }
 

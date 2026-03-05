@@ -5,7 +5,7 @@ const MP_BASE_URL = "https://api.mercadopago.com";
 
 const PAGE_LIMIT = 100;
 const MAX_PAGES = 20;
-const SUBSCRIPTIONS_MONTH_WINDOW = 3;
+const PAYMENTS_MONTH_WINDOW = 12;
 
 export const MercadoPagoHttpGateway = (): MercadoPagoGateway => {
   const client: AxiosInstance = axios.create({
@@ -22,10 +22,6 @@ export const MercadoPagoHttpGateway = (): MercadoPagoGateway => {
       let offset = 0;
       const limit = 50;
 
-      const now = new Date();
-      const fromDate = new Date();
-      fromDate.setMonth(now.getMonth() - SUBSCRIPTIONS_MONTH_WINDOW);
-
       while (true) {
         const { data } = await client.get("/preapproval/search", {
           params: { limit, offset },
@@ -34,13 +30,7 @@ export const MercadoPagoHttpGateway = (): MercadoPagoGateway => {
         const results = data?.results ?? [];
         if (!results.length) break;
 
-        const recent = results.filter((sub: any) => {
-          if (!sub.date_created) return false;
-          const created = new Date(sub.date_created);
-          return created >= fromDate;
-        });
-
-        all.push(...recent);
+        all.push(...results);
 
         if (results.length < limit) break;
         offset += limit;
@@ -84,7 +74,7 @@ export const MercadoPagoHttpGateway = (): MercadoPagoGateway => {
 
       const endDate = new Date();
       const beginDate = new Date();
-      beginDate.setMonth(endDate.getMonth() - SUBSCRIPTIONS_MONTH_WINDOW);
+      beginDate.setMonth(endDate.getMonth() - PAYMENTS_MONTH_WINDOW);
 
       let offset = 0;
       let page = 0;
