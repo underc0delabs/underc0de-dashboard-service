@@ -21,6 +21,7 @@ module.exports = {
       DB_PASSWORD: process.env.DB_PASSWORD,
       DB_SSL: process.env.DB_SSL,
       SECRETPRIVATEKEY: process.env.SECRETPRIVATEKEY,
+      APP_AUTH_SECRET: process.env.APP_AUTH_SECRET,
       FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID,
       FIREBASE_PRIVATE_KEY_ID: process.env.FIREBASE_PRIVATE_KEY_ID,
       FIREBASE_PRIVATE_KEY: process.env.FIREBASE_PRIVATE_KEY,

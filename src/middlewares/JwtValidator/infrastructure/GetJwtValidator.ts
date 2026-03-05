@@ -193,10 +193,11 @@ const getJwtValidator = (
       const userIdHeader = req.header("x-user-id")?.trim?.();
       console.log("[Auth] 401", req.method, req.path, "| APP_SECRET=", !!appSecret, "X-App-Auth-Key=", !!appKeyHeader, "X-User-Id=", userIdHeader || "vacío");
 
-      const isExpired = lastError?.name === "TokenExpiredError";
+      const err = lastError as Error | null;
+      const isExpired = err?.name === "TokenExpiredError";
       const hasForumSecret = Boolean(forumSecret?.trim());
       const hasForumApi = Boolean((configs as any).forum_api_url?.trim());
-      const lastErrMsg = lastError?.message ?? lastError?.name ?? "";
+      const lastErrMsg = (err?.message ?? err?.name ?? "") as string;
       console.warn("[Auth] 401", req.method, req.path, ":", isExpired
         ? "Token expirado"
         : `Token no válido (dashboard: ${secret ? "ok" : "sin secret"}, foro-jwt: ${hasForumSecret ? "ok" : "no"}, foro-api: ${hasForumApi ? "ok" : "no"})`,
