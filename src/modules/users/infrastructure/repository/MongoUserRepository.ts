@@ -25,7 +25,16 @@ export const MongoUserRepository = (): IUserRepository => ({
     return userJson as IUser;
   },
   async edit(user, id) {
-    return await UserModel.update(user as any, { where: { id } });
+    const payload = user && typeof user === "object" ? { ...user } : {};
+    const sanitized: Record<string, unknown> = {};
+    Object.keys(payload).forEach((key) => {
+      const val = (payload as any)[key];
+      if (val !== undefined && val !== null) {
+        sanitized[key] = val;
+      }
+    });
+    if (Object.keys(sanitized).length === 0) return [0];
+    return await UserModel.update(sanitized as any, { where: { id } });
   },
   async remove(id) {
     return await UserModel.destroy({ where: { id } });

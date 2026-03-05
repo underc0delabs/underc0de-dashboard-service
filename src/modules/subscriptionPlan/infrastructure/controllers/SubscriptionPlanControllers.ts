@@ -30,7 +30,14 @@ export const SubscriptionPlanControllers = ({
       if (!auth?.id) {
         return ErrorResponse(res, new Error("No hay token en la petición") as any, 401);
       }
-      const saveExecution = createSubscription.execute({ userId: auth.id });
+      const body = (req.body || {}) as { mercadopago_email?: string };
+      const mercadopagoEmail = typeof body.mercadopago_email === "string"
+        ? body.mercadopago_email.trim() || undefined
+        : undefined;
+      const saveExecution = createSubscription.execute({
+        userId: auth.id,
+        mercadopagoEmail,
+      });
       saveExecution.then(subscriptionPlan => {
         const message=`${name} cread${pronoun} correctamente`
         SuccessResponse(res,201,message,subscriptionPlan)

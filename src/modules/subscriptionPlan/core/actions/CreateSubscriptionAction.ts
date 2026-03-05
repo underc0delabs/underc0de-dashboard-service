@@ -47,7 +47,7 @@ const grantOwnerSubscription = async (
 };
 
 export interface ICreateSubscriptionAction {
-  execute: (userData: { userId: string }) => Promise<any>;
+  execute: (userData: { userId: string; mercadopagoEmail?: string }) => Promise<any>;
 }
 
 export const CreateSubscriptionAction = (
@@ -57,7 +57,7 @@ export const CreateSubscriptionAction = (
   environmentRepository: IEnvironmentRepository
 ): ICreateSubscriptionAction => {
   return {
-    execute: async (userData: { userId: string }) => {
+    execute: async (userData: { userId: string; mercadopagoEmail?: string }) => {
       try {
         const user = await userRepository.getById(userData.userId);
         if (!user) throw new Error("Usuario no encontrado");
@@ -65,8 +65,19 @@ export const CreateSubscriptionAction = (
         const userEmail = (user as any).email?.trim?.();
         if (!userEmail) throw new Error("El usuario no tiene email asociado");
 
+        const incomingMpEmail = userData.mercadopagoEmail?.trim?.();
+        if (incomingMpEmail) {
+          await userRepository.edit(
+            { mercadopago_email: incomingMpEmail } as any,
+            userData.userId
+          );
+        }
+
         const collectorEmail = process.env.MERCADO_PAGO_COLLECTOR_EMAIL?.trim().toLowerCase();
-        const mpEmail = (user as any).mercadopago_email?.trim?.() || userEmail;
+        const mpEmail =
+          incomingMpEmail ||
+          (user as any).mercadopago_email?.trim?.() ||
+          userEmail;
         const isCollector =
           collectorEmail &&
           (userEmail.toLowerCase() === collectorEmail ||

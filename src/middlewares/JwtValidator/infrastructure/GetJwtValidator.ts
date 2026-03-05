@@ -107,7 +107,7 @@ const getJwtValidator = (
           validateStatus: () => true,
         });
         if (res.status < 200 || res.status >= 300) {
-          console.warn("[Auth] foro-api status:", res.status, "keys:", res.data ? Object.keys(res.data).slice(0, 5) : []);
+          console.warn("[Auth] foro-api status:", res.status, "url:", forumApiUrl, "keys:", res.data ? Object.keys(res.data).slice(0, 5) : [], "sample:", JSON.stringify(res.data)?.slice(0, 200));
           return false;
         }
         const data = res.data;
@@ -163,9 +163,11 @@ const getJwtValidator = (
       const isExpired = lastError?.name === "TokenExpiredError";
       const hasForumSecret = Boolean(forumSecret?.trim());
       const hasForumApi = Boolean((configs as any).forum_api_url?.trim());
-      console.warn("[Auth] 401:", isExpired
+      const lastErrMsg = lastError?.message ?? lastError?.name ?? "";
+      console.warn("[Auth] 401", req.method, req.path, ":", isExpired
         ? "Token expirado"
-        : `Token no válido (dashboard: ${secret ? "ok" : "sin secret"}, foro-jwt: ${hasForumSecret ? "ok" : "no"}, foro-api: ${hasForumApi ? "ok" : "no"})`
+        : `Token no válido (dashboard: ${secret ? "ok" : "sin secret"}, foro-jwt: ${hasForumSecret ? "ok" : "no"}, foro-api: ${hasForumApi ? "ok" : "no"})`,
+        "lastErr:", lastErrMsg.slice(0, 80)
       );
       return res.status(401).json({
         status: 401,
