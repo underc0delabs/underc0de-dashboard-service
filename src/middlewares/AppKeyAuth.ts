@@ -23,7 +23,7 @@ export const appKeyAuth = (req: Request, res: Response, next: NextFunction) => {
     return res.status(401).json({
       status: 401,
       success: false,
-      msg: "Se requieren X-App-Auth-Key y X-User-Id",
+      msg: "[APPKEY] Se requieren X-App-Auth-Key y X-User-Id",
       type: "auth",
     });
   }
@@ -32,7 +32,7 @@ export const appKeyAuth = (req: Request, res: Response, next: NextFunction) => {
     return res.status(401).json({
       status: 401,
       success: false,
-      msg: "Clave inválida",
+      msg: "[APPKEY] Clave inválida",
       type: "auth",
     });
   }
