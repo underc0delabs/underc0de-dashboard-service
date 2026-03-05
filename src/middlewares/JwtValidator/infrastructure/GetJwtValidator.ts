@@ -155,10 +155,24 @@ const getJwtValidator = (
       }
     };
 
+    const tryAppKeyAuth = (): boolean => {
+      const appSecret = (configs as any).app_auth_secret as string | null;
+      if (!appSecret) return false;
+      const key = req.header("x-app-auth-key")?.trim?.();
+      const userId = req.header("x-user-id")?.trim?.();
+      if (key !== appSecret || !userId) return false;
+      const resourceId = String((req as any).params?.id ?? "");
+      if (resourceId && userId !== resourceId) return false;
+      (req as any).auth = { id: userId, isAdmin: false } as AuthPayload;
+      next();
+      return true;
+    };
+
     try {
       if (await tryDashboardToken()) return;
       if (await tryForumToken()) return;
       if (await tryForumTokenViaApi()) return;
+      if (tryAppKeyAuth()) return;
 
       const isExpired = lastError?.name === "TokenExpiredError";
       const hasForumSecret = Boolean(forumSecret?.trim());

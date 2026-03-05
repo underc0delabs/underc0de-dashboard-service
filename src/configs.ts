@@ -26,6 +26,7 @@ const configs = {
         port: process.env.DB_PORT,
     },
     secret_key: process.env.SECRETPRIVATEKEY,
+    app_auth_secret: process.env.APP_AUTH_SECRET?.trim() || null,
     forum_jwt_secret: process.env.FORUM_JWT_SECRET || process.env.SMF_JWT_SECRET,
     forum_api_url: process.env.FORUM_API_URL || 'https://underc0de.org/foro/extern/api.php',
     access_token_expires_seconds: Number(process.env.ACCESS_TOKEN_EXPIRES_IN) || 900,
