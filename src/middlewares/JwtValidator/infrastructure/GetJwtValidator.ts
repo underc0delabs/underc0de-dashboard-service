@@ -157,12 +157,28 @@ const getJwtValidator = (
 
     const tryAppKeyAuth = (): boolean => {
       const appSecret = (configs as any).app_auth_secret as string | null;
-      if (!appSecret) return false;
       const key = req.header("x-app-auth-key")?.trim?.();
       const userId = req.header("x-user-id")?.trim?.();
-      if (key !== appSecret || !userId) return false;
+      if (appSecret && (key || userId)) {
+        console.warn("[Auth] app-key intento:", req.method, req.path, "key=", !!key, "userId=", userId || "(vacío)");
+      }
+      if (!appSecret) {
+        if (key || userId) console.warn("[Auth] app-key: APP_AUTH_SECRET no configurado (headers recibidos:", !!key, !!userId, ")");
+        return false;
+      }
+      if (!key || !userId) {
+        if (key || userId) console.warn("[Auth] app-key: faltan headers X-App-Auth-Key o X-User-Id");
+        return false;
+      }
+      if (key !== appSecret) {
+        console.warn("[Auth] app-key: clave no coincide");
+        return false;
+      }
       const resourceId = String((req as any).params?.id ?? "");
-      if (resourceId && userId !== resourceId) return false;
+      if (resourceId && userId !== resourceId) {
+        console.warn("[Auth] app-key: userId", userId, "!= resourceId", resourceId);
+        return false;
+      }
       (req as any).auth = { id: userId, isAdmin: false } as AuthPayload;
       next();
       return true;
