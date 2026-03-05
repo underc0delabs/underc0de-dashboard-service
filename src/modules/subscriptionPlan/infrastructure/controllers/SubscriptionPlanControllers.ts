@@ -5,7 +5,7 @@ import { ISubscriptionPlanActions } from "../../core/actions/actionsProvider.js"
 import { InvalidIdException } from "../../core/exceptions/InvalidIdException.js";
 import { SubscriptionPlanNotExistException } from "../../core/exceptions/SubscriptionPlanNotExistException.js";
 
-const SUBSCRIPTION_SUCCESS_HTML = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Pago completado</title></head><body style="font-family:sans-serif;text-align:center;padding:2rem;"><h1>Pago completado</h1><p>Podés cerrar esta ventana.</p></body></html>`;
+const SUBSCRIPTION_SUCCESS_HTML = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="1;url=underc0de://subscriptions/success"><title>Pago completado</title></head><body style="font-family:sans-serif;text-align:center;padding:2rem;"><h1>Pago completado</h1><p>Volviendo a la app...</p><script>setTimeout(function(){window.location.href="underc0de://subscriptions/success";},800);</script></body></html>`;
 
 const name = 'Plan de suscripción'
 const pronoun = 'o'
