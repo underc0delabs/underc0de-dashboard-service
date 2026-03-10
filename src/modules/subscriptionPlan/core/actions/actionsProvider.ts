@@ -70,7 +70,7 @@ export const getSubscriptionPlanActions = (
   mercadoPagoGateway: MercadoPagoGateway,
   environmentRepository: IEnvironmentRepository,
 ) => {
-  const   const syncSubscriptionByPreapprovalId: ISyncSubscriptionByPreapprovalIdAction =
+  const syncSubscriptionByPreapprovalId: ISyncSubscriptionByPreapprovalIdAction =
     SyncSubscriptionByPreapprovalIdAction(
       userRepository,
       SubscriptionPlanRepository,
