@@ -14,6 +14,7 @@ export const SaveFcmTokenAction = (
           const user = await UserRepository.getById(body.userId);
           if (!user) {
             reject(new Error("User not found"));
+            return;
           }
           user.fcmToken = body.token;
           await UserRepository.edit(user, user.id);

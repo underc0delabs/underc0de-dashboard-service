@@ -17,12 +17,10 @@ export const SavePushNotificationAction = (
       return new Promise(async (resolve, reject) => {
         try {
           let tokens: string | string[] = [];
-          
-          if (body?.userId != "") {
-            const userId = body?.userId ?? '';
-            if (!userId) {
-              throw new Error('UserId is required for normalUsers audience');
-            }
+          const hasSpecificUser = body?.userId && String(body.userId).trim() !== "";
+
+          if (hasSpecificUser) {
+            const userId = String(body!.userId!).trim();
             
             const user = await userRepository.getById(userId);
             if (!user) {
@@ -61,6 +59,23 @@ export const SavePushNotificationAction = (
             tokens = users
               .map((user: any) => user.fcmToken)
               .filter((token: string) => token && token.trim() !== '');
+          } else if (body.audience === 'normalUsers') {
+            const usersResult = await userRepository.get({
+              status: true,
+              page_count: 10000,
+              page_number: 0,
+            });
+            
+            const users = usersResult?.users || [];
+            const normalUsers = users.filter((user: any) =>
+              !user.subscription || user.subscription?.status !== 'ACTIVE'
+            );
+            
+            tokens = normalUsers
+              .map((user: any) => user.fcmToken)
+              .filter((token: string) => token && token.trim() !== '');
+          } else if (body.audience === 'usuarioEspecifico') {
+            throw new Error('UserId is required for usuarioEspecifico audience');
           } else {
             throw new Error(`Invalid audience: ${body.audience}`);
           }

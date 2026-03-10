@@ -113,7 +113,12 @@ export const UserControllers = ({
         });
     },
     saveFcmToken(req: Request, res: Response) {
-      const saveFcmTokenExecution = saveFcmToken.execute(req.body);
+      const auth = (req as any).auth as { id: string } | undefined;
+      if (!auth?.id) {
+        return ErrorResponse(res, new Error("No autorizado"), 401);
+      }
+      const body = { ...req.body, userId: auth.id };
+      const saveFcmTokenExecution = saveFcmToken.execute(body);
       saveFcmTokenExecution
         .then((user) => {
           const message = `${name} fcm token guardado correctamente`;

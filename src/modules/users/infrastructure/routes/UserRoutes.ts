@@ -31,7 +31,7 @@ const getUserRoutes = (dependencyManager: DependencyManager) => {
   userRouter.post(`/${path}`, [jwtValidator], save);
   userRouter.get(`/${path}`, [jwtValidator], get);
   userRouter.get(`/${path}/metrics`, [jwtValidator], getMetrics);
-  userRouter.post(`/${path}/fcm-token`, saveFcmToken);
+  userRouter.post(`/${path}/fcm-token`, [jwtOrAppKeyAuth(jwtValidator)], saveFcmToken);
   userRouter.post(
     `/${path}/link-subscription`,
     linkSubscription

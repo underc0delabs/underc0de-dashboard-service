@@ -18,6 +18,8 @@ export const SubscriptionPlanControllers = ({
     syncMercadoPago,
     createSubscription,
     confirmSubscription,
+    syncSubscriptionByPreapprovalId,
+    refreshSubscriptionStatus,
   }: ISubscriptionPlanActions) => {
     
   const errorResponses = createHashMap({
@@ -107,7 +109,43 @@ export const SubscriptionPlanControllers = ({
           res.status(200).json({ received: true });
         });
     },
-    subscriptionSuccess(_req: Request, res: Response) {
+    refreshSubscriptionStatus(req: Request, res: Response) {
+      const auth = (req as any).auth;
+      if (!auth?.id) {
+        return ErrorResponse(res, new Error("No autorizado") as any, 401);
+      }
+      const body = (req.body || {}) as { preapproval_id?: string };
+      const preapproval_id = typeof body.preapproval_id === "string"
+        ? body.preapproval_id.trim() || undefined
+        : undefined;
+      refreshSubscriptionStatus
+        .execute({ userId: auth.id, preapproval_id })
+        .then((result) => {
+          if (result.success) {
+            SuccessResponse(res, 200, "Estado actualizado", result);
+          } else {
+            ErrorResponse(res, new Error(result.message ?? "Error al sincronizar") as any, 400);
+          }
+        })
+        .catch((error) => {
+          errorResponses[error?.name] ? errorResponses[error.name](res, error) : ErrorResponse(res, error, 500);
+        });
+    },
+    async subscriptionSuccess(req: Request, res: Response) {
+      const preapprovalId =
+        (req.query?.preapproval_id as string)?.trim() ||
+        (req.query?.id as string)?.trim();
+
+      if (preapprovalId) {
+        const syncPromise = syncSubscriptionByPreapprovalId.execute(preapprovalId);
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("Sync timeout")), 5000)
+        );
+        await Promise.race([syncPromise, timeoutPromise]).catch((err) => {
+          console.warn("[subscriptions/success] Sync failed:", err?.message ?? err);
+        });
+      }
+
       res.setHeader("Content-Type", "text/html; charset=utf-8");
       res.status(200).send(SUBSCRIPTION_SUCCESS_HTML);
     }

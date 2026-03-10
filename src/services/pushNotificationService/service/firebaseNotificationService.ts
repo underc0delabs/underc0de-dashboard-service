@@ -41,45 +41,52 @@ export const firebaseNotificationService = (): IFirebaseService => {
           return;
         }
 
-        const response = await messaging.sendEachForMulticast({
-          tokens: validTokens,
-          notification: {
-            title,
-            body: message,
-          },
-          data: {
-            timestamp: new Date().toISOString(),
-          },
-        });
-
-        if (response.failureCount > 0) {
-          const errors = response.responses
-            .map((r, i) => {
-              if (!r.success) {
-                const errorCode = r.error?.code || 'unknown';
-                const errorMessage = r.error?.message || 'Error desconocido';
-                
-                console.error(`Error en token ${i + 1}:`, {
-                  code: errorCode,
-                  message: errorMessage,
-                  error: r.error
-                });
-                
-                if (errorCode === 'messaging/third-party-auth-error') {
-                  return `Token ${i + 1}: Error de autenticación de Firebase. Verifica las credenciales y permisos de la cuenta de servicio.`;
-                }
-                
-                return `Token ${i + 1}: ${errorCode} - ${errorMessage}`;
-              }
-              return null;
-            })
-            .filter(Boolean);
-          
-          throw new Error(`Error al enviar notificaciones: ${errors.join(', ')}`);
+        // Firebase limita sendEachForMulticast a 500 tokens por llamada
+        const BATCH_SIZE = 500;
+        const batches: string[][] = [];
+        for (let i = 0; i < validTokens.length; i += BATCH_SIZE) {
+          batches.push(validTokens.slice(i, i + BATCH_SIZE));
         }
 
-        if (response.successCount === 0) {
-          throw new Error('No se pudo enviar ninguna notificación');
+        for (const batch of batches) {
+          const response = await messaging.sendEachForMulticast({
+            tokens: batch,
+            notification: {
+              title,
+              body: message,
+            },
+            data: {
+              timestamp: new Date().toISOString(),
+            },
+          });
+
+          if (response.failureCount > 0) {
+            const errors = response.responses
+              .map((r, i) => {
+                if (!r.success) {
+                  const errorCode = r.error?.code || "unknown";
+                  const errorMessage = r.error?.message || "Error desconocido";
+                  console.error(`Error en token ${i + 1}:`, {
+                    code: errorCode,
+                    message: errorMessage,
+                    error: r.error,
+                  });
+                  if (errorCode === "messaging/third-party-auth-error") {
+                    return `Token ${i + 1}: Error de autenticación de Firebase.`;
+                  }
+                  return `Token ${i + 1}: ${errorCode} - ${errorMessage}`;
+                }
+                return null;
+              })
+              .filter(Boolean);
+            throw new Error(
+              `Error al enviar notificaciones: ${(errors as string[]).join(", ")}`
+            );
+          }
+
+          if (response.successCount === 0) {
+            throw new Error("No se pudo enviar ninguna notificación");
+          }
         }
       } catch (error) {
         console.error('Error en firebaseNotificationService.sendNotification:', {

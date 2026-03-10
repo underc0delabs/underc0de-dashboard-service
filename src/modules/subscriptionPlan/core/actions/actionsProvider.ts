@@ -39,6 +39,14 @@ import {
   IConfirmSubscriptionAction,
   ConfirmSubscriptionAction,
 } from "./ConfirmSubscriptionAction.js";
+import {
+  ISyncSubscriptionByPreapprovalIdAction,
+  SyncSubscriptionByPreapprovalIdAction,
+} from "./SyncSubscriptionByPreapprovalIdAction.js";
+import {
+  IRefreshSubscriptionStatusAction,
+  RefreshSubscriptionStatusAction,
+} from "./RefreshSubscriptionStatusAction.js";
 import { IEnvironmentRepository } from "../../../environments/core/repository/IEnvironmentRepository.js";
 
 export interface ISubscriptionPlanActions {
@@ -51,6 +59,8 @@ export interface ISubscriptionPlanActions {
   syncMercadoPago: ISyncMercadoPagoSubscriptionsAction;
   createSubscription: ICreateSubscriptionAction;
   confirmSubscription: IConfirmSubscriptionAction;
+  syncSubscriptionByPreapprovalId: ISyncSubscriptionByPreapprovalIdAction;
+  refreshSubscriptionStatus: IRefreshSubscriptionStatusAction;
 }
 export const getSubscriptionPlanActions = (
   SubscriptionPlanRepository: ISubscriptionPlanRepository,
@@ -60,6 +70,13 @@ export const getSubscriptionPlanActions = (
   mercadoPagoGateway: MercadoPagoGateway,
   environmentRepository: IEnvironmentRepository,
 ) => {
+  const   const syncSubscriptionByPreapprovalId: ISyncSubscriptionByPreapprovalIdAction =
+    SyncSubscriptionByPreapprovalIdAction(
+      userRepository,
+      SubscriptionPlanRepository,
+      mercadoPagoGateway
+    );
+
   const SubscriptionPlanActions: ISubscriptionPlanActions = {
     save: SaveSubscriptionPlanAction(SubscriptionPlanRepository),
     edit: EditSubscriptionPlanAction(SubscriptionPlanRepository),
@@ -79,9 +96,12 @@ export const getSubscriptionPlanActions = (
       userRepository,
       environmentRepository,
     ),
-    confirmSubscription: ConfirmSubscriptionAction(
+    confirmSubscription: ConfirmSubscriptionAction(syncSubscriptionByPreapprovalId),
+    syncSubscriptionByPreapprovalId,
+    refreshSubscriptionStatus: RefreshSubscriptionStatusAction(
       userRepository,
       SubscriptionPlanRepository,
+      syncSubscriptionByPreapprovalId
     ),
   };
   return SubscriptionPlanActions;
