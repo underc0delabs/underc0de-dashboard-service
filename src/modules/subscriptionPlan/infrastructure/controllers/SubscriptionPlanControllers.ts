@@ -102,10 +102,19 @@ export const SubscriptionPlanControllers = ({
       })
     },
     handleWebhook(req: Request, res: Response) {
-      confirmSubscription.execute(req.body)
-        .then(() => res.status(200).json({ received: true }))
+      const body = req.body ?? {};
+      confirmSubscription.execute(body)
+        .then((result) => {
+          if (result?.success) {
+            console.log("[webhook/mercadopago] Subscription synced successfully", {
+              preapproval_id: body?.data?.id ?? body?.id,
+              user_is_pro: result?.user_is_pro,
+            });
+          }
+          res.status(200).json({ received: true });
+        })
         .catch((error) => {
-          console.error('[webhook/mercadopago] Error processing webhook:', error?.message ?? error);
+          console.error("[webhook/mercadopago] Error processing webhook:", error?.message ?? error);
           res.status(200).json({ received: true });
         });
     },

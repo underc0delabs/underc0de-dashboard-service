@@ -76,18 +76,17 @@ window.open(data.result.init_point);
 
 ---
 
-### 2. Webhook de MercadoPago
+### 2. Webhook de MercadoPago (mecanismo principal para marcar Pro)
 
-Recibe notificaciones automáticas de MercadoPago cuando cambia el estado de una suscripción.
+Recibe notificaciones automáticas de MercadoPago cuando el usuario autoriza el pago. **Es el mecanismo principal** para marcar al usuario como Pro inmediatamente, sin depender del cron.
 
 **Endpoint:** `POST /api/v1/webhook/mercadopago`
 
 **Público:** No requiere autenticación (MercadoPago lo llama directamente)
 
 **Eventos Manejados:**
-- `authorized`: Usuario se suscribió correctamente → `is_pro = true`, `status = ACTIVE`
-- `cancelled`: Usuario canceló la suscripción → `is_pro = false`, `status = CANCELLED`
-- `paused`: Suscripción pausada → `is_pro = false`
+- `preapproval`, `subscription_preapproval`, `subscription`: Usuario autorizó el pago → `is_pro = true`, `status = ACTIVE`
+- El webhook acepta múltiples formatos de notificación de MP (data.id, id, preapproval_id)
 
 ---
 
@@ -127,13 +126,15 @@ Recibe notificaciones automáticas de MercadoPago cuando cambia el estado de una
    - Usuario ingresa datos de tarjeta en MercadoPago
    - MercadoPago procesa el pago
 
-3. **MercadoPago notifica al backend:**
-   - MercadoPago envía evento al webhook
+3. **MercadoPago notifica al backend (automático, sin cron):**
+   - MercadoPago envía evento al webhook `POST /webhook/mercadopago` cuando el pago se autoriza
    - Backend consulta estado en API de MercadoPago
-   - Backend actualiza `SubscriptionPlans.status`
-   - Si `status === 'authorized'` → `User.is_pro = true` y `SubscriptionPlans.status = ACTIVE`
+   - Backend actualiza `SubscriptionPlans.status` y `User.is_pro = true` inmediatamente
+   - El usuario queda Pro sin esperar al cron
 
-4. **Usuario usa funciones PRO:**
+4. **Fallback (opcional):** Un cron diario (3:00 AM) ejecuta `sync-mercadopago` por si el webhook falla. No es necesario para el flujo normal.
+
+5. **Usuario usa funciones PRO:**
    - App consulta `User.is_pro` para habilitar features
 
 ---

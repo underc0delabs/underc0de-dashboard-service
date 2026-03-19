@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { DependencyManager } from '../../../../dependencyManager.js'
 import { IJwtValidator } from '../../../../middlewares/JwtValidator/core/IJwtValidator.js'
+import { validateMercadoPagoWebhook } from '../../../../middlewares/MercadoPagoWebhookValidator/validateMercadoPagoWebhook.js'
 import { getSubscriptionPlanControllers } from '../controllers/controllersProvider.js'
 
 const getSubscriptionPlanRoutes = (dependencyManager: DependencyManager) => {
@@ -15,7 +16,7 @@ const getSubscriptionPlanRoutes = (dependencyManager: DependencyManager) => {
     subscriptionPlanRouter.get(`/${path}/sync-mercadopago`,[jwtValidator], syncMercadoPago)
     subscriptionPlanRouter.post(`/subscriptions/confirm`, confirmSubscription)
     subscriptionPlanRouter.post(`/subscriptions/refresh-status`, [jwtValidator], refreshSubscriptionStatus)
-    subscriptionPlanRouter.post(`/webhook/mercadopago`, handleWebhook)
+    subscriptionPlanRouter.post(`/webhook/mercadopago`, [validateMercadoPagoWebhook], handleWebhook)
 
     return subscriptionPlanRouter
 }

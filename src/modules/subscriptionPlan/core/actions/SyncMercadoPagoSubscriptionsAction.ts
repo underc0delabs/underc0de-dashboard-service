@@ -135,11 +135,45 @@ export const SyncMercadoPagoSubscriptionsAction = (
         }
       }
 
+      let revokedCount = 0;
+      if (mpSubscriptions.length > 0) {
+        const mpAuthorizedIds = new Set(
+          mpSubscriptions
+            .filter((s: any) => s.status === "authorized")
+            .map((s: any) => String(s.id))
+        );
+        const proUsersResult = await userRepository.get({ is_pro: true });
+        const proUsers = proUsersResult?.users ?? [];
+        for (const u of proUsers) {
+          const userJson = u.toJSON ? u.toJSON() : u;
+          const plans = userJson.subscriptionPlans ?? [];
+          const hasOwnerPlan = plans.some(
+            (p: any) => String(p.mpPreapprovalId ?? "").startsWith("owner-")
+          );
+          if (hasOwnerPlan) continue;
+          const hasActiveInMp = plans.some(
+            (p: any) =>
+              p.status === "ACTIVE" &&
+              mpAuthorizedIds.has(String(p.mpPreapprovalId ?? ""))
+          );
+          if (hasActiveInMp) continue;
+          await userRepository.edit(
+            { ...userJson, is_pro: false } as any,
+            String(userJson.id)
+          );
+          revokedCount++;
+          console.log("[MP SYNC] Revoked is_pro (no active subscription in MP)", {
+            userId: userJson.id,
+          });
+        }
+      }
+
       return {
         success: true,
         subscriptionsCreated,
         subscriptionsUpdated,
         paymentsSaved,
+        usersRevoked: revokedCount,
       };
     },
   };

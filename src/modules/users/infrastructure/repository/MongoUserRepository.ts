@@ -104,7 +104,9 @@ export const MongoUserRepository = (): IUserRepository => ({
     const usersWithSubscriptionInfo = users.map((user: any) => {
       const userJson = user.toJSON();
       const activeSubscription = userJson.subscriptionPlans?.find((sub: any) => sub.status === 'ACTIVE');
-      
+      const cancelledSubscription = userJson.subscriptionPlans?.find((sub: any) => sub.status === 'CANCELLED');
+      const subscriptionPlan = activeSubscription ?? cancelledSubscription;
+
       let subscriptionStatus = null;
       let isUpToDate = null;
       let lastPayment = null;
@@ -114,12 +116,12 @@ export const MongoUserRepository = (): IUserRepository => ({
         subscriptionStatus = activeSubscription.status;
         nextPaymentDate = activeSubscription.nextPaymentDate;
         lastPayment = activeSubscription.payments?.[0] || null;
-        
+
         if (nextPaymentDate) {
           const nextPayment = new Date(nextPaymentDate);
           const today = new Date();
           today.setHours(0, 0, 0, 0);
-          
+
           if (lastPayment) {
             const lastPaymentDate = new Date(lastPayment.paidAt);
             lastPaymentDate.setHours(0, 0, 0, 0);
@@ -137,17 +139,26 @@ export const MongoUserRepository = (): IUserRepository => ({
             isUpToDate = false;
           }
         }
+      } else if (cancelledSubscription) {
+        subscriptionStatus = 'CANCELLED';
       }
+
+      const displayStatus = activeSubscription
+        ? (isUpToDate === false ? 'expired' : subscriptionStatus)
+        : cancelledSubscription
+          ? 'CANCELLED'
+          : subscriptionStatus;
 
       return {
         ...userJson,
         fullName: fullNameWithoutDuplicate(userJson.name, userJson.lastname),
-        vip: !!(activeSubscription?.status === "ACTIVE" || userJson.is_pro),
-        subscription: activeSubscription ? {
-          id: activeSubscription.id,
-          status: subscriptionStatus,
-          startedAt: activeSubscription.startedAt,
-          nextPaymentDate: nextPaymentDate,
+        vip: !!(activeSubscription && isUpToDate !== false) || !!(userJson.is_pro && !activeSubscription),
+        subscription: subscriptionPlan ? {
+          id: subscriptionPlan.id,
+          status: displayStatus,
+          rawStatus: subscriptionStatus,
+          startedAt: subscriptionPlan.startedAt,
+          nextPaymentDate: nextPaymentDate ?? subscriptionPlan.nextPaymentDate,
           isUpToDate: isUpToDate,
           lastPayment: lastPayment ? {
             id: lastPayment.id,

@@ -188,7 +188,9 @@ src/
 1. **Creación**: La app llama `POST /subscriptions/create` → backend crea preapproval en MP y devuelve `init_point`.
 2. **Pago**: Usuario paga en checkout MP (WebView). MP redirige a `MP_BACK_URL`.
 3. **Activación en tiempo real**: MP envía POST a `MP_WEBHOOK_URL` → backend actualiza suscripción y marca usuario como Pro.
-4. **Fallback**: Un cron diario (3:00 AM) ejecuta `SyncMercadoPagoSubscriptionsAction` para sincronizar datos desde MP por si el webhook falla.
+4. **Marcado como Pro**: Cuando el usuario completa el pago, MercadoPago envía un webhook al backend. El backend actualiza `User.is_pro` inmediatamente. No se requiere el cron para el flujo normal.
+
+5. **Fallback**: Un cron diario (3:00 AM) ejecuta `SyncMercadoPagoSubscriptionsAction` por si el webhook falla o no llega.
 
 ## Solución de Problemas
 
