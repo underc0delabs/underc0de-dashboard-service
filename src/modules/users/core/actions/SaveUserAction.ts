@@ -33,12 +33,13 @@ export const SaveUserAction = (
             resolve(updated);
             return;
           }
-          const user = {
+          const user: any = {
             ...body,
             userType: body.userType ?? 0,
             status: body.status ?? true,
             password: hashService.hash(body.password || crypto.randomBytes(32).toString("hex")),
           };
+          delete user.id;
           const result = await UserRepository.save(user);
           resolve(result);
         } catch (error) {

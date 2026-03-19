@@ -1,5 +1,4 @@
 import axios from "axios";
-import crypto from "crypto";
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 
@@ -124,26 +123,17 @@ const getJwtValidator = (
         }
         let user = await userRepository.getOneByEmailIgnoreCase(email);
         if (!user) {
-          try {
-            const memberName = (payload?.member_name ?? payload?.memberName ?? email.split("@")[0])?.trim?.() || "Usuario";
-            const forumId = payload?.id_member ?? "";
-            const username = memberName || `forum_${forumId || email.replace(/[^a-zA-Z0-9]/g, "_")}`;
-            const newUser = await userRepository.save({
-              username,
-              name: memberName,
-              lastname: "",
-              phone: "",
-              email,
-              password: crypto.randomBytes(32).toString("hex"),
-              userType: 0,
-              birthday: new Date(),
-              status: true,
-            } as any);
-            user = newUser;
-          } catch (createErr: any) {
-            console.warn("[Auth] foro-api: no se pudo crear usuario:", createErr?.message ?? createErr);
-            return false;
-          }
+          const memberName = (payload?.member_name ?? payload?.memberName ?? email.split("@")[0])?.trim?.() || "Usuario";
+          const forumId = payload?.id_member ?? "";
+          const username = memberName || `forum_${forumId || email.replace(/[^a-zA-Z0-9]/g, "_")}`;
+          (req as any).auth = {
+            isNewUser: true,
+            email,
+            memberName: username,
+            forumId: String(forumId),
+          };
+          next();
+          return true;
         }
         if ((user as any).status === false) return false;
         (req as any).auth = { id: String((user as any).id), isAdmin: false } as AuthPayload;
