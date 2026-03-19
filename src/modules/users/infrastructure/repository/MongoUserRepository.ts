@@ -122,12 +122,14 @@ export const MongoUserRepository = (): IUserRepository => ({
           const today = new Date();
           today.setHours(0, 0, 0, 0);
 
-          if (lastPayment) {
+          if (nextPayment > today) {
+            isUpToDate = true;
+          } else if (lastPayment) {
             const lastPaymentDate = new Date(lastPayment.paidAt);
             lastPaymentDate.setHours(0, 0, 0, 0);
             isUpToDate = lastPaymentDate >= nextPayment;
           } else {
-            isUpToDate = nextPayment >= today;
+            isUpToDate = false;
           }
         } else {
           if (lastPayment) {

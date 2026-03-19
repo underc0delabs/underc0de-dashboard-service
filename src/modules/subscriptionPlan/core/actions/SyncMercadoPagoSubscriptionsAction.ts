@@ -26,15 +26,27 @@ export const SyncMercadoPagoSubscriptionsAction = (
 
       for (const mpSub of mpSubscriptions) {
         const preapprovalId = String(mpSub.id);
+
+        const existing = await subscriptionPlanRepository.getOne({
+          mpPreapprovalId: preapprovalId,
+        });
+        const existingUserId =
+          existing?.userId ??
+          (existing as any)?.toJSON?.()?.userId ??
+          (typeof (existing as any)?.get === "function"
+            ? (existing as any).get("userId")
+            : null);
+
         let payerEmail =
           (mpSub as any).payer_email?.trim?.() ||
           (mpSub as any).payer_email_address?.trim?.();
         if (!payerEmail) {
           const detail = await mercadoPagoSyncService.getPreapprovalById(preapprovalId);
+          const d = detail as any;
           payerEmail = (
-            (detail as any)?.payer_email ||
-            (detail as any)?.payer_email_address ||
-            (detail as any)?.payer?.email
+            d?.payer_email ||
+            d?.payer_email_address ||
+            d?.payer?.email
           )?.trim?.();
         }
 
@@ -43,23 +55,26 @@ export const SyncMercadoPagoSubscriptionsAction = (
           const firstPayment = mpPayments[0] as any;
           payerEmail = (
             firstPayment?.payer?.email ||
-            firstPayment?.payer_email
+            firstPayment?.payer_email ||
+            firstPayment?.payer?.email_address
           )?.trim?.();
         }
 
-        let user = mpSub.payer_id
-          ? await userRepository.getOne({ mpPayerId: String(mpSub.payer_id) })
-          : null;
+        let user =
+          existingUserId != null
+            ? await userRepository.getById(String(existingUserId))
+            : null;
+        if (!user && mpSub.payer_id) {
+          user = await userRepository.getOne({ mpPayerId: String(mpSub.payer_id) });
+        }
         if (!user && payerEmail) {
           user =
             (await userRepository.getOneByEmailIgnoreCase(payerEmail)) ??
             (await userRepository.getOneByMercadopagoEmailIgnoreCase(payerEmail));
         }
-        const existing = await subscriptionPlanRepository.getOne({
-          mpPreapprovalId: preapprovalId,
-        });
+
         const subscriptionPayload = {
-          userId: user?.id ?? existing?.userId ?? null,
+          userId: user?.id ?? existingUserId ?? null,
           status: mpSub.status === "authorized" ? "ACTIVE" : "CANCELLED",
           startedAt: new Date(mpSub.date_created),
           nextPaymentDate: calculateNextPaymentDate(mpSub),
