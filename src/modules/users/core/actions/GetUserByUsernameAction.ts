@@ -16,7 +16,7 @@ export const GetUserByUsernameAction = (
     execute(username) {
       return new Promise(async (resolve, reject) => {
         try {
-          const user = await UserRepository.getOne({ username: username });
+          const user = await UserRepository.getOneByUsernameIgnoreCase(username);
           if (!user) throw new UserNotExistException();
           const result = await SubscriptionPlanRepository.get({
             userId: user.id,

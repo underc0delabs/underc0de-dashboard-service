@@ -198,6 +198,17 @@ export const MongoUserRepository = (): IUserRepository => ({
     });
     return user ? (user.toJSON() as any) : null;
   },
+  async getOneByUsernameIgnoreCase(username: string) {
+    if (!username?.trim()) return null;
+    const user = await UserModel.findOne({
+      where: Sequelize.where(
+        Sequelize.fn("LOWER", Sequelize.col("username")),
+        username.trim().toLowerCase()
+      ),
+      attributes: { exclude: ["password"] },
+    });
+    return user ? (user.toJSON() as any) : null;
+  },
   async getById(id) {
     const user = await UserModel.findByPk(id, {
       attributes: { exclude: ['password'] },

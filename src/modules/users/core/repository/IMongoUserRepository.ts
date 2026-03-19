@@ -8,5 +8,6 @@ export interface IUserRepository {
     getOne: (query:any, includePassword?: boolean) => Promise<any>,
     getOneByEmailIgnoreCase: (email: string) => Promise<any>,
     getOneByMercadopagoEmailIgnoreCase: (email: string) => Promise<any>,
+    getOneByUsernameIgnoreCase: (username: string) => Promise<any>,
     getById: (id:string) => Promise<any>,
 }
