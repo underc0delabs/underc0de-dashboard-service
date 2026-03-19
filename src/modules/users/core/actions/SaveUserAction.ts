@@ -60,7 +60,7 @@ export const SaveUserAction = (
             userType: body.userType ?? 0,
             status: body.status ?? true,
             birthday,
-            is_pro: body.is_pro ?? body.vip ?? false,
+            is_pro: body.vip ?? false,
             password: hashService.hash(body.password || crypto.randomBytes(32).toString("hex")),
           };
           const result = await UserRepository.save(user);
