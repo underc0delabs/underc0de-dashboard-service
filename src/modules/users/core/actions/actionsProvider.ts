@@ -68,8 +68,7 @@ export const getUserActions = (
     getMetrics: GetMetricsAction(
       UserRepository,
       merchantsRepository,
-      notificationsRepository,
-      subscriptionPlanRepository
+      notificationsRepository
     ),
     getByUsername: GetUserByUsernameAction(
       UserRepository,
