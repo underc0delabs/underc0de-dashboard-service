@@ -38,6 +38,7 @@ export const sequelize = new Sequelize(
     dialect: "postgres",
     port: configs.db.port ? parseInt(configs.db.port) : 5432,
     dialectOptions: getSSLConfig(),
+    omitNull: true,
     pool: {
       max: 10,
       min: 0,
