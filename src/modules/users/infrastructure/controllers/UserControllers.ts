@@ -37,7 +37,7 @@ export const UserControllers = ({
   ) as any;
   return {
     save(req: Request, res: Response) {
-      const saveExecution = save.execute(req.body);
+      const saveExecution = save.execute(req.body, req);
       saveExecution
         .then((user) => {
           const message = `${name} cread${pronoun} correctamente`;
