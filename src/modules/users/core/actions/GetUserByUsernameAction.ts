@@ -18,13 +18,22 @@ export const GetUserByUsernameAction = (
         try {
           const user = await UserRepository.getOne({ username: username });
           if (!user) throw new UserNotExistException();
-          const subscription = await SubscriptionPlanRepository.getOne({ userId: user.id });
+          const result = await SubscriptionPlanRepository.get({
+            userId: user.id,
+            status: "ACTIVE",
+            page_count: 1,
+            page_number: 0,
+          });
+          const plans = result?.subscriptionPlans ?? [];
+          const subscription = Array.isArray(plans) ? plans[0] : null;
+          const subData = subscription?.toJSON ? subscription.toJSON() : subscription;
           const payments = subscription
-            ? await PaymentRepository.get({ userSubscriptionId: subscription.id })
+            ? await PaymentRepository.get({ userSubscriptionId: (subData ?? subscription).id })
             : [];
           const n = (user.name ?? "").trim();
           const l = ((user as any).lastname ?? "").trim();
           const fullName = !l ? n : n === l ? n : n.endsWith(l) ? n : `${n} ${l}`.trim() || n;
+          const isPro = !!(user as any).is_pro || (subData ?? subscription)?.status === "ACTIVE";
           resolve({
             id: user.id,
             username: user.username,
@@ -36,8 +45,8 @@ export const GetUserByUsernameAction = (
             idNumber: user.idNumber,
             userType: user.userType,
             birthday: user.birthday,
-            vip: subscription?.status === "ACTIVE",
-            suscription: subscription?.status ?? null,
+            vip: isPro,
+            suscription: (subData ?? subscription)?.status ?? null,
             status: user.status,
             fcmToken: user.fcmToken,
             mercadopago_email: (user as any).mercadopago_email ?? null,
