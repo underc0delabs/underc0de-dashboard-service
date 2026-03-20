@@ -30,10 +30,16 @@ export const MongoUserRepository = (): IUserRepository => ({
         .filter((k) => rest[k] !== undefined)
         .map((k) => [k, rest[k]])
     );
-    const newUser = await UserModel.create(payload as any, {
-      fields: Object.keys(payload),
-    });
-    const userJson = newUser.toJSON() as any;
+    const cols = Object.keys(payload);
+    const placeholders = cols.map((_, i) => `$${i + 1}`).join(", ");
+    const colNames = cols.map((c) => `"${c}"`).join(", ");
+    const [rows] = await UserModel.sequelize!.query(
+      `INSERT INTO "Users" (${colNames}, "createdAt", "updatedAt") VALUES (${placeholders}, NOW(), NOW()) RETURNING *`,
+      { replacements: cols.map((c) => payload[c]) }
+    );
+    const row = (rows as any[])?.[0];
+    if (!row) throw new Error("Insert failed");
+    const userJson = { ...row };
     delete userJson.password;
     return userJson as IUser;
   },
