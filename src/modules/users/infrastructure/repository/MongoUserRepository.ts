@@ -19,27 +19,10 @@ const fullNameWithoutDuplicate = (name?: string | null, lastname?: string | null
 
 export const MongoUserRepository = (): IUserRepository => ({
   async save(user) {
-    const { id: _id, ...rest } = user as unknown as Record<string, unknown>;
-    const allowedKeys = [
-      "username", "name", "lastname", "phone", "email", "idNumber",
-      "password", "userType", "status", "birthday", "fcmToken", "mpPayerId",
-      "mercadopago_email", "is_pro"
-    ];
-    const payload = Object.fromEntries(
-      allowedKeys
-        .filter((k) => rest[k] !== undefined)
-        .map((k) => [k, rest[k]])
-    );
-    const cols = Object.keys(payload);
-    const placeholders = cols.map((_, i) => `$${i + 1}`).join(", ");
-    const colNames = cols.map((c) => `"${c}"`).join(", ");
-    const [rows] = await UserModel.sequelize!.query(
-      `INSERT INTO "Users" (${colNames}, "createdAt", "updatedAt") VALUES (${placeholders}, NOW(), NOW()) RETURNING *`,
-      { replacements: cols.map((c) => payload[c]) }
-    );
-    const row = (rows as any[])?.[0];
-    if (!row) throw new Error("Insert failed");
-    const userJson = { ...row };
+    const payload = { ...(user as object) };
+    delete (payload as any).id;
+    const newUser = await UserModel.create(payload as any);
+    const userJson = newUser.toJSON() as any;
     delete userJson.password;
     return userJson as IUser;
   },
