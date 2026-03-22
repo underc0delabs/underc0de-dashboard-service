@@ -151,8 +151,9 @@ export const UserControllers = ({
           SuccessResponse(res, 200, message, user);
         })
         .catch((error: any) => {
-          if (!error?.name || !errorResponses[error.name]) {
-            console.error("[GetUserByUsername]", error?.message ?? error);
+          const known = [UserNotExistException.name, UserNotActiveException.name, WrongCredentialsException.name, InvalidIdException.name];
+          if (!known.includes(error?.name)) {
+            console.error("[GetUserByUsername]", error?.message ?? error, error?.stack);
           }
           errorResponses[error.name](res, error);
         });

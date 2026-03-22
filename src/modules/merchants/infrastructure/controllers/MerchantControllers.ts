@@ -54,8 +54,9 @@ export const MerchantControllers = ({
         const message = `${name}s obtenid${pronoun}s con exito`
         SuccessResponse(res,200,message,merchants)
       }).catch(error => {
-        if (!error?.name || !errorResponses[error.name]) {
-          console.error("[GetMerchants]", error?.message ?? error);
+        const known = [MerchantNotExistException.name, InvalidIdException.name];
+        if (!known.includes(error?.name)) {
+          console.error("[GetMerchants]", error?.message ?? error, error?.stack);
         }
         errorResponses[error.name](res, error)
       })
