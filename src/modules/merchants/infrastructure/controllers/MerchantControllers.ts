@@ -49,11 +49,14 @@ export const MerchantControllers = ({
       })
     },
     get(req: Request, res: Response) {
-      const getExecution = getAll.execute(req.query)
+      const getExecution = getAll.execute(req.query ?? {})
       getExecution.then(({merchants}) => {
         const message = `${name}s obtenid${pronoun}s con exito`
         SuccessResponse(res,200,message,merchants)
       }).catch(error => {
+        if (!error?.name || !errorResponses[error.name]) {
+          console.error("[GetMerchants]", error?.message ?? error);
+        }
         errorResponses[error.name](res, error)
       })
     },
