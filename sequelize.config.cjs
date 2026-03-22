@@ -1,4 +1,5 @@
 require('dotenv').config({ quiet: true });
+require('dotenv').config({ path: '.env.local', quiet: true });
 
 module.exports = {
   development: {

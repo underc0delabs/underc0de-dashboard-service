@@ -151,6 +151,9 @@ export const UserControllers = ({
           SuccessResponse(res, 200, message, user);
         })
         .catch((error: any) => {
+          if (!error?.name || !errorResponses[error.name]) {
+            console.error("[GetUserByUsername]", error?.message ?? error);
+          }
           errorResponses[error.name](res, error);
         });
     },

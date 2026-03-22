@@ -27,9 +27,15 @@ export const GetUserByUsernameAction = (
           const plans = result?.subscriptionPlans ?? [];
           const subscription = Array.isArray(plans) ? plans[0] : null;
           const subData = subscription?.toJSON ? subscription.toJSON() : subscription;
-          const payments = subscription
-            ? await PaymentRepository.get({ userSubscriptionId: (subData ?? subscription).id })
-            : [];
+          const subId = (subData ?? subscription)?.id;
+          const paymentsResult = subscription && subId
+            ? await PaymentRepository.get({
+                userSubscriptionId: subId,
+                page_count: 10,
+                page_number: 0,
+              })
+            : null;
+          const payments = paymentsResult?.payments ?? [];
           const n = (user.name ?? "").trim();
           const l = ((user as any).lastname ?? "").trim();
           const fullName = !l ? n : n === l ? n : n.endsWith(l) ? n : `${n} ${l}`.trim() || n;

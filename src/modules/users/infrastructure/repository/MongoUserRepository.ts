@@ -1,4 +1,4 @@
-import { Sequelize } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 import { IUserRepository } from "../../core/repository/IMongoUserRepository.js";
 import UserModel from "../models/UserModel.js";
 import configs from "../../../../configs.js";
@@ -181,6 +181,7 @@ export const MongoUserRepository = (): IUserRepository => ({
     const user = await UserModel.findOne({
       where: Sequelize.where(
         Sequelize.fn("LOWER", Sequelize.col("email")),
+        Op.eq,
         email.trim().toLowerCase()
       ),
       attributes: { exclude: ["password"] },
@@ -192,6 +193,7 @@ export const MongoUserRepository = (): IUserRepository => ({
     const user = await UserModel.findOne({
       where: Sequelize.where(
         Sequelize.fn("LOWER", Sequelize.col("mercadopago_email")),
+        Op.eq,
         email.trim().toLowerCase()
       ),
       attributes: { exclude: ["password"] },
@@ -203,6 +205,7 @@ export const MongoUserRepository = (): IUserRepository => ({
     const user = await UserModel.findOne({
       where: Sequelize.where(
         Sequelize.fn("LOWER", Sequelize.col("username")),
+        Op.eq,
         username.trim().toLowerCase()
       ),
       attributes: { exclude: ["password"] },
