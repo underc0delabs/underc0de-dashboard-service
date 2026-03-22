@@ -176,7 +176,7 @@ export const MongoUserRepository = (): IUserRepository => ({
       users: usersWithSubscriptionInfo,
     };
   },
-  async getOneByEmailIgnoreCase(email: string) {
+  async getOneByEmailIgnoreCase(email: string, includePassword = false) {
     if (!email?.trim()) return null;
     const user = await UserModel.findOne({
       where: Sequelize.where(
@@ -184,7 +184,7 @@ export const MongoUserRepository = (): IUserRepository => ({
         Op.eq,
         email.trim().toLowerCase()
       ),
-      attributes: { exclude: ["password"] },
+      ...(includePassword ? {} : { attributes: { exclude: ["password"] } }),
     });
     return user ? (user.toJSON() as any) : null;
   },
@@ -200,7 +200,7 @@ export const MongoUserRepository = (): IUserRepository => ({
     });
     return user ? (user.toJSON() as any) : null;
   },
-  async getOneByUsernameIgnoreCase(username: string) {
+  async getOneByUsernameIgnoreCase(username: string, includePassword = false) {
     if (!username?.trim()) return null;
     const user = await UserModel.findOne({
       where: Sequelize.where(
@@ -208,7 +208,7 @@ export const MongoUserRepository = (): IUserRepository => ({
         Op.eq,
         username.trim().toLowerCase()
       ),
-      attributes: { exclude: ["password"] },
+      ...(includePassword ? {} : { attributes: { exclude: ["password"] } }),
     });
     return user ? (user.toJSON() as any) : null;
   },

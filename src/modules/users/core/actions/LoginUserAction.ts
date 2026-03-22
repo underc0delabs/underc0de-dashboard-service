@@ -9,7 +9,7 @@ import { UserNotExistException } from "../exceptions/UserNotExistException.js";
 import { WrongCredentialsException } from "../exceptions/WrongCredentialsException.js";
 
 export interface ILoginUserAction {
-  execute: (credentials: { email: string; password: string }) => Promise<any>;
+  execute: (credentials: { username?: string; email?: string; password: string }) => Promise<any>;
 }
 
 const getRefreshTokenExpiresAt = () => {
@@ -28,12 +28,12 @@ export const LoginUserAction = (
     execute(credentials) {
       return new Promise(async (resolve, reject) => {
         try {
-          const email = credentials?.email?.trim?.();
-          if (!email) {
+          const username = (credentials?.username ?? credentials?.email)?.trim?.();
+          if (!username) {
             throw new WrongCredentialsException();
           }
-          const user = await userRepository.getOne(
-            { email },
+          const user = await userRepository.getOneByUsernameIgnoreCase(
+            username,
             true
           );
           if (!user) throw new UserNotExistException();
