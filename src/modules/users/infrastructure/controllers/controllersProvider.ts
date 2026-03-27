@@ -8,6 +8,7 @@ import { IPushNotificationRepository } from "../../../pushNotifications/core/rep
 import { ISubscriptionPlanRepository } from "../../../subscriptionPlan/core/repository/ISubscriptionPlanRepository.js";
 import { IRefreshTokenRepository } from "../../core/repository/IRefreshTokenRepository.js";
 import { IPaymentRepository } from "../../../payment/core/repository/IPaymentRepository.js";
+import { MercadoPagoSyncService } from "../../../../services/mercadopagoService/core/service/mercadoPagoSyncService.js";
 
 export const getUserControllers = (dependencyManager: DependencyManager) => {
   const UserRepository = getUserRepository(dependencyManager);
@@ -17,6 +18,9 @@ export const getUserControllers = (dependencyManager: DependencyManager) => {
   const notificationsRepository = getNotificationsRepository(dependencyManager);
   const subscriptionPlanRepository = getSubscriptionPlanRepository(dependencyManager);
   const paymentRepository = getPaymentRepository(dependencyManager);
+  const mercadoPagoSyncService = dependencyManager.resolve(
+    "mercadoPagoSyncService"
+  ) as MercadoPagoSyncService;
   const UserActions = getUserActions(
     UserRepository,
     hashService,
@@ -24,7 +28,8 @@ export const getUserControllers = (dependencyManager: DependencyManager) => {
     merchantsRepository,
     notificationsRepository,
     subscriptionPlanRepository,
-    paymentRepository
+    paymentRepository,
+    mercadoPagoSyncService
   );
   return UserControllers(UserActions);
 };

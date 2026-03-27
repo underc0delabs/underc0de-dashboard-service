@@ -21,6 +21,7 @@ export const UserControllers = ({
   getByUsername,
   getCurrentUser,
   linkSubscription,
+  reconcileMercadoPagoUser,
 }: IUserActions) => {
   const errorResponses = createHashMap(
     {
@@ -185,6 +186,32 @@ export const UserControllers = ({
         })
         .catch((error) => {
           errorResponses[error.name] ? errorResponses[error.name](res, error) : ErrorResponse(res, error, 500);
+        });
+    },
+    reconcileMercadoPagoForUser(req: Request, res: Response) {
+      reconcileMercadoPagoUser
+        .execute(req.params.id)
+        .then((result) => {
+          if (!result.ok) {
+            return ErrorResponse(
+              res,
+              new Error(result.message) as Error,
+              result.status
+            );
+          }
+          SuccessResponse(
+            res,
+            200,
+            "Usuario reconciliado con MercadoPago",
+            result
+          );
+        })
+        .catch((error) => {
+          ErrorResponse(
+            res,
+            error instanceof Error ? error : new Error(String(error)),
+            502
+          );
         });
     },
   };

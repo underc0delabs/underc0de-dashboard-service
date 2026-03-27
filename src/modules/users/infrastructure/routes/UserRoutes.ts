@@ -22,6 +22,7 @@ const getUserRoutes = (dependencyManager: DependencyManager) => {
     getByUsername,
     getMe,
     linkSubscription,
+    reconcileMercadoPagoForUser,
   } = getUserControllers(dependencyManager);
   const userRouter = Router();
   const path = "users";
@@ -40,6 +41,11 @@ const getUserRoutes = (dependencyManager: DependencyManager) => {
   userRouter.get(`/${path}/me`, authMeOrPatch, getMe);
   userRouter.get(`/${path}/:id`, [jwtValidator], getById);
   userRouter.patch(`/admin/${path}/:id`, [jwtValidator, requireAdmin], edit);
+  userRouter.post(
+    `/admin/${path}/:id/mercadopago-reconcile`,
+    [jwtValidator, requireAdmin],
+    reconcileMercadoPagoForUser
+  );
   userRouter.patch(`/${path}/:id`, authMeOrPatch, edit);
   userRouter.delete(`/${path}/:id`, [jwtValidator], remove);
   return userRouter;

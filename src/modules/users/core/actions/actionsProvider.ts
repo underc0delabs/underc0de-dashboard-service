@@ -30,6 +30,11 @@ import {
 import { IRefreshTokenRepository } from "../repository/IRefreshTokenRepository.js";
 import { ISubscriptionPlanRepository } from "../../../subscriptionPlan/core/repository/ISubscriptionPlanRepository.js";
 import { IPaymentRepository } from "../../../payment/core/repository/IPaymentRepository.js";
+import { MercadoPagoSyncService } from "../../../../services/mercadopagoService/core/service/mercadoPagoSyncService.js";
+import {
+  IReconcileMercadoPagoUserAction,
+  ReconcileMercadoPagoUserAction,
+} from "../../../subscriptionPlan/core/actions/ReconcileMercadoPagoUserAction.js";
 
 export interface IUserActions {
   save: ISaveUserAction;
@@ -45,6 +50,7 @@ export interface IUserActions {
   getByUsername: IGetUserByUsernameAction;
   getCurrentUser: IGetCurrentUserAction;
   linkSubscription: ILinkSubscriptionAction;
+  reconcileMercadoPagoUser: IReconcileMercadoPagoUserAction;
 }
 export const getUserActions = (
   UserRepository: IUserRepository,
@@ -53,7 +59,8 @@ export const getUserActions = (
   merchantsRepository: IMerchantRepository,
   notificationsRepository: IPushNotificationRepository,
   subscriptionPlanRepository: ISubscriptionPlanRepository,
-  paymentRepository: IPaymentRepository
+  paymentRepository: IPaymentRepository,
+  mercadoPagoSyncService: MercadoPagoSyncService
 ) => {
   const UserActions: IUserActions = {
     save: SaveUserAction(UserRepository, hashService),
@@ -84,6 +91,12 @@ export const getUserActions = (
       UserRepository,
       subscriptionPlanRepository,
       paymentRepository
+    ),
+    reconcileMercadoPagoUser: ReconcileMercadoPagoUserAction(
+      mercadoPagoSyncService,
+      subscriptionPlanRepository,
+      paymentRepository,
+      UserRepository
     ),
   };
   return UserActions;
