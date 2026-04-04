@@ -16,9 +16,12 @@ export const SaveFcmTokenAction = (
             reject(new Error("User not found"));
             return;
           }
-          user.fcmToken = body.token;
-          await UserRepository.edit(user, user.id);
-          resolve(user);
+          /** Solo fcmToken: el objeto user de getById trae relaciones anidadas y rompe el UPDATE. */
+          await UserRepository.edit(
+            { fcmToken: body.token } as any,
+            String(body.userId)
+          );
+          resolve({ ...user, fcmToken: body.token });
         } catch (error) {
           reject(error);
         }

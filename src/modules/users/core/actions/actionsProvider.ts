@@ -35,6 +35,7 @@ import {
   IReconcileMercadoPagoUserAction,
   ReconcileMercadoPagoUserAction,
 } from "../../../subscriptionPlan/core/actions/ReconcileMercadoPagoUserAction.js";
+import { IInternalMemberRepository } from "../../../internalMembers/core/repository/IInternalMemberRepository.js";
 
 export interface IUserActions {
   save: ISaveUserAction;
@@ -60,7 +61,8 @@ export const getUserActions = (
   notificationsRepository: IPushNotificationRepository,
   subscriptionPlanRepository: ISubscriptionPlanRepository,
   paymentRepository: IPaymentRepository,
-  mercadoPagoSyncService: MercadoPagoSyncService
+  mercadoPagoSyncService: MercadoPagoSyncService,
+  internalMemberRepository: IInternalMemberRepository
 ) => {
   const UserActions: IUserActions = {
     save: SaveUserAction(UserRepository, hashService),
@@ -80,7 +82,8 @@ export const getUserActions = (
     getByUsername: GetUserByUsernameAction(
       UserRepository,
       subscriptionPlanRepository,
-      paymentRepository
+      paymentRepository,
+      internalMemberRepository
     ),
     getCurrentUser: GetCurrentUserAction(
       UserRepository,

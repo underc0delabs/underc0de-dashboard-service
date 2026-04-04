@@ -1,4 +1,4 @@
-import { Op, Sequelize } from "sequelize";
+import { Op, Sequelize, type WhereOptions } from "sequelize";
 import { IUserRepository } from "../../core/repository/IMongoUserRepository.js";
 import UserModel from "../models/UserModel.js";
 import configs from "../../../../configs.js";
@@ -6,6 +6,10 @@ import IUser from "../../core/entities/IUser.js";
 import SubscriptionPlan from "../../../subscriptionPlan/infrastructure/models/SubscriptionPlanModel.js";
 import Payment from "../../../payment/infrastructure/models/PaymentModel.js";
 import InternalMember from "../../../internalMembers/infrastructure/models/InternalMemberModel.js";
+import {
+  normalizeUserLookupKey,
+  sanitizeIlikeLiteralFragment,
+} from "../../../../helpers/userLookupNormalize.js";
 
 const flattenInternalMember = (userJson: Record<string, unknown>) => {
   const im = userJson.internalMember as Record<string, unknown> | null | undefined;
@@ -271,6 +275,61 @@ export const MongoUserRepository = (): IUserRepository => ({
       ...(includePassword ? {} : { attributes: { exclude: ["password"] } }),
     });
     return user ? (user.toJSON() as any) : null;
+  },
+  async getOneByUsernameAccentFoldIgnoreCase(username: string, includePassword = false) {
+    const needle = normalizeUserLookupKey(username ?? "");
+    if (!needle) return null;
+    const words = needle.split(" ").filter((w) => w.length > 0);
+    const w0 = sanitizeIlikeLiteralFragment(words[0] ?? "");
+    if (!w0) return null;
+
+    const attr = includePassword ? {} : { attributes: { exclude: ["password"] } };
+    const needleCompact = needle.replace(/\s+/g, "");
+
+    const pickHit = (rows: any[]): any | null => {
+      return (
+        rows.find((row) => {
+          const u = normalizeUserLookupKey(String((row as any).username ?? ""));
+          if (u === needle) return true;
+          if (
+            needleCompact.length >= 3 &&
+            u.replace(/\s+/g, "") === needleCompact
+          ) {
+            return true;
+          }
+          return false;
+        }) ?? null
+      );
+    };
+
+    /** Prefijo largo, luego 2 letras (ej. "noemi" vs "Noemí…") y contiene (último recurso). */
+    const wheres: WhereOptions[] = [{ username: { [Op.iLike]: `${w0}%` } }];
+    if (w0.length >= 2) {
+      const two = w0.slice(0, 2);
+      wheres.push({ username: { [Op.iLike]: `${two}%` } });
+      wheres.push({ username: { [Op.iLike]: `%${two}%` } });
+    }
+
+    const seen = new Set<string | number>();
+    const merged: any[] = [];
+    for (const where of wheres) {
+      const rows = await UserModel.findAll({
+        where,
+        limit: 180,
+        ...attr,
+      });
+      for (const row of rows) {
+        const id = (row as any).id as string | number;
+        if (!seen.has(id)) {
+          seen.add(id);
+          merged.push(row);
+        }
+      }
+      const hit = pickHit(merged);
+      if (hit) return hit.toJSON() as any;
+    }
+
+    return null;
   },
   async getById(id) {
     const user = await UserModel.findByPk(id, {

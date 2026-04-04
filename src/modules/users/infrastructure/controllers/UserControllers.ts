@@ -145,7 +145,17 @@ export const UserControllers = ({
         });
     },
     getByUsername(req: Request, res: Response) {
-      const getByUsernameExecution = getByUsername.execute(req.params.username);
+      const emailQ = req.query.email;
+      const email =
+        typeof emailQ === "string"
+          ? emailQ
+          : Array.isArray(emailQ) && typeof emailQ[0] === "string"
+            ? emailQ[0]
+            : undefined;
+      const getByUsernameExecution = getByUsername.execute(
+        req.params.username,
+        email ? { email } : undefined
+      );
       const message = "Usuario obtenido correctamente";
       getByUsernameExecution
         .then((user: any) => {

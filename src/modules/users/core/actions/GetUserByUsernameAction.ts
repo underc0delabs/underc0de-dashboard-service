@@ -2,21 +2,51 @@ import { IUserRepository } from "../repository/IMongoUserRepository.js";
 import { UserNotExistException } from "../exceptions/UserNotExistException.js";
 import { ISubscriptionPlanRepository } from "../../../subscriptionPlan/core/repository/ISubscriptionPlanRepository.js";
 import { IPaymentRepository } from "../../../payment/core/repository/IPaymentRepository.js";
+import { IInternalMemberRepository } from "../../../internalMembers/core/repository/IInternalMemberRepository.js";
+import { normalizeUserLookupWhitespace } from "../../../../helpers/userLookupNormalize.js";
+
+export type GetByUsernameOptions = {
+  /** Email del foro: si no hay match por usuario o id foro, se intenta por email en la app. */
+  email?: string | null;
+};
 
 export interface IGetUserByUsernameAction {
-  execute: (username: string) => Promise<any>;
+  execute: (
+    usernameOrForumKey: string,
+    options?: GetByUsernameOptions
+  ) => Promise<any>;
 }
 
 export const GetUserByUsernameAction = (
   UserRepository: IUserRepository,
   SubscriptionPlanRepository: ISubscriptionPlanRepository,
   PaymentRepository: IPaymentRepository,
+  internalMemberRepository: IInternalMemberRepository
 ): IGetUserByUsernameAction => {
   return {
-    execute(username) {
+    execute(usernameOrForumKey, options) {
       return new Promise(async (resolve, reject) => {
         try {
-          const user = await UserRepository.getOneByUsernameIgnoreCase(username);
+          const key =
+            normalizeUserLookupWhitespace(usernameOrForumKey ?? "") ||
+            (usernameOrForumKey ?? "").trim();
+          const emailOpt = options?.email?.trim() ?? "";
+          let user: any = null;
+          if (emailOpt) {
+            user = await UserRepository.getOneByEmailIgnoreCase(emailOpt);
+          }
+          if (!user && key) {
+            user = await UserRepository.getOneByUsernameIgnoreCase(key);
+          }
+          if (!user && key) {
+            const member = await internalMemberRepository.findByForumUserId(key);
+            if (member) {
+              user = await UserRepository.getById(String(member.appUserId));
+            }
+          }
+          if (!user && key) {
+            user = await UserRepository.getOneByUsernameAccentFoldIgnoreCase(key);
+          }
           if (!user) throw new UserNotExistException();
           const result = await SubscriptionPlanRepository.get({
             userId: user.id,

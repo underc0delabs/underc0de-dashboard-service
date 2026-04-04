@@ -9,6 +9,7 @@ import { ISubscriptionPlanRepository } from "../../../subscriptionPlan/core/repo
 import { IRefreshTokenRepository } from "../../core/repository/IRefreshTokenRepository.js";
 import { IPaymentRepository } from "../../../payment/core/repository/IPaymentRepository.js";
 import { MercadoPagoSyncService } from "../../../../services/mercadopagoService/core/service/mercadoPagoSyncService.js";
+import { IInternalMemberRepository } from "../../../internalMembers/core/repository/IInternalMemberRepository.js";
 
 export const getUserControllers = (dependencyManager: DependencyManager) => {
   const UserRepository = getUserRepository(dependencyManager);
@@ -21,6 +22,9 @@ export const getUserControllers = (dependencyManager: DependencyManager) => {
   const mercadoPagoSyncService = dependencyManager.resolve(
     "mercadoPagoSyncService"
   ) as MercadoPagoSyncService;
+  const internalMemberRepository = dependencyManager.resolve(
+    "internalMemberRepository"
+  ) as IInternalMemberRepository;
   const UserActions = getUserActions(
     UserRepository,
     hashService,
@@ -29,7 +33,8 @@ export const getUserControllers = (dependencyManager: DependencyManager) => {
     notificationsRepository,
     subscriptionPlanRepository,
     paymentRepository,
-    mercadoPagoSyncService
+    mercadoPagoSyncService,
+    internalMemberRepository
   );
   return UserControllers(UserActions);
 };
