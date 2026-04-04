@@ -6,6 +6,7 @@ import { PushNotificationModuleInitializer } from "./pushNotifications/pushNotif
 import { SubscriptionPlanModuleInitializer } from "./subscriptionPlan/subscriptionPlanModule.js"
 import { PaymentModuleInitializer } from "./payment/paymentModule.js"
 import { EnvironmentModule } from "./environments/environmentModule.js"
+import { InternalMemberModuleInitializer } from "./internalMembers/internalMemberModule.js"
 
 const ModulesInitializer = (dependencyManager:DependencyManager) => {
     UserModuleInitializer(dependencyManager)
@@ -14,6 +15,7 @@ const ModulesInitializer = (dependencyManager:DependencyManager) => {
     PushNotificationModuleInitializer(dependencyManager)
     SubscriptionPlanModuleInitializer(dependencyManager)
     PaymentModuleInitializer(dependencyManager)
+    InternalMemberModuleInitializer(dependencyManager)
     EnvironmentModule(dependencyManager)
 }
 export default ModulesInitializer

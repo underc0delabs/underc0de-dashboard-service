@@ -134,7 +134,12 @@ Recibe notificaciones automáticas de MercadoPago cuando el usuario autoriza el 
 
 4. **Fallback (opcional):** Un cron diario (3:00 AM) ejecuta `sync-mercadopago` por si el webhook falla. No es necesario para el flujo normal.
 
-5. **Usuario usa funciones PRO:**
+5. **Reconciliación puntual por usuario (admin, sin el worker global):**
+   - El panel puede llamar `POST /api/v1/admin/users/:id/mercadopago-reconcile` con JWT de administrador.
+   - El backend consulta el preapproval de MercadoPago asociado al usuario, actualiza `SubscriptionPlans`, pagos faltantes y `Users.is_pro` en **una respuesta HTTP**.
+   - No modifica el job/cron que sincroniza todos los suscriptores; es un camino aparte para soporte.
+
+6. **Usuario usa funciones PRO:**
    - App consulta `User.is_pro` para habilitar features
 
 ---

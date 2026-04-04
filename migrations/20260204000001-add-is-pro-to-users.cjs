@@ -1,11 +1,13 @@
 'use strict';
 
+const { ensureColumn } = require('../scripts/migration-helpers.cjs');
+
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.addColumn('Users', 'is_pro', {
+    await ensureColumn(queryInterface, Sequelize, 'Users', 'is_pro', {
       type: Sequelize.BOOLEAN,
       allowNull: false,
-      defaultValue: false
+      defaultValue: false,
     });
   },
 

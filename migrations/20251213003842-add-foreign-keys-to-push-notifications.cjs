@@ -22,14 +22,17 @@ module.exports = {
         ON ccu.constraint_name = tc.constraint_name
         AND ccu.table_schema = tc.table_schema
       WHERE tc.constraint_type = 'FOREIGN KEY'
-        AND tc.table_name = '${tableName}'
-        AND kcu.column_name IN ('createdBy', 'modifiedBy');
+        AND tc.table_schema = 'public'
+        AND LOWER(tc.table_name) = LOWER('${tableName}')
+        AND LOWER(kcu.column_name) IN ('createdby', 'modifiedby');
     `);
 
-    const existingConstraints = foreignKeys.map(fk => fk.column_name);
+    const existingConstraints = foreignKeys.map((fk) =>
+      String(fk.column_name).toLowerCase()
+    );
 
     // Agregar foreign key para createdBy si no existe
-    if (!existingConstraints.includes('createdBy')) {
+    if (!existingConstraints.includes("createdby")) {
       await queryInterface.addConstraint(tableName, {
         fields: ['createdBy'],
         type: 'foreign key',
@@ -44,7 +47,7 @@ module.exports = {
     }
 
     // Agregar foreign key para modifiedBy si no existe
-    if (!existingConstraints.includes('modifiedBy')) {
+    if (!existingConstraints.includes("modifiedby")) {
       await queryInterface.addConstraint(tableName, {
         fields: ['modifiedBy'],
         type: 'foreign key',
@@ -58,27 +61,33 @@ module.exports = {
       });
     }
 
-    // Verificar y agregar índices si no existen
+    // Índices por nombre (no filtrar tablename: con "PushNotifications" citado,
+    // pg_indexes.tablename no siempre es minúsculas y la query devolvía vacío → duplicaba índices).
     const [indexes] = await queryInterface.sequelize.query(`
       SELECT indexname 
       FROM pg_indexes 
-      WHERE tablename = '${tableName.toLowerCase()}'
+      WHERE schemaname = 'public'
         AND indexname IN ('push_notifications_created_by_idx', 'push_notifications_modified_by_idx');
     `);
 
-    const existingIndexes = indexes.map(idx => idx.indexname);
+    const existingIndexes = indexes.map((idx) => idx.indexname);
 
-    if (!existingIndexes.includes('push_notifications_created_by_idx')) {
-      await queryInterface.addIndex(tableName, ['createdBy'], {
-        name: 'push_notifications_created_by_idx'
-      });
-    }
+    const addIndexIfMissing = async (
+      indexName,
+      fields,
+    ) => {
+      if (existingIndexes.includes(indexName)) return;
+      try {
+        await queryInterface.addIndex(tableName, fields, { name: indexName });
+        existingIndexes.push(indexName);
+      } catch (err) {
+        const msg = err?.message ?? String(err);
+        if (!msg.includes("already exists")) throw err;
+      }
+    };
 
-    if (!existingIndexes.includes('push_notifications_modified_by_idx')) {
-      await queryInterface.addIndex(tableName, ['modifiedBy'], {
-        name: 'push_notifications_modified_by_idx'
-      });
-    }
+    await addIndexIfMissing("push_notifications_created_by_idx", ["createdBy"]);
+    await addIndexIfMissing("push_notifications_modified_by_idx", ["modifiedBy"]);
   },
 
   async down(queryInterface, Sequelize) {

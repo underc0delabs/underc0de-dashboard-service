@@ -13,11 +13,15 @@ module.exports = {
       console.log('Índice merchants_email_unique no encontrado o ya eliminado');
     }
 
-    // Cambiar la columna email para permitir null
-    await queryInterface.changeColumn(tableName, 'email', {
-      type: Sequelize.STRING,
-      allowNull: true
-    });
+    try {
+      await queryInterface.changeColumn(tableName, 'email', {
+        type: Sequelize.STRING,
+        allowNull: true,
+      });
+    } catch (e) {
+      const msg = e?.message ?? String(e);
+      if (!msg.includes('already') && !msg.includes('violates')) throw e;
+    }
   },
 
   async down(queryInterface, Sequelize) {

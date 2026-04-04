@@ -61,8 +61,15 @@ export const SaveUserAction = (
             status: body.status ?? true,
             birthday,
             is_pro: body.vip ?? false,
+            mercadopago_email:
+              (body as any).mercadopago_email ??
+              (body as any).mercadopagoEmail ??
+              null,
             password: hashService.hash(body.password || crypto.randomBytes(32).toString("hex")),
           };
+          if (user.mercadopago_email == null || user.mercadopago_email === "") {
+            delete user.mercadopago_email;
+          }
           const result = await UserRepository.save(user);
           resolve(result);
         } catch (error) {

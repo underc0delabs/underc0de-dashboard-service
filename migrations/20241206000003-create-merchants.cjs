@@ -2,6 +2,9 @@
 
 module.exports = {
   async up(queryInterface, Sequelize) {
+    if (await queryInterface.tableExists('Merchants')) {
+      return;
+    }
     await queryInterface.createTable('Merchants', {
       id: {
         allowNull: false,
@@ -47,11 +50,6 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE
       }
-    });
-
-    await queryInterface.addIndex('Merchants', ['email'], {
-      unique: true,
-      name: 'merchants_email_unique'
     });
   },
 

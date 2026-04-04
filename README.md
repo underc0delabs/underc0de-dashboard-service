@@ -228,6 +228,20 @@ docker-compose down -v
 npm run docker:up
 ```
 
+## API admin — miembros internos (app / foro / Mercado Pago)
+
+Rutas bajo el prefijo configurado (p. ej. `/api/v1`). Requieren JWT de **admin** (`requireAdmin`).
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| POST | `/admin/members/provision` | Crea usuario de app + fila en `InternalMembers`. |
+| GET | `/admin/members/by-app-user/:appUserId` | Usuario app + miembro interno (crea miembro si faltaba). |
+| PATCH | `/admin/members/by-app-user/:appUserId/forum` | Vincula `forumUserId` / `forumEmail` (manual). |
+| PATCH | `/admin/members/by-app-user/:appUserId/mercadopago` | Persiste email MP e IDs; sincroniza `mercadopago_email` en `Users` si hay email. |
+| POST | `/admin/members/by-app-user/:appUserId/link-subscription` | Body `{ mpPreapprovalId }`; reutiliza lógica de `link-subscription`. |
+
+Migración: `20260404120000-create-internal-members.cjs`.
+
 ## Licencia
 
 ISC

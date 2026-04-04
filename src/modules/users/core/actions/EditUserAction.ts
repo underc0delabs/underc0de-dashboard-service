@@ -4,6 +4,7 @@ import { IHashService } from "../services/IHashService.js";
 import { ISubscriptionPlanRepository } from "../../../subscriptionPlan/core/repository/ISubscriptionPlanRepository.js";
 
 const EDIT_ALLOWED_KEYS = [
+  "username",
   "name",
   "lastname",
   "phone",
@@ -36,6 +37,29 @@ const buildUpdatePayload = (body: any, hashService: IHashService): Record<string
     payload.password = hashService.hash(String(payload.password));
   }
   return payload;
+};
+
+/** Deja un solo plan ACTIVE por usuario al activar desde el panel (evita duplicados que confunden el listado). */
+const cancelOtherActivePlans = async (
+  subscriptionPlanRepository: ISubscriptionPlanRepository,
+  userIdNum: number,
+  keepSubId: number | null
+) => {
+  const result = await subscriptionPlanRepository.get({
+    userId: userIdNum,
+    page_count: 100,
+    page_number: 0,
+  });
+  const plans = (result as any).subscriptionPlans ?? [];
+  for (const p of plans) {
+    const row = p?.toJSON ? p.toJSON() : p;
+    if (row.status !== "ACTIVE") continue;
+    if (keepSubId != null && Number(row.id) === keepSubId) continue;
+    await subscriptionPlanRepository.edit(
+      { status: "CANCELLED" } as any,
+      String(row.id)
+    );
+  }
 };
 
 /** Acepta "ACTIVE"|"CANCELLED", "Activa"|"Cancelada", o objeto { value/label/status } del front. */
@@ -122,6 +146,11 @@ export const EditUserAction = (
             if (subscriptionStatus === "ACTIVE") {
               if (subscription) {
                 const subId = (subscription as any).id;
+                await cancelOtherActivePlans(
+                  subscriptionPlanRepository,
+                  userIdNum,
+                  subId
+                );
                 await subscriptionPlanRepository.edit(
                   {
                     status: "ACTIVE",
@@ -130,6 +159,11 @@ export const EditUserAction = (
                   String(subId)
                 );
               } else {
+                await cancelOtherActivePlans(
+                  subscriptionPlanRepository,
+                  userIdNum,
+                  null
+                );
                 await subscriptionPlanRepository.save({
                   userId: userIdNum,
                   status: "ACTIVE",

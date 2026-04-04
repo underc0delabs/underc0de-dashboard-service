@@ -1,14 +1,15 @@
 'use strict';
 
+const { ensureColumn } = require('../scripts/migration-helpers.cjs');
+
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
     const tableName = 'Merchants';
 
-    // Agregar url
-    await queryInterface.addColumn(tableName, 'url', {
+    await ensureColumn(queryInterface, Sequelize, tableName, 'url', {
       type: Sequelize.STRING,
-      allowNull: true
+      allowNull: true,
     });
   },
 

@@ -1,13 +1,15 @@
 'use strict';
 
+const { ensureColumn } = require('../scripts/migration-helpers.cjs');
+
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up (queryInterface, Sequelize) {
-    await queryInterface.addColumn('Users', 'mpPayerId', {
+    await ensureColumn(queryInterface, Sequelize, 'Users', 'mpPayerId', {
       type: Sequelize.INTEGER,
       allowNull: true,
       unique: true,
-      comment: 'MercadoPago payer_id para relacionar usuarios con pagos'
+      comment: 'MercadoPago payer_id para relacionar usuarios con pagos',
     });
   },
 

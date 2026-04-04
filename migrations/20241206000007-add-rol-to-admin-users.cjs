@@ -2,6 +2,10 @@
 
 module.exports = {
   async up(queryInterface, Sequelize) {
+    const table = await queryInterface.describeTable('AdminUsers');
+    if (table.rol) {
+      return;
+    }
     await queryInterface.addColumn('AdminUsers', 'rol', {
       type: Sequelize.ENUM('Admin', 'Editor'),
       allowNull: false,

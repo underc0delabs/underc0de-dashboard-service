@@ -35,8 +35,8 @@ module.exports = {
       END $$;
     `);
 
-    // Cambiar la columna status a usar el ENUM
-    await queryInterface.sequelize.query(`
+    try {
+      await queryInterface.sequelize.query(`
       ALTER TABLE "SubscriptionPlans" 
       ALTER COLUMN "status" TYPE "enum_SubscriptionPlans_status" 
       USING CASE 
@@ -45,6 +45,10 @@ module.exports = {
         ELSE 'ACTIVE'::"enum_SubscriptionPlans_status"
       END;
     `);
+    } catch (e) {
+      const msg = e?.message ?? String(e);
+      if (!msg.includes('already') && !msg.includes('cannot cast')) throw e;
+    }
 
     // Actualizar mpPreapprovalId: cambiar a NOT NULL y agregar unique constraint
     // Primero, si hay valores NULL, los actualizamos

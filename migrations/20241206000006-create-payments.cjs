@@ -1,7 +1,15 @@
 'use strict';
 
+/**
+ * Evitar índices duplicados: la FK en userSubscriptionId y unique en mpPaymentId
+ * ya generan índices; addIndex repetido provoca "relation already exists".
+ */
 module.exports = {
   async up(queryInterface, Sequelize) {
+    if (await queryInterface.tableExists('Payments')) {
+      return;
+    }
+
     await queryInterface.createTable('Payments', {
       id: {
         allowNull: false,
@@ -40,12 +48,6 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE
       }
-    });
-
-    await queryInterface.addIndex('Payments', ['userSubscriptionId']);
-    await queryInterface.addIndex('Payments', ['mpPaymentId'], {
-      unique: true,
-      name: 'payments_mp_payment_id_unique'
     });
   },
 

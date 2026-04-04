@@ -7,10 +7,12 @@ import getSubscriptionPlanRoutes from "../modules/subscriptionPlan/infrastructur
 import getPaymentRoutes from "../modules/payment/infrastructure/routes/PaymentRoutes.js"
 import getEnvironmentRoutes from "../modules/environments/infrastructure/routes/EnvironmentRoutes.js"
 import { CronRoutes } from "../routes/CronRoutes.js"
+import getAdminMemberRoutes from "../modules/internalMembers/infrastructure/routes/AdminMemberRoutes.js"
 
 const prefix = '/api/v1'
 const ReduceRouters = (app: { use: (arg0: string, arg1: any) => void }, dependencyManager: DependencyManager) => {
     app.use(prefix, getUserRoutes(dependencyManager))
+    app.use(prefix, getAdminMemberRoutes(dependencyManager))
     app.use(prefix, getAdminUserRoutes(dependencyManager))
     app.use(prefix, getMerchantRoutes(dependencyManager))
     app.use(prefix, getPushNotificationRoutes(dependencyManager))

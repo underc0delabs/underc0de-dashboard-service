@@ -17,9 +17,12 @@ module.exports = {
       END $$;
     `);
     
-    // Crear el tipo ENUM con valores en minúsculas
     await queryInterface.sequelize.query(`
-      CREATE TYPE "enum_Payments_status" AS ENUM ('approved', 'pending', 'rejected', 'cancelled', 'refunded');
+      DO $$ BEGIN
+        CREATE TYPE "enum_Payments_status" AS ENUM ('approved', 'pending', 'rejected', 'cancelled', 'refunded');
+      EXCEPTION
+        WHEN duplicate_object THEN NULL;
+      END $$;
     `);
     
     // Si la columna status no existe, agregarla usando SQL directo

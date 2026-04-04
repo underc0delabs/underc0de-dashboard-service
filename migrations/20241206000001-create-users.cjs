@@ -2,6 +2,9 @@
 
 module.exports = {
   async up(queryInterface, Sequelize) {
+    if (await queryInterface.tableExists('Users')) {
+      return;
+    }
     await queryInterface.createTable('Users', {
       id: {
         allowNull: false,
@@ -40,11 +43,7 @@ module.exports = {
         type: Sequelize.DATE
       }
     });
-
-    await queryInterface.addIndex('Users', ['email'], {
-      unique: true,
-      name: 'users_email_unique'
-    });
+    /* unique en la columna email ya crea el índice único */
   },
 
   async down(queryInterface, Sequelize) {

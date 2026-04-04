@@ -1,34 +1,47 @@
 'use strict';
 
 /** @type {import('sequelize-cli').Migration} */
+const safeChange = async (fn) => {
+  try {
+    await fn();
+  } catch (e) {
+    const msg = e?.message ?? String(e);
+    if (!msg.includes('already') && !msg.includes('noop')) throw e;
+  }
+};
+
 module.exports = {
   async up(queryInterface, Sequelize) {
     const tableName = 'Merchants';
 
-    // Cambiar name para permitir null
-    await queryInterface.changeColumn(tableName, 'name', {
-      type: Sequelize.STRING,
-      allowNull: true
-    });
+    await safeChange(() =>
+      queryInterface.changeColumn(tableName, 'name', {
+        type: Sequelize.STRING,
+        allowNull: true,
+      })
+    );
 
-    // Cambiar address para permitir null
-    await queryInterface.changeColumn(tableName, 'address', {
-      type: Sequelize.STRING,
-      allowNull: true
-    });
+    await safeChange(() =>
+      queryInterface.changeColumn(tableName, 'address', {
+        type: Sequelize.STRING,
+        allowNull: true,
+      })
+    );
 
-    // Cambiar phone para permitir null
-    await queryInterface.changeColumn(tableName, 'phone', {
-      type: Sequelize.STRING,
-      allowNull: true
-    });
+    await safeChange(() =>
+      queryInterface.changeColumn(tableName, 'phone', {
+        type: Sequelize.STRING,
+        allowNull: true,
+      })
+    );
 
-    // Cambiar status para permitir null
-    await queryInterface.changeColumn(tableName, 'status', {
-      type: Sequelize.BOOLEAN,
-      allowNull: true,
-      defaultValue: true
-    });
+    await safeChange(() =>
+      queryInterface.changeColumn(tableName, 'status', {
+        type: Sequelize.BOOLEAN,
+        allowNull: true,
+        defaultValue: true,
+      })
+    );
   },
 
   async down(queryInterface, Sequelize) {

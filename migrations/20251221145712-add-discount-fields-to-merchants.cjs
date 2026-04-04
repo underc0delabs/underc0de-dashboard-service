@@ -1,20 +1,20 @@
 'use strict';
 
+const { ensureColumn } = require('../scripts/migration-helpers.cjs');
+
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
     const tableName = 'Merchants';
 
-    // Agregar usersProDisccount
-    await queryInterface.addColumn(tableName, 'usersProDisccount', {
+    await ensureColumn(queryInterface, Sequelize, tableName, 'usersProDisccount', {
       type: Sequelize.INTEGER,
-      allowNull: true
+      allowNull: true,
     });
 
-    // Agregar usersDisccount
-    await queryInterface.addColumn(tableName, 'usersDisccount', {
+    await ensureColumn(queryInterface, Sequelize, tableName, 'usersDisccount', {
       type: Sequelize.INTEGER,
-      allowNull: true
+      allowNull: true,
     });
   },
 

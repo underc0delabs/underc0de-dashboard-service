@@ -1,7 +1,16 @@
 'use strict';
 
+/**
+ * No añadir addIndex(['userId']) aquí: createTable con references ya genera el índice
+ * de la FK (p. ej. relation "subscription_plans_user_id" already exists).
+ * Si la tabla ya existe (migración previa / .js), omitir.
+ */
 module.exports = {
   async up(queryInterface, Sequelize) {
+    if (await queryInterface.tableExists('SubscriptionPlans')) {
+      return;
+    }
+
     await queryInterface.createTable('SubscriptionPlans', {
       id: {
         allowNull: false,
@@ -48,8 +57,6 @@ module.exports = {
         type: Sequelize.DATE
       }
     });
-
-    await queryInterface.addIndex('SubscriptionPlans', ['userId']);
   },
 
   async down(queryInterface, Sequelize) {

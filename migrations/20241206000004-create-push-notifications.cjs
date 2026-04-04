@@ -1,7 +1,19 @@
 'use strict';
 
+/**
+ * Tabla sin FK inline: evita que Sequelize/PG dupliquen índices (p. ej. relation
+ * "push_notifications_created_by" already exists) y coincide con
+ * 20251213003842-add-foreign-keys-to-push-notifications.cjs, que agrega FK + índices
+ * nombrados de forma idempotente.
+ *
+ * Si la tabla ya existe (migración .js antigua u otro entorno), no hacer nada.
+ */
 module.exports = {
   async up(queryInterface, Sequelize) {
+    if (await queryInterface.tableExists('PushNotifications')) {
+      return;
+    }
+
     await queryInterface.createTable('PushNotifications', {
       id: {
         allowNull: false,
@@ -28,23 +40,11 @@ module.exports = {
       },
       createdBy: {
         type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: 'AdminUsers',
-          key: 'id'
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'RESTRICT'
+        allowNull: false
       },
       modifiedBy: {
         type: Sequelize.INTEGER,
-        allowNull: true,
-        references: {
-          model: 'AdminUsers',
-          key: 'id'
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'SET NULL'
+        allowNull: true
       },
       createdAt: {
         allowNull: false,
@@ -55,9 +55,6 @@ module.exports = {
         type: Sequelize.DATE
       }
     });
-
-    await queryInterface.addIndex('PushNotifications', ['createdBy']);
-    await queryInterface.addIndex('PushNotifications', ['modifiedBy']);
   },
 
   async down(queryInterface, Sequelize) {

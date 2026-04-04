@@ -1,0 +1,9 @@
+const path = require("path");
+
+/** Indica a sequelize-cli dónde está la config y las migraciones (este repo no usa config/config.json). */
+module.exports = {
+  config: path.resolve(__dirname, "sequelize.config.cjs"),
+  "models-path": path.resolve(__dirname, "src", "modules"),
+  "seeders-path": path.resolve(__dirname, "seeders"),
+  "migrations-path": path.resolve(__dirname, "migrations"),
+};

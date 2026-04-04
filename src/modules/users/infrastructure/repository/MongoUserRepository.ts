@@ -5,6 +5,57 @@ import configs from "../../../../configs.js";
 import IUser from "../../core/entities/IUser.js";
 import SubscriptionPlan from "../../../subscriptionPlan/infrastructure/models/SubscriptionPlanModel.js";
 import Payment from "../../../payment/infrastructure/models/PaymentModel.js";
+import InternalMember from "../../../internalMembers/infrastructure/models/InternalMemberModel.js";
+
+const flattenInternalMember = (userJson: Record<string, unknown>) => {
+  const im = userJson.internalMember as Record<string, unknown> | null | undefined;
+  const { internalMember: _internalMemberDrop, ...rest } = userJson;
+  return {
+    ...rest,
+    forumUserId: (im?.forumUserId as string | null | undefined) ?? null,
+    forumEmail: (im?.forumEmail as string | null | undefined) ?? null,
+    mercadopagoCustomerId:
+      (im?.mercadopagoCustomerId as string | null | undefined) ?? null,
+    mercadopagoExternalReference:
+      (im?.mercadopagoExternalReference as string | null | undefined) ?? null,
+  } as Record<string, unknown>;
+};
+
+const toPlanRow = (sub: any) =>
+  sub && typeof sub.toJSON === "function" ? sub.toJSON() : sub;
+
+/**
+ * Con más de un plan ACTIVE (p. ej. reactivación desde el panel sin cerrar el anterior),
+ * `.find` devolvía el primero por id y podía seguir mostrando "expirado" si ese registro
+ * tenía fechas viejas. Tomamos el ACTIVE más reciente por createdAt.
+ */
+const pickLatestActiveSubscription = (plans: any[] | undefined): any | null => {
+  if (!plans?.length) return null;
+  const actives = plans.map(toPlanRow).filter((p: any) => p?.status === "ACTIVE");
+  if (actives.length === 0) return null;
+  return actives.reduce((best: any, p: any) => {
+    const bt = best?.createdAt ? new Date(best.createdAt).getTime() : 0;
+    const pt = p?.createdAt ? new Date(p.createdAt).getTime() : 0;
+    if (pt > bt) return p;
+    if (pt === bt && Number(p?.id) > Number(best?.id)) return p;
+    return best;
+  });
+};
+
+const pickLatestCancelledSubscription = (plans: any[] | undefined): any | null => {
+  if (!plans?.length) return null;
+  const cancelled = plans
+    .map(toPlanRow)
+    .filter((p: any) => p?.status === "CANCELLED");
+  if (cancelled.length === 0) return null;
+  return cancelled.reduce((best: any, p: any) => {
+    const bt = best?.createdAt ? new Date(best.createdAt).getTime() : 0;
+    const pt = p?.createdAt ? new Date(p.createdAt).getTime() : 0;
+    if (pt > bt) return p;
+    if (pt === bt && Number(p?.id) > Number(best?.id)) return p;
+    return best;
+  });
+};
 
 /** Un solo nombre para mostrar: evita duplicar (name ya incluye apellido, o name === lastname). */
 const fullNameWithoutDuplicate = (name?: string | null, lastname?: string | null): string => {
@@ -84,6 +135,11 @@ export const MongoUserRepository = (): IUserRepository => ({
       attributes: { exclude: ['password'] },
       include: [
         {
+          model: InternalMember,
+          as: "internalMember",
+          required: false,
+        },
+        {
           model: SubscriptionPlan,
           as: 'subscriptionPlans',
           required: false,
@@ -102,9 +158,13 @@ export const MongoUserRepository = (): IUserRepository => ({
     });
 
     const usersWithSubscriptionInfo = users.map((user: any) => {
-      const userJson = user.toJSON();
-      const activeSubscription = userJson.subscriptionPlans?.find((sub: any) => sub.status === 'ACTIVE');
-      const cancelledSubscription = userJson.subscriptionPlans?.find((sub: any) => sub.status === 'CANCELLED');
+      const userJson = flattenInternalMember(user.toJSON() as Record<string, unknown>) as any;
+      const activeSubscription = pickLatestActiveSubscription(
+        userJson.subscriptionPlans
+      );
+      const cancelledSubscription = activeSubscription
+        ? null
+        : pickLatestCancelledSubscription(userJson.subscriptionPlans);
       const subscriptionPlan = activeSubscription ?? cancelledSubscription;
 
       let subscriptionStatus = null;
@@ -217,6 +277,11 @@ export const MongoUserRepository = (): IUserRepository => ({
       attributes: { exclude: ['password'] },
       include: [
         {
+          model: InternalMember,
+          as: "internalMember",
+          required: false,
+        },
+        {
           model: SubscriptionPlan,
           as: 'subscriptionPlans',
           required: false,
@@ -236,9 +301,15 @@ export const MongoUserRepository = (): IUserRepository => ({
 
     if (!user) return null;
 
-    const userJson = user.toJSON() as any;
-    const activeSubscription = userJson.subscriptionPlans?.find((sub: any) => sub.status === 'ACTIVE');
-    
+    const userJson = flattenInternalMember(user.toJSON() as Record<string, unknown>) as any;
+    const activeSubscription = pickLatestActiveSubscription(
+      userJson.subscriptionPlans
+    );
+    const cancelledSubscription = activeSubscription
+      ? null
+      : pickLatestCancelledSubscription(userJson.subscriptionPlans);
+    const subscriptionPlan = activeSubscription ?? cancelledSubscription;
+
     let subscriptionStatus = null;
     let isUpToDate = null;
     let lastPayment = null;
@@ -248,47 +319,67 @@ export const MongoUserRepository = (): IUserRepository => ({
       subscriptionStatus = activeSubscription.status;
       nextPaymentDate = activeSubscription.nextPaymentDate;
       lastPayment = activeSubscription.payments?.[0] || null;
-      
+
       if (nextPaymentDate) {
         const nextPayment = new Date(nextPaymentDate);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        
-        if (lastPayment) {
+
+        if (nextPayment > today) {
+          isUpToDate = true;
+        } else if (lastPayment) {
           const lastPaymentDate = new Date(lastPayment.paidAt);
           lastPaymentDate.setHours(0, 0, 0, 0);
           isUpToDate = lastPaymentDate >= nextPayment;
         } else {
-          isUpToDate = nextPayment >= today;
+          isUpToDate = false;
         }
       } else {
         if (lastPayment) {
           const lastPaymentDate = new Date(lastPayment.paidAt);
           const today = new Date();
-          const daysSinceLastPayment = Math.floor((today.getTime() - lastPaymentDate.getTime()) / (1000 * 60 * 60 * 24));
+          const daysSinceLastPayment = Math.floor(
+            (today.getTime() - lastPaymentDate.getTime()) /
+              (1000 * 60 * 60 * 24)
+          );
           isUpToDate = daysSinceLastPayment < 30;
         } else {
           isUpToDate = false;
         }
       }
+    } else if (cancelledSubscription) {
+      subscriptionStatus = "CANCELLED";
     }
+
+    const displayStatus = activeSubscription
+      ? isUpToDate === false
+        ? "expired"
+        : subscriptionStatus
+      : cancelledSubscription
+        ? "CANCELLED"
+        : subscriptionStatus;
 
     return {
       ...userJson,
       fullName: fullNameWithoutDuplicate(userJson.name, userJson.lastname),
-      subscription: activeSubscription ? {
-        id: activeSubscription.id,
-        status: subscriptionStatus,
-        startedAt: activeSubscription.startedAt,
-        nextPaymentDate: nextPaymentDate,
-        isUpToDate: isUpToDate,
-        lastPayment: lastPayment ? {
-          id: lastPayment.id,
-          amount: lastPayment.amount,
-          currency: lastPayment.currency,
-          paidAt: lastPayment.paidAt,
-        } : null,
-      } : null,
+      subscription: subscriptionPlan
+        ? {
+            id: subscriptionPlan.id,
+            status: displayStatus,
+            rawStatus: subscriptionStatus,
+            startedAt: subscriptionPlan.startedAt,
+            nextPaymentDate: nextPaymentDate ?? subscriptionPlan.nextPaymentDate,
+            isUpToDate: isUpToDate,
+            lastPayment: lastPayment
+              ? {
+                  id: lastPayment.id,
+                  amount: lastPayment.amount,
+                  currency: lastPayment.currency,
+                  paidAt: lastPayment.paidAt,
+                }
+              : null,
+          }
+        : null,
     };
   },
   async getOne(query, includePassword = false) {
