@@ -121,8 +121,9 @@ module.exports = {
           type: Sequelize.STRING,
           allowNull: false,
         },
+        /** JSONB requiere PG ≥ 9.4; JSON basta para auditoría y funciona en 9.2+. */
         payloadJson: {
-          type: Sequelize.JSONB,
+          type: Sequelize.JSON,
           allowNull: true,
         },
         createdAt: {

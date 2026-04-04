@@ -23,7 +23,7 @@ const AdminMemberAudit = sequelize.define(
       allowNull: false,
     },
     payloadJson: {
-      type: DataTypes.JSONB,
+      type: DataTypes.JSON,
       allowNull: true,
     },
     createdAt: {
