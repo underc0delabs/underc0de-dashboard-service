@@ -3,10 +3,15 @@
 /** Asegura que la columna id de SubscriptionPlans tenga DEFAULT nextval (evita "null viola not null" en INSERT). */
 module.exports = {
   async up(queryInterface) {
+    /** pg_sequences existe desde PG 10; information_schema.sequences sirve en versiones anteriores. */
     await queryInterface.sequelize.query(`
       DO $$
       BEGIN
-        IF NOT EXISTS (SELECT 1 FROM pg_sequences WHERE schemaname = 'public' AND sequencename = 'SubscriptionPlans_id_seq') THEN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.sequences
+          WHERE sequence_schema = 'public'
+            AND sequence_name = 'SubscriptionPlans_id_seq'
+        ) THEN
           CREATE SEQUENCE "SubscriptionPlans_id_seq" OWNED BY "SubscriptionPlans"."id";
           PERFORM setval('"SubscriptionPlans_id_seq"', COALESCE((SELECT MAX(id) FROM "SubscriptionPlans"), 1));
         END IF;

@@ -7,7 +7,11 @@ module.exports = {
     await queryInterface.sequelize.query(`
       DO $$
       BEGIN
-        IF NOT EXISTS (SELECT 1 FROM pg_sequences WHERE schemaname = 'public' AND sequencename = 'Users_id_seq') THEN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.sequences
+          WHERE sequence_schema = 'public'
+            AND sequence_name = 'Users_id_seq'
+        ) THEN
           CREATE SEQUENCE "Users_id_seq" OWNED BY "Users"."id";
           PERFORM setval('"Users_id_seq"', COALESCE((SELECT MAX(id) FROM "Users"), 1));
         END IF;
