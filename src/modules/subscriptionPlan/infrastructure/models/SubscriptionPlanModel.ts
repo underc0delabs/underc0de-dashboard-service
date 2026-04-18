@@ -13,7 +13,13 @@ const SubscriptionPlan = sequelize.define("SubscriptionPlan", {
       allowNull: true,
     },
     status: {
-      type: DataTypes.ENUM("ACTIVE", "CANCELLED"),
+      type: DataTypes.ENUM(
+        "ACTIVE",
+        "CANCELLED",
+        "PENDING",
+        "EXPIRED",
+        "PAYMENT_FAILED"
+      ),
       allowNull: false,
     },
   

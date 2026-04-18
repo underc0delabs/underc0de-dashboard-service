@@ -1,6 +1,7 @@
 import { IUserRepository } from "../repository/IMongoUserRepository.js";
 import { ISubscriptionPlanRepository } from "../../../subscriptionPlan/core/repository/ISubscriptionPlanRepository.js";
 import { IPaymentRepository } from "../../../payment/core/repository/IPaymentRepository.js";
+import { isTerminalSubscriptionStatus } from "../../../subscriptionPlan/core/domain/subscriptionStatusPolicy.js";
 
 export interface ILinkSubscriptionAction {
   execute: (body: { suscriptionCode: string; email: string }) => Promise<any>;
@@ -54,6 +55,16 @@ export const LinkSubscriptionAction = (
           } else {
             const subscriptionData = subscription.toJSON ? subscription.toJSON() : subscription;
             subscriptionId = subscriptionData.id;
+
+            const st = String(subscriptionData.status ?? "");
+            if (isTerminalSubscriptionStatus(st)) {
+              reject(
+                new Error(
+                  "Ese preapproval ya está asociado a una suscripción cancelada o finalizada. Para volver a ser Pro, creá una suscripción nueva desde la app (no se puede reutilizar un plan cerrado)."
+                )
+              );
+              return;
+            }
 
             await SubscriptionPlanRepository.edit(
               { userId: userId } as any,

@@ -33,7 +33,8 @@ export const getAdminMemberControllers = (dependencyManager: DependencyManager) 
   );
   const getBundle = GetMemberBundleByAppUserIdAction(
     userRepository,
-    internalMemberRepository
+    internalMemberRepository,
+    subscriptionPlanRepository
   );
   const patchForum = PatchForumLinkByAppUserIdAction(
     userRepository,

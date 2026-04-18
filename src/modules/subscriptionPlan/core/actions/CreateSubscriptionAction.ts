@@ -6,14 +6,30 @@ import { IEnvironmentRepository } from "../../../environments/core/repository/IE
 
 const OWNER_PREAPPROVAL_PREFIX = "owner-";
 
-/**
- * Maps MercadoPago status to SubscriptionPlan ENUM (ACTIVE | CANCELLED).
- * MP returns "authorized" when paid, "pending" when awaiting payment. Pending maps to CANCELLED
- * until webhook/sync updates to ACTIVE after payment.
- */
-const mapMpStatusToModel = (mpStatus: string): "ACTIVE" | "CANCELLED" => {
-  if (String(mpStatus || "").toLowerCase() === "authorized") return "ACTIVE";
-  return "CANCELLED";
+import {
+  mapMpCreateStatusToModel,
+} from "../domain/subscriptionStatusPolicy.js";
+
+/** Política PENDING obsoleto: al iniciar un nuevo checkout, las filas PENDING del mismo usuario pasan a CANCELLED (nuevo intento reemplaza el anterior). */
+const cancelPreviousPendingCheckouts = async (
+  userId: number,
+  subscriptionPlanRepository: ISubscriptionPlanRepository
+) => {
+  const result = await subscriptionPlanRepository.get({
+    userId,
+    status: "PENDING",
+    page_count: 100,
+    page_number: 0,
+  });
+  const plans = result?.subscriptionPlans ?? [];
+  for (const row of plans) {
+    const id = (row as any).id ?? (row as any).dataValues?.id;
+    if (id == null) continue;
+    await subscriptionPlanRepository.edit(
+      { status: "CANCELLED" } as any,
+      String(id)
+    );
+  }
 };
 
 const grantOwnerSubscription = async (
@@ -36,7 +52,6 @@ const grantOwnerSubscription = async (
       status: "ACTIVE",
       startedAt: new Date(),
       mpPreapprovalId: ownerPreapprovalId,
-      mpSubscriptionId: ownerPreapprovalId,
     } as any);
   }
   await userRepository.edit(
@@ -99,16 +114,19 @@ export const CreateSubscriptionAction = (
           throw new Error("MERCADO_PAGO_PRICE no está configurado. Configuralo en Environments o en la variable de entorno.");
         }
         const transactionAmount = Number(transactionAmountRaw);
+        await cancelPreviousPendingCheckouts(
+          user.id,
+          subscriptionPlanRepository
+        );
+
         const response = await mercadoPagoGateway.createPreapproval(mpEmail, transactionAmount);
         const { id, init_point, status } = response;
-        const modelStatus = mapMpStatusToModel(status);
+        const modelStatus = mapMpCreateStatusToModel(status);
         await subscriptionPlanRepository.save({
           userId: user.id,
           status: modelStatus,
           startedAt: new Date(),
-          expiresAt: new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000),
           mpPreapprovalId: id,
-          mpSubscriptionId: id,
         } as any);
         return {
           init_point,

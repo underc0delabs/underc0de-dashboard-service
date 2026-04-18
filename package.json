@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "tsx --test src/modules/subscriptionPlan/core/domain/subscriptionStatusPolicy.test.ts",
     "dev": "nodemon --env-file=.env.local",
     "build": "tsc && (cp underc0de-f1e15-39bd5639c220.json build/ 2>/dev/null || true)",
     "start": "node build/index.js",
