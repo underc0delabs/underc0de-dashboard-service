@@ -1,5 +1,7 @@
 'use strict';
 
+/** MIGRATION_FILE_ID: extend-enum-20260418-pgenum-no-if-sql */
+
 /**
  * Enum enum_SubscriptionPlans_status: agrega PENDING, EXPIRED, PAYMENT_FAILED.
  * Compatible con PostgreSQL 9.1+ (solo ADD VALUE clásico; ver pg_enum para idempotencia).
