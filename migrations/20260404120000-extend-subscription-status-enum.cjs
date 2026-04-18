@@ -6,22 +6,18 @@
  */
 module.exports = {
   async up(queryInterface) {
-    const addValue = async (label) => {
-      await queryInterface.sequelize.query(`
-        DO $$ BEGIN
-          IF NOT EXISTS (
-            SELECT 1 FROM pg_enum e
-            JOIN pg_type t ON e.enumtypid = t.oid
-            WHERE t.typname = 'enum_SubscriptionPlans_status' AND e.enumlabel = '${label}'
-          ) THEN
-            ALTER TYPE "enum_SubscriptionPlans_status" ADD VALUE '${label}';
-          END IF;
-        END $$;
-      `);
-    };
-    await addValue('PENDING');
-    await addValue('EXPIRED');
-    await addValue('PAYMENT_FAILED');
+    // ALTER TYPE ... ADD VALUE no puede ejecutarse dentro de DO $$ (PostgreSQL).
+    // IF NOT EXISTS evita error si el valor ya existe (re-ejecución / deploy repetido).
+    const run = (sql) => queryInterface.sequelize.query(sql);
+    await run(
+      `ALTER TYPE "enum_SubscriptionPlans_status" ADD VALUE IF NOT EXISTS 'PENDING';`,
+    );
+    await run(
+      `ALTER TYPE "enum_SubscriptionPlans_status" ADD VALUE IF NOT EXISTS 'EXPIRED';`,
+    );
+    await run(
+      `ALTER TYPE "enum_SubscriptionPlans_status" ADD VALUE IF NOT EXISTS 'PAYMENT_FAILED';`,
+    );
   },
 
   async down() {
