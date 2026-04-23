@@ -63,8 +63,21 @@ export const ReconcileMercadoPagoUserAction = (
         p.mpPreapprovalId &&
         !String(p.mpPreapprovalId).startsWith("owner-")
     );
+    const byRecency = (a: any, b: any) => {
+      const ta = a?.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const tb = b?.createdAt ? new Date(b.createdAt).getTime() : 0;
+      if (tb !== ta) return tb - ta;
+      return Number(b?.id ?? 0) - Number(a?.id ?? 0);
+    };
+    const sorted = [...candidates].sort(byRecency);
+    const newest = sorted[0];
+    // Si el intento más reciente es PENDING, reconciliarlo (p. ej. re-suscripción con fila
+    // ACTIVE vieja aún no bajada); no usar .find(ACTIVE) sobre toda la lista, que devolvía
+    // un ACTIVE obsoleto antes que el PENDING más nuevo.
     const planWithMp =
-      candidates.find((p: any) => p.status === "ACTIVE") ?? candidates[0];
+      newest?.status === "PENDING"
+        ? newest
+        : sorted.find((p: any) => p.status === "ACTIVE") ?? newest;
 
     if (!planWithMp?.mpPreapprovalId) {
       return {
