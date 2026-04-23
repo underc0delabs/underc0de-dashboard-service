@@ -209,8 +209,11 @@ export const MongoUserRepository = (): IUserRepository => ({
         subscriptionStatus = 'CANCELLED';
       }
 
+      // No forzar "expirado" solo por isUpToDate: si el plan en DB es ACTIVE, el usuario
+      // puede estar al día aun con fechas desfasadas; isUpToDate queda en el payload para
+      // filtros o UI secundaria.
       const displayStatus = activeSubscription
-        ? (isUpToDate === false ? 'expired' : subscriptionStatus)
+        ? subscriptionStatus
         : cancelledSubscription
           ? 'CANCELLED'
           : subscriptionStatus;
@@ -411,9 +414,7 @@ export const MongoUserRepository = (): IUserRepository => ({
     }
 
     const displayStatus = activeSubscription
-      ? isUpToDate === false
-        ? "expired"
-        : subscriptionStatus
+      ? subscriptionStatus
       : cancelledSubscription
         ? "CANCELLED"
         : subscriptionStatus;
