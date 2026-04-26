@@ -6,12 +6,13 @@ import { getSubscriptionPlanControllers } from '../controllers/controllersProvid
 
 const getSubscriptionPlanRoutes = (dependencyManager: DependencyManager) => {
     const jwtValidator = getJwtValidator(dependencyManager)
-    const {createSubscription, get, syncMercadoPago, confirmSubscription, subscriptionSuccess, handleWebhook, refreshSubscriptionStatus} = getSubscriptionPlanControllers(dependencyManager)
+    const {createSubscription, get, syncMercadoPago, confirmSubscription, subscriptionSuccess, handleWebhook, refreshSubscriptionStatus, cancelUserSubscription} = getSubscriptionPlanControllers(dependencyManager)
     const subscriptionPlanRouter = Router()
     const path = 'subscription-plans'
 
     subscriptionPlanRouter.get(`/subscriptions/success`, subscriptionSuccess)
     subscriptionPlanRouter.post(`/subscriptions/create`, [jwtValidator], createSubscription)
+    subscriptionPlanRouter.post(`/subscriptions/cancel`, [jwtValidator], cancelUserSubscription)
     subscriptionPlanRouter.get(`/${path}`,[jwtValidator], get)
     subscriptionPlanRouter.get(`/${path}/sync-mercadopago`,[jwtValidator], syncMercadoPago)
     subscriptionPlanRouter.post(`/subscriptions/confirm`, confirmSubscription)

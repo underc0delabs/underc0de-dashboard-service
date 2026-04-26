@@ -18,4 +18,9 @@ export interface MercadoPagoGateway {
     userId: string,
     transactionAmount: number
   ): Promise<MpPreapproval>;
+  /**
+   * Cancela un preapproval en Mercado Pago (suscripción recurrente).
+   * API: `PUT /preapproval/{id}` con cuerpo `{ "status": "cancelled" }` (misma base `https://api.mercadopago.com` que el resto del gateway).
+   */
+  cancelPreapproval(preapprovalId: string): Promise<void>;
 }

@@ -4,6 +4,7 @@ import { createHashMap } from "../../../../helpers/utils.js";
 import { ISubscriptionPlanActions } from "../../core/actions/actionsProvider.js";
 import { InvalidIdException } from "../../core/exceptions/InvalidIdException.js";
 import { SubscriptionPlanNotExistException } from "../../core/exceptions/SubscriptionPlanNotExistException.js";
+import { NoActiveSubscriptionToCancelError } from "../../core/actions/CancelSubscriptionAction.js";
 
 const SUBSCRIPTION_SUCCESS_HTML = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="1;url=underc0de://subscriptions/success"><title>Pago completado</title></head><body style="font-family:sans-serif;text-align:center;padding:2rem;"><h1>Pago completado</h1><p>Volviendo a la app...</p><script>setTimeout(function(){window.location.href="underc0de://subscriptions/success";},800);</script></body></html>`;
 
@@ -20,6 +21,7 @@ export const SubscriptionPlanControllers = ({
     confirmSubscription,
     syncSubscriptionByPreapprovalId,
     refreshSubscriptionStatus,
+    cancelSubscription,
   }: ISubscriptionPlanActions) => {
     
   const errorResponses = createHashMap({
@@ -138,6 +140,31 @@ export const SubscriptionPlanControllers = ({
         })
         .catch((error) => {
           errorResponses[error?.name] ? errorResponses[error.name](res, error) : ErrorResponse(res, error, 500);
+        });
+    },
+    cancelUserSubscription(req: Request, res: Response) {
+      const auth = (req as any).auth;
+      if (!auth?.id) {
+        return ErrorResponse(res, new Error("No hay token en la petición") as any, 401);
+      }
+      cancelSubscription
+        .execute(String(auth.id))
+        .then((result) => {
+          SuccessResponse(res, 200, "Suscripción cancelada", result);
+        })
+        .catch((error: Error) => {
+          if (error instanceof NoActiveSubscriptionToCancelError) {
+            return ErrorResponse(res, error, 400);
+          }
+          if (error.name === "MercadoPagoPreapprovalNotFoundError") {
+            return ErrorResponse(res, error, 404);
+          }
+          if (error.name === "MercadoPagoCancelError") {
+            return ErrorResponse(res, error, 502);
+          }
+          errorResponses[error?.name]
+            ? errorResponses[error.name](res, error)
+            : ErrorResponse(res, error, 500);
         });
     },
     async subscriptionSuccess(req: Request, res: Response) {

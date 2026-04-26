@@ -146,10 +146,38 @@ export const MercadoPagoHttpGateway = (): MercadoPagoGateway => {
     }
   };
 
+  /** `PUT /preapproval/{id}` — ver referencia de MP: actualizar estado a `cancelled`. */
+  const cancelPreapproval = async (preapprovalId: string) => {
+    const id = preapprovalId?.trim();
+    if (!id) throw new Error("preapprovalId requerido");
+    try {
+      await client.put(`/preapproval/${id}`, { status: "cancelled" });
+    } catch (error: any) {
+      const status = error.response?.status;
+      const body = error.response?.data;
+      const msg =
+        typeof body?.message === "string"
+          ? body.message
+          : body?.message?.toString?.() || error?.message;
+      if (status === 404) {
+        const e = new Error("Preapproval no encontrado en Mercado Pago");
+        (e as any).name = "MercadoPagoPreapprovalNotFoundError";
+        throw e;
+      }
+      const e = new Error(
+        `MercadoPago: ${msg || "Error al cancelar preapproval"}`,
+      );
+      (e as any).name = "MercadoPagoCancelError";
+      (e as any).mpStatus = status;
+      throw e;
+    }
+  };
+
   return {
     getSuscriptions,
     getPreapprovalById,
     getPaymentsByPreapprovalId,
     createPreapproval,
+    cancelPreapproval,
   };
 };

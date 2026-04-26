@@ -48,6 +48,10 @@ import {
   RefreshSubscriptionStatusAction,
 } from "./RefreshSubscriptionStatusAction.js";
 import { IEnvironmentRepository } from "../../../environments/core/repository/IEnvironmentRepository.js";
+import {
+  CancelSubscriptionAction,
+  ICancelSubscriptionAction,
+} from "./CancelSubscriptionAction.js";
 
 export interface ISubscriptionPlanActions {
   save: ISaveSubscriptionPlanAction;
@@ -61,6 +65,7 @@ export interface ISubscriptionPlanActions {
   confirmSubscription: IConfirmSubscriptionAction;
   syncSubscriptionByPreapprovalId: ISyncSubscriptionByPreapprovalIdAction;
   refreshSubscriptionStatus: IRefreshSubscriptionStatusAction;
+  cancelSubscription: ICancelSubscriptionAction;
 }
 export const getSubscriptionPlanActions = (
   SubscriptionPlanRepository: ISubscriptionPlanRepository,
@@ -101,6 +106,11 @@ export const getSubscriptionPlanActions = (
     refreshSubscriptionStatus: RefreshSubscriptionStatusAction(
       userRepository,
       SubscriptionPlanRepository,
+      syncSubscriptionByPreapprovalId
+    ),
+    cancelSubscription: CancelSubscriptionAction(
+      SubscriptionPlanRepository,
+      mercadoPagoGateway,
       syncSubscriptionByPreapprovalId
     ),
   };
