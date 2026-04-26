@@ -238,11 +238,16 @@ export const MongoUserRepository = (): IUserRepository => ({
       const proFromCancelled =
         !!cancelledSubscription && isUpToDate === true;
 
+      /** is_pro lo marca MP al sincronizar; isUpToDate se deriva de fechas y a veces falla justo tras el pago. */
+      const activeProVip =
+        !!activeSubscription &&
+        (isUpToDate !== false || userJson.is_pro === true);
+
       return {
         ...userJson,
         fullName: fullNameWithoutDuplicate(userJson.name, userJson.lastname),
         vip:
-          (!!activeSubscription && isUpToDate !== false) ||
+          activeProVip ||
           proFromCancelled ||
           (!!userJson.is_pro && !activeSubscription && !cancelledSubscription),
         subscription: subscriptionPlan ? {
@@ -462,8 +467,13 @@ export const MongoUserRepository = (): IUserRepository => ({
     const proFromCancelled =
       !!cancelledSubscription && isUpToDate === true;
 
+    /** is_pro refleja el último sync con MP; no ocultar PRO si las fechas aún no alinean (p. ej. recién pagó). */
+    const activeProVip =
+      !!activeSubscription &&
+      (isUpToDate !== false || userJson.is_pro === true);
+
     const resolvedVip =
-      (!!activeSubscription && isUpToDate !== false) ||
+      activeProVip ||
       proFromCancelled ||
       (!!userJson.is_pro && !activeSubscription && !cancelledSubscription);
 
