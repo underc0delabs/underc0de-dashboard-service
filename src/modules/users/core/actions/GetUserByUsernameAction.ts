@@ -19,7 +19,7 @@ export interface IGetUserByUsernameAction {
 
 export const GetUserByUsernameAction = (
   UserRepository: IUserRepository,
-  SubscriptionPlanRepository: ISubscriptionPlanRepository,
+  _subscriptionPlanRepository: ISubscriptionPlanRepository,
   PaymentRepository: IPaymentRepository,
   internalMemberRepository: IInternalMemberRepository
 ): IGetUserByUsernameAction => {
@@ -48,47 +48,40 @@ export const GetUserByUsernameAction = (
             user = await UserRepository.getOneByUsernameAccentFoldIgnoreCase(key);
           }
           if (!user) throw new UserNotExistException();
-          const result = await SubscriptionPlanRepository.get({
-            userId: user.id,
-            status: "ACTIVE",
-            page_count: 1,
-            page_number: 0,
-          });
-          const plans = result?.subscriptionPlans ?? [];
-          const subscription = Array.isArray(plans) ? plans[0] : null;
-          const subData = subscription?.toJSON ? subscription.toJSON() : subscription;
-          const subId = (subData ?? subscription)?.id;
-          const paymentsResult = subscription && subId
+          const full = await UserRepository.getById(String(user.id));
+          if (!full) throw new UserNotExistException();
+          const sub: any = (full as any).subscription;
+          const paymentsResult = sub
             ? await PaymentRepository.get({
-                userSubscriptionId: subId,
-                page_count: 10,
+                userSubscriptionId: sub.id,
+                page_count: 20,
                 page_number: 0,
               })
             : null;
           const payments = paymentsResult?.payments ?? [];
-          const n = (user.name ?? "").trim();
-          const l = ((user as any).lastname ?? "").trim();
+          const n = (full.name ?? "").trim();
+          const l = ((full as any).lastname ?? "").trim();
           const fullName = !l ? n : n === l ? n : n.endsWith(l) ? n : `${n} ${l}`.trim() || n;
-          const isPro = !!(user as any).is_pro || (subData ?? subscription)?.status === "ACTIVE";
           resolve({
-            id: user.id,
-            username: user.username,
-            name: user.name,
-            lastname: user.lastname,
+            id: full.id,
+            username: full.username,
+            name: full.name,
+            lastname: full.lastname,
             fullName: fullName || n,
-            phone: user.phone,
-            email: user.email,
-            idNumber: user.idNumber,
-            userType: user.userType,
-            birthday: user.birthday,
-            vip: isPro,
-            suscription: (subData ?? subscription)?.status ?? null,
-            status: user.status,
-            fcmToken: user.fcmToken,
-            mercadopago_email: (user as any).mercadopago_email ?? null,
-            createdAt: user.createdAt,
-            updatedAt: user.updatedAt,
-            avatar: (user as any).avatar,
+            phone: full.phone,
+            email: full.email,
+            idNumber: full.idNumber,
+            userType: full.userType,
+            birthday: full.birthday,
+            vip: (full as any).vip,
+            suscription: sub?.status ?? null,
+            subscription: sub ?? null,
+            status: full.status,
+            fcmToken: full.fcmToken,
+            mercadopago_email: (full as any).mercadopago_email ?? null,
+            createdAt: full.createdAt,
+            updatedAt: full.updatedAt,
+            avatar: (full as any).avatar,
             payments: payments,
           });
         } catch (error) {

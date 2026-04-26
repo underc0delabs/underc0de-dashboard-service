@@ -207,6 +207,23 @@ export const MongoUserRepository = (): IUserRepository => ({
         }
       } else if (cancelledSubscription) {
         subscriptionStatus = 'CANCELLED';
+        nextPaymentDate = cancelledSubscription.nextPaymentDate;
+        lastPayment = cancelledSubscription.payments?.[0] || null;
+        if (nextPaymentDate) {
+          const end = new Date(nextPaymentDate);
+          const startOfToday = new Date();
+          startOfToday.setHours(0, 0, 0, 0);
+          isUpToDate = end >= startOfToday;
+        } else if (lastPayment) {
+          const lastPaymentDate = new Date(lastPayment.paidAt);
+          const today = new Date();
+          const daysSinceLastPayment = Math.floor(
+            (today.getTime() - lastPaymentDate.getTime()) / (1000 * 60 * 60 * 24)
+          );
+          isUpToDate = daysSinceLastPayment < 30;
+        } else {
+          isUpToDate = false;
+        }
       }
 
       // No forzar "expirado" solo por isUpToDate: si el plan en DB es ACTIVE, el usuario
@@ -218,10 +235,16 @@ export const MongoUserRepository = (): IUserRepository => ({
           ? 'CANCELLED'
           : subscriptionStatus;
 
+      const proFromCancelled =
+        !!cancelledSubscription && isUpToDate === true;
+
       return {
         ...userJson,
         fullName: fullNameWithoutDuplicate(userJson.name, userJson.lastname),
-        vip: !!(activeSubscription && isUpToDate !== false) || !!(userJson.is_pro && !activeSubscription),
+        vip:
+          (!!activeSubscription && isUpToDate !== false) ||
+          proFromCancelled ||
+          (!!userJson.is_pro && !activeSubscription && !cancelledSubscription),
         subscription: subscriptionPlan ? {
           id: subscriptionPlan.id,
           status: displayStatus,
@@ -396,21 +419,38 @@ export const MongoUserRepository = (): IUserRepository => ({
         } else {
           isUpToDate = false;
         }
-      } else {
-        if (lastPayment) {
-          const lastPaymentDate = new Date(lastPayment.paidAt);
-          const today = new Date();
-          const daysSinceLastPayment = Math.floor(
-            (today.getTime() - lastPaymentDate.getTime()) /
-              (1000 * 60 * 60 * 24)
-          );
-          isUpToDate = daysSinceLastPayment < 30;
         } else {
-          isUpToDate = false;
+          if (lastPayment) {
+            const lastPaymentDate = new Date(lastPayment.paidAt);
+            const today = new Date();
+            const daysSinceLastPayment = Math.floor(
+              (today.getTime() - lastPaymentDate.getTime()) /
+                (1000 * 60 * 60 * 24)
+            );
+            isUpToDate = daysSinceLastPayment < 30;
+          } else {
+            isUpToDate = false;
+          }
         }
-      }
     } else if (cancelledSubscription) {
       subscriptionStatus = "CANCELLED";
+      nextPaymentDate = cancelledSubscription.nextPaymentDate;
+      lastPayment = cancelledSubscription.payments?.[0] || null;
+      if (nextPaymentDate) {
+        const end = new Date(nextPaymentDate);
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        isUpToDate = end >= startOfToday;
+      } else if (lastPayment) {
+        const lastPaymentDate = new Date(lastPayment.paidAt);
+        const today = new Date();
+        const daysSinceLastPayment = Math.floor(
+          (today.getTime() - lastPaymentDate.getTime()) / (1000 * 60 * 60 * 24)
+        );
+        isUpToDate = daysSinceLastPayment < 30;
+      } else {
+        isUpToDate = false;
+      }
     }
 
     const displayStatus = activeSubscription
@@ -419,9 +459,18 @@ export const MongoUserRepository = (): IUserRepository => ({
         ? "CANCELLED"
         : subscriptionStatus;
 
+    const proFromCancelled =
+      !!cancelledSubscription && isUpToDate === true;
+
+    const resolvedVip =
+      (!!activeSubscription && isUpToDate !== false) ||
+      proFromCancelled ||
+      (!!userJson.is_pro && !activeSubscription && !cancelledSubscription);
+
     return {
       ...userJson,
       fullName: fullNameWithoutDuplicate(userJson.name, userJson.lastname),
+      vip: resolvedVip,
       subscription: subscriptionPlan
         ? {
             id: subscriptionPlan.id,
