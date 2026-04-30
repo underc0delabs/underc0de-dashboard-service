@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "tsx --test src/modules/subscriptionPlan/core/domain/subscriptionStatusPolicy.test.ts",
+    "test": "tsx --test src/modules/subscriptionPlan/core/domain/subscriptionStatusPolicy.test.ts src/modules/partnerL2/infrastructure/gateways/forumUsernameLookupGateway.test.ts src/helpers/partnerIntegrationAuth.test.ts",
     "dev": "nodemon --env-file=.env.local",
     "build": "tsc && (cp underc0de-f1e15-39bd5639c220.json build/ 2>/dev/null || true)",
     "start": "node build/index.js",
@@ -18,6 +18,7 @@
     "migrate:down": "npx sequelize-cli db:migrate:undo",
     "migrate:down_all": "npx sequelize-cli db:migrate:undo:all",
     "migrate:status": "npx sequelize-cli db:migrate:status",
+    "smoke:partner-l2": "bash scripts/smoke-partner-l2-local.sh",
     "migrate:create": "npx sequelize-cli migration:generate --name",
     "seed:up": "npx sequelize-cli db:seed:all",
     "seed:down": "npx sequelize-cli db:seed:undo",

@@ -76,7 +76,25 @@ window.open(data.result.init_point);
 
 ---
 
-### 2. Webhook de MercadoPago (mecanismo principal para marcar Pro)
+### 2. Cancelar suscripción (usuario)
+
+Cancela el **preapproval** vigente en Mercado Pago para el usuario autenticado y actualiza el estado local (`SubscriptionPlans`, `is_pro`) vía la misma lógica de sync que el webhook. Usa en API de MP: `PUT https://api.mercadopago.com/preapproval/{id}` con cuerpo `{ "status": "cancelled" }` (mismo `MP_ACCESS_TOKEN` que el resto del gateway).
+
+**Endpoint:** `POST /api/v1/subscriptions/cancel`
+
+**Requiere:** JWT (mismo mecanismo que `POST /subscriptions/create`; en la app móvil también pueden enviarse `x-app-auth-key` y `x-user-id` si el cliente lo soporta).
+
+**Body:** vacío (`{}`).
+
+**Respuestas frecuentes:** `200` con mensaje de éxito; `400` si no hay suscripción Mercado Pago **ACTIVE** cancelable; `404` / `502` según error al consultar o cancelar en Mercado Pago; `401` sin token.
+
+**Flujo en la app:** desde el modal PRO (usuario ya **vip**), botón *Cancelar suscripción* con confirmación → `POST` a este endpoint → refresco de datos del usuario.
+
+**Prueba manual sugerida:** suscribir (checkout MP) → verificar `is_pro` → cancelar desde la app → verificar en MP y en base que el plan pasa a cancelado y `is_pro` baja; luego re-suscribir y comprobar **nueva** fila/preapproval (no reutilizar la cancelada).
+
+---
+
+### 3. Webhook de MercadoPago (mecanismo principal para marcar Pro)
 
 Recibe notificaciones automáticas de MercadoPago cuando el usuario autoriza el pago. **Es el mecanismo principal** para marcar al usuario como Pro inmediatamente, sin depender del cron.
 

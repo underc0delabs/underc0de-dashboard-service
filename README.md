@@ -32,6 +32,14 @@ DB_SSL=false
 
 # Security
 SECRETPRIVATEKEY=your-secret-key-here-change-in-production
+
+# Opcional — integración L2 Memories ↔ foro (servidor-a-servidor). Ver docs/partner-l2-forum-integration.md
+# L2_PARTNER_INTEGRATION_ENABLED=true
+# Recomendado: API keys por proyecto (ej. solo l2memories)
+# L2_PARTNER_API_KEYS={"l2memories":"generar-uuid-u-opaque-largo"}
+# Alternativa legacy (un solo secreto sin JSON):
+# L2_PARTNER_INTEGRATION_SECRET=generar-seguro-local
+# FORUM_API_USERNAME_LOOKUP_ACTION=nombre-accion-php-si-aplica
 ```
 
 ### 2. Instalar Dependencias
