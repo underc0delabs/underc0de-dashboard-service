@@ -173,10 +173,12 @@ const getJwtValidator = (
     };
 
     try {
+      // App móvil: X-App-Auth-Key + X-User-Id (APP_AUTH_SECRET). Ir primero evita 401
+      // "Sesión expirada" cuando el Bearer (JWT) ya expiró pero la petición es legítima.
+      if (tryAppKeyAuth()) return;
       if (await tryDashboardToken()) return;
       if (await tryForumToken()) return;
       if (await tryForumTokenViaApi()) return;
-      if (tryAppKeyAuth()) return;
 
       const appSecret = (configs as any).app_auth_secret as string | null;
       const appKeyHeader = req.header("x-app-auth-key")?.trim?.();
