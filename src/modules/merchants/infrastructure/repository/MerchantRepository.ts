@@ -45,7 +45,29 @@ export const MerchantRepository = (): IMerchantRepository => ({
     return enrichMerchant(saved.toJSON() as Record<string, unknown>);
   },
   async edit(merchant, id) {
-    return await MerchantModel.update(merchant as any, { where: { id } });
+    const payload = { ...(merchant as unknown as Record<string, unknown>) };
+    const nullableFieldsToClear: string[] = [];
+
+    for (const field of ["category"]) {
+      if (payload[field] === null) {
+        nullableFieldsToClear.push(field);
+        delete payload[field];
+      }
+    }
+
+    if (Object.keys(payload).length > 0) {
+      await MerchantModel.update(payload as never, { where: { id } });
+    }
+
+    if (nullableFieldsToClear.length > 0) {
+      const setClause = nullableFieldsToClear
+        .map((field) => `"${field}" = NULL`)
+        .join(", ");
+      await MerchantModel.sequelize!.query(
+        `UPDATE "Merchants" SET ${setClause}, "updatedAt" = NOW() WHERE "id" = :id`,
+        { replacements: { id } },
+      );
+    }
   },
   async remove(id) {
     return await MerchantModel.destroy({ where: { id } });
