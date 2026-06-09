@@ -1,6 +1,7 @@
 import IMerchant from "../entities/IMerchant.js";
 import { IMerchantRepository } from "../repository/IMerchantRepository.js";
 import { IFileStorageService } from "../../infrastructure/services/FileStorageService.js";
+import { normalizeMerchantPayload } from "../normalizeMerchantPayload.js";
 
 export interface ISaveMerchantAction {
   execute: (body: IMerchant, file?: Express.Multer.File) => Promise<any>;
@@ -20,12 +21,14 @@ export const SaveMerchantAction = (
             logoPath = await FileStorageService.saveFile(file, 'logos');
           }
           
-          const merchantData = {
+          const merchantData = normalizeMerchantPayload({
             ...body,
             logo: logoPath,
-          };
+          });
           
-          const result = await MerchantRepository.save(merchantData);
+          const result = await MerchantRepository.save(
+            merchantData as unknown as IMerchant,
+          );
           resolve(result);
         } catch (error) {
           reject(error);

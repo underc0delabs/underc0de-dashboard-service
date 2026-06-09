@@ -2,6 +2,7 @@ import IMerchant from "../entities/IMerchant.js";
 import { IMerchantRepository } from "../repository/IMerchantRepository.js";
 import { IFileStorageService } from "../../infrastructure/services/FileStorageService.js";
 import MerchantModel from "../../infrastructure/models/MerchantModel.js";
+import { normalizeMerchantPayload } from "../normalizeMerchantPayload.js";
 
 export interface IEditMerchantAction {
   execute: (body: IMerchant, id: string, file?: Express.Multer.File) => Promise<any>;
@@ -31,12 +32,12 @@ export const EditMerchantAction = (
             }
           }
           
-          const merchantData = {
+          const merchantData = normalizeMerchantPayload({
             ...body,
             logo: logoPath,
-          };
+          });
           
-          await MerchantRepository.edit(merchantData, id);
+          await MerchantRepository.edit(merchantData as unknown as IMerchant, id);
           const result = await MerchantRepository.getById(id);
           resolve(result);
         } catch (error) {
