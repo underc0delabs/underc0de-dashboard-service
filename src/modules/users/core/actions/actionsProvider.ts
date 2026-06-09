@@ -36,6 +36,11 @@ import {
   ReconcileMercadoPagoUserAction,
 } from "../../../subscriptionPlan/core/actions/ReconcileMercadoPagoUserAction.js";
 import { IInternalMemberRepository } from "../../../internalMembers/core/repository/IInternalMemberRepository.js";
+import {
+  IUploadAvatarAction,
+  UploadAvatarAction,
+} from "./UploadAvatarAction.js";
+import { IFileStorageService } from "../../../merchants/infrastructure/services/FileStorageService.js";
 
 export interface IUserActions {
   save: ISaveUserAction;
@@ -52,6 +57,7 @@ export interface IUserActions {
   getCurrentUser: IGetCurrentUserAction;
   linkSubscription: ILinkSubscriptionAction;
   reconcileMercadoPagoUser: IReconcileMercadoPagoUserAction;
+  uploadAvatar: IUploadAvatarAction;
 }
 export const getUserActions = (
   UserRepository: IUserRepository,
@@ -62,7 +68,8 @@ export const getUserActions = (
   subscriptionPlanRepository: ISubscriptionPlanRepository,
   paymentRepository: IPaymentRepository,
   mercadoPagoSyncService: MercadoPagoSyncService,
-  internalMemberRepository: IInternalMemberRepository
+  internalMemberRepository: IInternalMemberRepository,
+  fileStorageService: IFileStorageService
 ) => {
   const UserActions: IUserActions = {
     save: SaveUserAction(UserRepository, hashService),
@@ -101,6 +108,7 @@ export const getUserActions = (
       paymentRepository,
       UserRepository
     ),
+    uploadAvatar: UploadAvatarAction(UserRepository, fileStorageService),
   };
   return UserActions;
 };

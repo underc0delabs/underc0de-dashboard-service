@@ -22,6 +22,7 @@ export const UserControllers = ({
   getCurrentUser,
   linkSubscription,
   reconcileMercadoPagoUser,
+  uploadAvatar,
 }: IUserActions) => {
   const errorResponses = createHashMap(
     {
@@ -222,6 +223,25 @@ export const UserControllers = ({
             error instanceof Error ? error : new Error(String(error)),
             502
           );
+        });
+    },
+    uploadAvatar(req: Request, res: Response) {
+      const file = (req as { file?: Express.Multer.File }).file;
+      uploadAvatar
+        .execute(req.params.id, file)
+        .then((result) => {
+          SuccessResponse(res, 200, "Avatar actualizado correctamente", result);
+        })
+        .catch((error) => {
+          if (error instanceof Error && error.message.includes("No se recibió")) {
+            return ErrorResponse(res, error, 400);
+          }
+          errorResponses[error?.name]
+            ? errorResponses[error.name](res, error)
+            : ErrorResponse(
+                res,
+                error instanceof Error ? error : new Error(String(error)),
+              );
         });
     },
   };

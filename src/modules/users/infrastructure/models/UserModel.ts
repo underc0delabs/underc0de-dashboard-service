@@ -72,6 +72,10 @@ const User = sequelize.define('User', {
         allowNull: true,
         defaultValue: false,
     },
+    avatar: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
     createdAt: {
         type: DataTypes.DATE,
         allowNull: false,

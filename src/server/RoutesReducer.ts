@@ -9,6 +9,7 @@ import getEnvironmentRoutes from "../modules/environments/infrastructure/routes/
 import { CronRoutes } from "../routes/CronRoutes.js"
 import getAdminMemberRoutes from "../modules/internalMembers/infrastructure/routes/AdminMemberRoutes.js"
 import getPartnerL2Routes from "../modules/partnerL2/infrastructure/routes/PartnerL2Routes.js"
+import getCategoryRoutes from "../modules/categories/infrastructure/routes/CategoryRoutes.js"
 
 const prefix = '/api/v1'
 const ReduceRouters = (app: { use: (arg0: string, arg1: any) => void }, dependencyManager: DependencyManager) => {
@@ -20,6 +21,7 @@ const ReduceRouters = (app: { use: (arg0: string, arg1: any) => void }, dependen
     app.use(prefix, getSubscriptionPlanRoutes(dependencyManager))
     app.use(prefix, getPaymentRoutes(dependencyManager))
     app.use(prefix, getEnvironmentRoutes(dependencyManager))
+    app.use(prefix, getCategoryRoutes(dependencyManager))
     app.use(prefix, getPartnerL2Routes(dependencyManager))
     app.use(prefix + '/cron', CronRoutes(dependencyManager))
 }

@@ -5,6 +5,7 @@ import { IJwtValidator } from "../../../../middlewares/JwtValidator/core/IJwtVal
 import { jwtOrAppKeyAuth } from "../../../../middlewares/JwtOrAppKeyAuth.js";
 import { requireAdmin } from "../../../../middlewares/RequireAdmin.js";
 import { getUserControllers } from "../controllers/controllersProvider.js";
+import { uploadAvatarMiddleware } from "../middlewares/uploadAvatarMiddleware.js";
 
 const getUserRoutes = (dependencyManager: DependencyManager) => {
   const jwtValidator = getJwtValidator(dependencyManager);
@@ -23,6 +24,7 @@ const getUserRoutes = (dependencyManager: DependencyManager) => {
     getMe,
     linkSubscription,
     reconcileMercadoPagoForUser,
+    uploadAvatar,
   } = getUserControllers(dependencyManager);
   const userRouter = Router();
   const path = "users";
@@ -47,6 +49,11 @@ const getUserRoutes = (dependencyManager: DependencyManager) => {
     reconcileMercadoPagoForUser
   );
   userRouter.patch(`/${path}/:id`, authMeOrPatch, edit);
+  userRouter.post(
+    `/${path}/:id/avatar`,
+    [...authMeOrPatch, uploadAvatarMiddleware],
+    uploadAvatar
+  );
   userRouter.delete(`/${path}/:id`, [jwtValidator], remove);
   return userRouter;
 };

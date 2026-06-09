@@ -7,11 +7,13 @@ import { SubscriptionPlanModuleInitializer } from "./subscriptionPlan/subscripti
 import { PaymentModuleInitializer } from "./payment/paymentModule.js"
 import { EnvironmentModule } from "./environments/environmentModule.js"
 import { InternalMemberModuleInitializer } from "./internalMembers/internalMemberModule.js"
+import { CategoryModuleInitializer } from "./categories/categoryModule.js"
 
 const ModulesInitializer = (dependencyManager:DependencyManager) => {
     UserModuleInitializer(dependencyManager)
     AdminUserModuleInitializer(dependencyManager)
     MerchantModuleInitializer(dependencyManager)
+    CategoryModuleInitializer(dependencyManager)
     PushNotificationModuleInitializer(dependencyManager)
     SubscriptionPlanModuleInitializer(dependencyManager)
     PaymentModuleInitializer(dependencyManager)
