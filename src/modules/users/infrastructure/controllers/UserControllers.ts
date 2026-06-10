@@ -23,6 +23,7 @@ export const UserControllers = ({
   linkSubscription,
   reconcileMercadoPagoUser,
   uploadAvatar,
+  deactivateAccount,
 }: IUserActions) => {
   const errorResponses = createHashMap(
     {
@@ -236,6 +237,26 @@ export const UserControllers = ({
           if (error instanceof Error && error.message.includes("No se recibió")) {
             return ErrorResponse(res, error, 400);
           }
+          errorResponses[error?.name]
+            ? errorResponses[error.name](res, error)
+            : ErrorResponse(
+                res,
+                error instanceof Error ? error : new Error(String(error)),
+              );
+        });
+    },
+    deactivateAccount(req: Request, res: Response) {
+      deactivateAccount
+        .execute(req.params.id)
+        .then((result) => {
+          SuccessResponse(
+            res,
+            200,
+            "Cuenta desactivada correctamente",
+            result,
+          );
+        })
+        .catch((error) => {
           errorResponses[error?.name]
             ? errorResponses[error.name](res, error)
             : ErrorResponse(

@@ -76,6 +76,11 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         allowNull: true,
     },
+    shareCode: {
+        type: DataTypes.STRING(64),
+        allowNull: true,
+        unique: true,
+    },
     createdAt: {
         type: DataTypes.DATE,
         allowNull: false,

@@ -25,6 +25,7 @@ const getUserRoutes = (dependencyManager: DependencyManager) => {
     linkSubscription,
     reconcileMercadoPagoForUser,
     uploadAvatar,
+    deactivateAccount,
   } = getUserControllers(dependencyManager);
   const userRouter = Router();
   const path = "users";
@@ -53,6 +54,11 @@ const getUserRoutes = (dependencyManager: DependencyManager) => {
     `/${path}/:id/avatar`,
     [...authMeOrPatch, uploadAvatarMiddleware],
     uploadAvatar
+  );
+  userRouter.post(
+    `/${path}/:id/deactivate`,
+    authMeOrPatch,
+    deactivateAccount
   );
   userRouter.delete(`/${path}/:id`, [jwtValidator], remove);
   return userRouter;

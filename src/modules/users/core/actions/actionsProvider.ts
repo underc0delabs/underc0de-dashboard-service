@@ -40,6 +40,10 @@ import {
   IUploadAvatarAction,
   UploadAvatarAction,
 } from "./UploadAvatarAction.js";
+import {
+  DeactivateAccountAction,
+  IDeactivateAccountAction,
+} from "./DeactivateAccountAction.js";
 import { IFileStorageService } from "../../../merchants/infrastructure/services/FileStorageService.js";
 
 export interface IUserActions {
@@ -58,6 +62,7 @@ export interface IUserActions {
   linkSubscription: ILinkSubscriptionAction;
   reconcileMercadoPagoUser: IReconcileMercadoPagoUserAction;
   uploadAvatar: IUploadAvatarAction;
+  deactivateAccount: IDeactivateAccountAction;
 }
 export const getUserActions = (
   UserRepository: IUserRepository,
@@ -109,6 +114,10 @@ export const getUserActions = (
       UserRepository
     ),
     uploadAvatar: UploadAvatarAction(UserRepository, fileStorageService),
+    deactivateAccount: DeactivateAccountAction(
+      UserRepository,
+      refreshTokenRepository,
+    ),
   };
   return UserActions;
 };
