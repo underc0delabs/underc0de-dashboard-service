@@ -9,6 +9,7 @@ import { EnvironmentModule } from "./environments/environmentModule.js"
 import { InternalMemberModuleInitializer } from "./internalMembers/internalMemberModule.js"
 import { CategoryModuleInitializer } from "./categories/categoryModule.js"
 import { ConnectionModuleInitializer } from "./connections/connectionModule.js"
+import { RaffleModuleInitializer } from "./raffles/raffleModule.js"
 
 const ModulesInitializer = (dependencyManager:DependencyManager) => {
     UserModuleInitializer(dependencyManager)
@@ -16,6 +17,7 @@ const ModulesInitializer = (dependencyManager:DependencyManager) => {
     MerchantModuleInitializer(dependencyManager)
     CategoryModuleInitializer(dependencyManager)
     ConnectionModuleInitializer(dependencyManager)
+    RaffleModuleInitializer(dependencyManager)
     PushNotificationModuleInitializer(dependencyManager)
     SubscriptionPlanModuleInitializer(dependencyManager)
     PaymentModuleInitializer(dependencyManager)

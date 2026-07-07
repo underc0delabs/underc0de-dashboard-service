@@ -7,6 +7,10 @@ import Category from "./categories/infrastructure/models/CategoryModel.js";
 import Merchant from "./merchants/infrastructure/models/MerchantModel.js";
 import UserConnection from "./connections/infrastructure/models/UserConnectionModel.js";
 import UserFollow from "./connections/infrastructure/models/UserFollowModel.js";
+import Raffle from "./raffles/infrastructure/models/RaffleModel.js";
+import RaffleParticipant from "./raffles/infrastructure/models/RaffleParticipantModel.js";
+import RaffleDraw from "./raffles/infrastructure/models/RaffleDrawModel.js";
+import RaffleEvent from "./raffles/infrastructure/models/RaffleEventModel.js";
 import "./partnerL2/infrastructure/models/L2PartnerForumLinkModel.js";
 
 // Definir relaciones después de que todos los modelos estén inicializados
@@ -37,3 +41,16 @@ User.hasMany(UserFollow, { foreignKey: "followerId", as: "following" });
 User.hasMany(UserFollow, { foreignKey: "followingId", as: "followers" });
 UserFollow.belongsTo(User, { foreignKey: "followerId", as: "follower" });
 UserFollow.belongsTo(User, { foreignKey: "followingId", as: "followedUser" });
+
+Raffle.hasMany(RaffleParticipant, { foreignKey: "raffleId", as: "participants" });
+RaffleParticipant.belongsTo(Raffle, { foreignKey: "raffleId", as: "raffle" });
+RaffleParticipant.belongsTo(User, { foreignKey: "userId", as: "user" });
+User.hasMany(RaffleParticipant, { foreignKey: "userId", as: "raffleEntries" });
+
+Raffle.hasMany(RaffleDraw, { foreignKey: "raffleId", as: "draws" });
+RaffleDraw.belongsTo(Raffle, { foreignKey: "raffleId", as: "raffle" });
+RaffleDraw.belongsTo(User, { foreignKey: "winnerUserId", as: "winner" });
+
+Raffle.hasMany(RaffleEvent, { foreignKey: "raffleId", as: "events" });
+RaffleEvent.belongsTo(Raffle, { foreignKey: "raffleId", as: "raffle" });
+Raffle.belongsTo(User, { foreignKey: "winnerUserId", as: "winner" });

@@ -11,6 +11,7 @@ import getAdminMemberRoutes from "../modules/internalMembers/infrastructure/rout
 import getPartnerL2Routes from "../modules/partnerL2/infrastructure/routes/PartnerL2Routes.js"
 import getCategoryRoutes from "../modules/categories/infrastructure/routes/CategoryRoutes.js"
 import getConnectionRoutes from "../modules/connections/infrastructure/routes/ConnectionRoutes.js"
+import getRaffleRoutes from "../modules/raffles/infrastructure/routes/RaffleRoutes.js"
 
 const prefix = '/api/v1'
 const ReduceRouters = (app: { use: (arg0: string, arg1: any) => void }, dependencyManager: DependencyManager) => {
@@ -24,6 +25,7 @@ const ReduceRouters = (app: { use: (arg0: string, arg1: any) => void }, dependen
     app.use(prefix, getEnvironmentRoutes(dependencyManager))
     app.use(prefix, getCategoryRoutes(dependencyManager))
     app.use(prefix, getConnectionRoutes(dependencyManager))
+    app.use(prefix, getRaffleRoutes(dependencyManager))
     app.use(prefix, getPartnerL2Routes(dependencyManager))
     app.use(prefix + '/cron', CronRoutes(dependencyManager))
 }
