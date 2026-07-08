@@ -1,4 +1,5 @@
 import { DependencyManager } from "../../../../dependencyManager.js";
+import type { IUserRepository } from "../../../users/core/repository/IMongoUserRepository.js";
 import { RaffleActionsProvider } from "../../core/actions/raffleActionsProvider.js";
 import type { IRaffleRepository } from "../repository/RaffleRepository.js";
 import { RaffleControllers } from "./RaffleControllers.js";
@@ -13,7 +14,14 @@ export const getRaffleControllers = (dependencyManager: DependencyManager) => {
       subfolder: string,
     ) => Promise<string>;
   };
+  const userRepository = dependencyManager.resolve(
+    "userRepository",
+  ) as IUserRepository;
 
-  const actions = RaffleActionsProvider(raffleRepository, fileStorageService);
+  const actions = RaffleActionsProvider(
+    raffleRepository,
+    fileStorageService,
+    userRepository,
+  );
   return RaffleControllers(actions);
 };

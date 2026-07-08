@@ -1,5 +1,7 @@
+import { getFileUrl } from "../../../../helpers/file-url.js";
 import { UserNotActiveException } from "../../../users/core/exceptions/UserNotActiveException.js";
 import { UserNotExistException } from "../../../users/core/exceptions/UserNotExistException.js";
+import type { IUserRepository } from "../../../users/core/repository/IMongoUserRepository.js";
 import {
   RaffleConflictException,
   RaffleForbiddenException,
@@ -38,6 +40,31 @@ const parseDate = (value: unknown, field: string): Date => {
     );
   }
   return date;
+};
+
+/** FormData sends booleans as strings; Boolean("false") is true. */
+const parseBoolean = (value: unknown, defaultValue = false): boolean => {
+  if (value === true || value === 1) {
+    return true;
+  }
+  if (value === false || value === 0 || value == null) {
+    return defaultValue;
+  }
+
+  const normalized = String(value).trim().toLowerCase();
+  if (normalized === "true" || normalized === "1" || normalized === "yes") {
+    return true;
+  }
+  if (
+    normalized === "false" ||
+    normalized === "0" ||
+    normalized === "no" ||
+    normalized === ""
+  ) {
+    return false;
+  }
+
+  return defaultValue;
 };
 
 const assertActiveUser = async (
@@ -124,7 +151,7 @@ const mapPublicRaffle = async (
     id: raffle.id,
     title: raffle.title,
     description: raffle.description,
-    imageUrl: raffle.imageUrl,
+    imageUrl: getFileUrl(raffle.imageUrl),
     participationDeadline: raffle.participationDeadline,
     claimDeadline: raffle.claimDeadline,
     proOnly: raffle.proOnly,
@@ -152,6 +179,17 @@ export interface IRaffleActions {
   enterApp(id: string, userId: number): Promise<unknown>;
 }
 
+const isProMember = async (
+  userRepository: IUserRepository,
+  userId: number,
+): Promise<boolean> => {
+  const user = await userRepository.getById(String(userId));
+  if (!user) {
+    return false;
+  }
+  return Boolean((user as { vip?: boolean }).vip);
+};
+
 export const RaffleActionsProvider = (
   raffleRepository: IRaffleRepository,
   fileStorageService: {
@@ -160,6 +198,7 @@ export const RaffleActionsProvider = (
       subfolder: string,
     ) => Promise<string>;
   },
+  userRepository: IUserRepository,
 ): IRaffleActions => ({
   async listAdmin() {
     const rows = await raffleRepository.listAll();
@@ -198,7 +237,7 @@ export const RaffleActionsProvider = (
       imageUrl,
       participationDeadline,
       claimDeadline,
-      proOnly: Boolean(input.proOnly),
+      proOnly: parseBoolean(input.proOnly, false),
       createdByAdminId: adminId,
     });
 
@@ -258,7 +297,9 @@ export const RaffleActionsProvider = (
       participationDeadline,
       claimDeadline,
       proOnly:
-        input.proOnly != null ? Boolean(input.proOnly) : raffle.proOnly,
+        input.proOnly != null
+          ? parseBoolean(input.proOnly, raffle.proOnly)
+          : raffle.proOnly,
     });
 
     return mapPublicRaffle(raffleRepository, updated!);
@@ -487,7 +528,7 @@ export const RaffleActionsProvider = (
       throw new RaffleConflictException("Plazo de participación vencido");
     }
 
-    if (raffle.proOnly && !user.is_pro) {
+    if (raffle.proOnly && !(await isProMember(userRepository, userId))) {
       throw new RaffleForbiddenException("Sorteo exclusivo para miembros PRO");
     }
 
