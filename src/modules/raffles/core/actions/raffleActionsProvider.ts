@@ -169,6 +169,7 @@ export interface IRaffleActions {
   createAdmin(input: Record<string, unknown>, adminId: number, file?: Express.Multer.File): Promise<unknown>;
   updateAdmin(id: string, input: Record<string, unknown>, file?: Express.Multer.File): Promise<unknown>;
   publishAdmin(id: string, adminId: number): Promise<unknown>;
+  closeAdmin(id: string, adminId: number): Promise<unknown>;
   drawAdmin(id: string, adminId: number): Promise<unknown>;
   redrawAdmin(id: string, adminId: number): Promise<unknown>;
   claimAdmin(id: string, adminId: number): Promise<unknown>;
@@ -202,7 +203,12 @@ export const RaffleActionsProvider = (
 ): IRaffleActions => ({
   async listAdmin() {
     const rows = await raffleRepository.listAll();
-    return Promise.all(rows.map(r => mapPublicRaffle(raffleRepository, r)));
+    const synced = await Promise.all(
+      rows.map(r => syncRaffleDeadlines(raffleRepository, r)),
+    );
+    return Promise.all(
+      synced.map(r => mapPublicRaffle(raffleRepository, r)),
+    );
   },
 
   async getAdminById(id: string) {
@@ -323,6 +329,40 @@ export const RaffleActionsProvider = (
       raffleId: id,
       type: RAFFLE_EVENT_TYPE.PUBLISHED,
       payload: {},
+      actorType: "admin",
+      actorId: String(adminId),
+    });
+
+    return mapPublicRaffle(raffleRepository, updated!);
+  },
+
+  async closeAdmin(id, adminId) {
+    let raffle = await raffleRepository.findById(id);
+    if (!raffle) {
+      throw new RaffleNotFoundException();
+    }
+
+    raffle = await syncRaffleDeadlines(raffleRepository, raffle);
+
+    if (raffle.status === RAFFLE_STATUS.CLOSED) {
+      return mapPublicRaffle(raffleRepository, raffle);
+    }
+
+    if (raffle.status !== RAFFLE_STATUS.PUBLISHED) {
+      throw new RaffleConflictException(
+        "Solo se puede cerrar la participación de un sorteo publicado",
+      );
+    }
+
+    const participantCount = await raffleRepository.countParticipants(id);
+    const updated = await raffleRepository.update(id, {
+      status: RAFFLE_STATUS.CLOSED,
+    });
+
+    await raffleRepository.addEvent({
+      raffleId: id,
+      type: RAFFLE_EVENT_TYPE.PARTICIPATION_CLOSED,
+      payload: { participantCount, forced: true },
       actorType: "admin",
       actorId: String(adminId),
     });

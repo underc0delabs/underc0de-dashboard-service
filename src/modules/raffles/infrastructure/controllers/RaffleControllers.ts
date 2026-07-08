@@ -111,6 +111,15 @@ export const RaffleControllers = (actions: IRaffleActions) => {
         .catch(error => handleError(res, error));
     },
 
+    closeAdmin(req: Request, res: Response) {
+      actions
+        .closeAdmin(req.params.id, getAdminId(req))
+        .then(result =>
+          SuccessResponse(res, 200, "Participación cerrada", result),
+        )
+        .catch(error => handleError(res, error));
+    },
+
     drawAdmin(req: Request, res: Response) {
       actions
         .drawAdmin(req.params.id, getAdminId(req))

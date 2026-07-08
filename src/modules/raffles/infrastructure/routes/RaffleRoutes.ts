@@ -20,6 +20,7 @@ const getRaffleRoutes = (dependencyManager: DependencyManager) => {
     createAdmin,
     updateAdmin,
     publishAdmin,
+    closeAdmin,
     drawAdmin,
     redrawAdmin,
     claimAdmin,
@@ -47,6 +48,7 @@ const getRaffleRoutes = (dependencyManager: DependencyManager) => {
     updateAdmin,
   );
   router.post("/admin/raffles/:id/publish", adminAuth, publishAdmin);
+  router.post("/admin/raffles/:id/close", adminAuth, closeAdmin);
   router.post("/admin/raffles/:id/draw", adminAuth, drawAdmin);
   router.post("/admin/raffles/:id/redraw", adminAuth, redrawAdmin);
   router.post("/admin/raffles/:id/claim", adminAuth, claimAdmin);
