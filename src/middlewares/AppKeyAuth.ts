@@ -37,16 +37,6 @@ export const appKeyAuth = (req: Request, res: Response, next: NextFunction) => {
     });
   }
 
-  const resourceId = String((req as any).params?.id ?? "");
-  if (resourceId && userId !== resourceId) {
-    return res.status(403).json({
-      status: 403,
-      success: false,
-      msg: "No podés modificar otro usuario",
-      type: "auth",
-    });
-  }
-
   (req as any).auth = { id: userId, isAdmin: false };
   next();
 };

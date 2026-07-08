@@ -10,10 +10,32 @@ import { RAFFLE_STATUS } from "../../infrastructure/models/RaffleModel.js";
 import { RAFFLE_EVENT_TYPE } from "../../infrastructure/models/RaffleEventModel.js";
 import type { IRaffleRepository, RaffleRow } from "../../infrastructure/repository/RaffleRepository.js";
 
+const dateFieldLabels: Record<string, string> = {
+  participationDeadline: "Fecha de cierre de participación",
+  claimDeadline: "Fecha límite para reclamar el premio",
+};
+
+/** datetime-local from admin dashboard has no timezone — treat as Argentina. */
 const parseDate = (value: unknown, field: string): Date => {
-  const date = value instanceof Date ? value : new Date(String(value));
+  const raw = String(value ?? "").trim();
+  if (!raw) {
+    throw new RaffleValidationException(
+      `${dateFieldLabels[field] ?? field} es obligatoria`,
+    );
+  }
+
+  let date: Date;
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(raw)) {
+    const normalized = raw.length === 16 ? `${raw}:00` : raw;
+    date = new Date(`${normalized}-03:00`);
+  } else {
+    date = value instanceof Date ? value : new Date(raw);
+  }
+
   if (Number.isNaN(date.getTime())) {
-    throw new RaffleValidationException(`${field} inválida`);
+    throw new RaffleValidationException(
+      `${dateFieldLabels[field] ?? field} inválida`,
+    );
   }
   return date;
 };

@@ -162,11 +162,6 @@ const getJwtValidator = (
         console.warn("[Auth] app-key: clave no coincide");
         return false;
       }
-      const resourceId = String((req as any).params?.id ?? "");
-      if (resourceId && userId !== resourceId) {
-        console.warn("[Auth] app-key: userId", userId, "!= resourceId", resourceId);
-        return false;
-      }
       (req as any).auth = { id: userId, isAdmin: false } as AuthPayload;
       next();
       return true;
