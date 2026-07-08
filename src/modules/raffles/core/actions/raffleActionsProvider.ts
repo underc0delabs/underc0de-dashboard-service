@@ -188,7 +188,8 @@ const isProMember = async (
   if (!user) {
     return false;
   }
-  return Boolean((user as { vip?: boolean }).vip);
+  const profile = user as {vip?: boolean; is_pro?: boolean};
+  return Boolean(profile.vip || profile.is_pro);
 };
 
 export const RaffleActionsProvider = (
