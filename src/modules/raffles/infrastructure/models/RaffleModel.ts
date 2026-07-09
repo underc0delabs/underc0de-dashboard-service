@@ -68,6 +68,10 @@ const Raffle = sequelize.define(
       type: DataTypes.DATE,
       allowNull: true,
     },
+    deletedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
   {
     tableName: "Raffles",

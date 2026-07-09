@@ -1,4 +1,4 @@
-import { getFileUrl } from "../../../../helpers/file-url.js";
+import { normalizeUploadPath } from "../../../../helpers/file-url.js";
 import { UserNotActiveException } from "../../../users/core/exceptions/UserNotActiveException.js";
 import { UserNotExistException } from "../../../users/core/exceptions/UserNotExistException.js";
 import type { IUserRepository } from "../../../users/core/repository/IMongoUserRepository.js";
@@ -11,35 +11,27 @@ import {
 import { RAFFLE_STATUS } from "../../infrastructure/models/RaffleModel.js";
 import { RAFFLE_EVENT_TYPE } from "../../infrastructure/models/RaffleEventModel.js";
 import type { IRaffleRepository, RaffleRow } from "../../infrastructure/repository/RaffleRepository.js";
+import {
+  isDeadlinePassed,
+  parseAdminDateTime,
+  serializeRaffleDateTime,
+} from "../raffleDateTime.js";
 
 const dateFieldLabels: Record<string, string> = {
   participationDeadline: "Fecha de cierre de participación",
   claimDeadline: "Fecha límite para reclamar el premio",
 };
 
-/** datetime-local from admin dashboard has no timezone — treat as Argentina. */
 const parseDate = (value: unknown, field: string): Date => {
-  const raw = String(value ?? "").trim();
-  if (!raw) {
+  try {
+    return parseAdminDateTime(value, dateFieldLabels[field] ?? field);
+  } catch (error) {
     throw new RaffleValidationException(
-      `${dateFieldLabels[field] ?? field} es obligatoria`,
+      error instanceof Error
+        ? error.message
+        : `${dateFieldLabels[field] ?? field} inválida`,
     );
   }
-
-  let date: Date;
-  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(raw)) {
-    const normalized = raw.length === 16 ? `${raw}:00` : raw;
-    date = new Date(`${normalized}-03:00`);
-  } else {
-    date = value instanceof Date ? value : new Date(raw);
-  }
-
-  if (Number.isNaN(date.getTime())) {
-    throw new RaffleValidationException(
-      `${dateFieldLabels[field] ?? field} inválida`,
-    );
-  }
-  return date;
 };
 
 /** FormData sends booleans as strings; Boolean("false") is true. */
@@ -93,12 +85,30 @@ export const syncRaffleDeadlines = async (
   repo: IRaffleRepository,
   raffle: RaffleRow,
 ): Promise<RaffleRow> => {
-  const now = new Date();
+  const nowMs = Date.now();
   let updated = raffle;
 
   if (
-    raffle.status === RAFFLE_STATUS.PUBLISHED &&
-    now > new Date(raffle.participationDeadline)
+    updated.status === RAFFLE_STATUS.CLOSED &&
+    !isDeadlinePassed(updated.participationDeadline, nowMs)
+  ) {
+    const lastClose = await repo.getLatestEvent(
+      updated.id,
+      RAFFLE_EVENT_TYPE.PARTICIPATION_CLOSED,
+    );
+    if (lastClose?.actorType === "system") {
+      const row = await repo.update(updated.id, {
+        status: RAFFLE_STATUS.PUBLISHED,
+      });
+      if (row) {
+        updated = row;
+      }
+    }
+  }
+
+  if (
+    updated.status === RAFFLE_STATUS.PUBLISHED &&
+    isDeadlinePassed(updated.participationDeadline, nowMs)
   ) {
     const row = await repo.update(raffle.id, { status: RAFFLE_STATUS.CLOSED });
     if (row) {
@@ -114,7 +124,7 @@ export const syncRaffleDeadlines = async (
 
   if (
     updated.status === RAFFLE_STATUS.DRAWN &&
-    now > new Date(updated.claimDeadline)
+    isDeadlinePassed(updated.claimDeadline, nowMs)
   ) {
     const row = await repo.update(updated.id, { status: RAFFLE_STATUS.EXPIRED });
     if (row) {
@@ -147,16 +157,21 @@ const mapPublicRaffle = async (
     winnerDisplay = await winnerDisplayName(repo, raffle.winnerUserId);
   }
 
+  const participationOpen =
+    raffle.status === RAFFLE_STATUS.PUBLISHED &&
+    !isDeadlinePassed(raffle.participationDeadline);
+
   return {
     id: raffle.id,
     title: raffle.title,
     description: raffle.description,
-    imageUrl: getFileUrl(raffle.imageUrl),
-    participationDeadline: raffle.participationDeadline,
-    claimDeadline: raffle.claimDeadline,
+    imageUrl: normalizeUploadPath(raffle.imageUrl),
+    participationDeadline: serializeRaffleDateTime(raffle.participationDeadline),
+    claimDeadline: serializeRaffleDateTime(raffle.claimDeadline),
     proOnly: raffle.proOnly,
     status: raffle.status,
-    publishedAt: raffle.publishedAt,
+    publishedAt: serializeRaffleDateTime(raffle.publishedAt),
+    participationOpen,
     participantCount,
     hasEntered,
     winnerDisplayName: winnerDisplay,
@@ -173,6 +188,8 @@ export interface IRaffleActions {
   drawAdmin(id: string, adminId: number): Promise<unknown>;
   redrawAdmin(id: string, adminId: number): Promise<unknown>;
   claimAdmin(id: string, adminId: number): Promise<unknown>;
+  deleteAdmin(id: string, adminId: number): Promise<{ id: string }>;
+  duplicateAdmin(id: string, adminId: number): Promise<unknown>;
   listParticipantsAdmin(id: string): Promise<unknown[]>;
   listEventsAdmin(id: string): Promise<unknown[]>;
   listApp(userId: number): Promise<unknown[]>;
@@ -500,6 +517,73 @@ export const RaffleActionsProvider = (
     return mapPublicRaffle(raffleRepository, updated!);
   },
 
+  async deleteAdmin(id, adminId) {
+    const raffle = await raffleRepository.findById(id);
+    if (!raffle) {
+      throw new RaffleNotFoundException();
+    }
+
+    const deletableStatuses: string[] = [
+      RAFFLE_STATUS.DRAFT,
+      RAFFLE_STATUS.COMPLETED,
+    ];
+    if (!deletableStatuses.includes(raffle.status)) {
+      throw new RaffleConflictException(
+        "Solo se pueden eliminar sorteos en borrador o finalizados",
+      );
+    }
+
+    await raffleRepository.addEvent({
+      raffleId: id,
+      type: RAFFLE_EVENT_TYPE.DELETED,
+      payload: { title: raffle.title, status: raffle.status },
+      actorType: "admin",
+      actorId: String(adminId),
+    });
+
+    const deleted = await raffleRepository.softDelete(id);
+    if (!deleted) {
+      throw new RaffleNotFoundException();
+    }
+
+    return { id };
+  },
+
+  async duplicateAdmin(id, adminId) {
+    const source = await raffleRepository.findById(id);
+    if (!source) {
+      throw new RaffleNotFoundException();
+    }
+
+    const copy = await raffleRepository.create({
+      title: `${source.title} (copia)`,
+      description: source.description,
+      imageUrl: source.imageUrl,
+      participationDeadline: new Date(source.participationDeadline),
+      claimDeadline: new Date(source.claimDeadline),
+      proOnly: source.proOnly,
+      createdByAdminId: adminId,
+    });
+
+    await raffleRepository.addEvent({
+      raffleId: copy.id,
+      type: RAFFLE_EVENT_TYPE.CREATED,
+      payload: { title: copy.title, duplicatedFrom: source.id },
+      actorType: "admin",
+      actorId: String(adminId),
+    });
+
+    await raffleRepository.addEvent({
+      raffleId: source.id,
+      type: RAFFLE_EVENT_TYPE.DUPLICATED,
+      payload: { newRaffleId: copy.id, title: copy.title },
+      actorType: "admin",
+      actorId: String(adminId),
+    });
+
+    return mapPublicRaffle(raffleRepository, copy);
+  },
+
   async listParticipantsAdmin(id: string) {
     const raffle = await raffleRepository.findById(id);
     if (!raffle) {
@@ -565,7 +649,7 @@ export const RaffleActionsProvider = (
       throw new RaffleConflictException("El sorteo ya no acepta participantes");
     }
 
-    if (new Date() > new Date(raffle.participationDeadline)) {
+    if (isDeadlinePassed(raffle.participationDeadline)) {
       throw new RaffleConflictException("Plazo de participación vencido");
     }
 

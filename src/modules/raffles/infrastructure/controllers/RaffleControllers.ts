@@ -147,6 +147,24 @@ export const RaffleControllers = (actions: IRaffleActions) => {
         .catch(error => handleError(res, error));
     },
 
+    deleteAdmin(req: Request, res: Response) {
+      actions
+        .deleteAdmin(req.params.id, getAdminId(req))
+        .then(result =>
+          SuccessResponse(res, 200, "Sorteo eliminado", result),
+        )
+        .catch(error => handleError(res, error));
+    },
+
+    duplicateAdmin(req: Request, res: Response) {
+      actions
+        .duplicateAdmin(req.params.id, getAdminId(req))
+        .then(result =>
+          SuccessResponse(res, 201, "Sorteo duplicado", result),
+        )
+        .catch(error => handleError(res, error));
+    },
+
     listParticipantsAdmin(req: Request, res: Response) {
       actions
         .listParticipantsAdmin(req.params.id)

@@ -24,6 +24,7 @@ export type RaffleRow = {
   winnerUserId: number | null;
   currentDrawId: string | null;
   publishedAt: Date | null;
+  deletedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -53,20 +54,26 @@ export type EventRow = {
 const toRaffleRow = (row: unknown): RaffleRow =>
   (row as { toJSON: () => RaffleRow }).toJSON();
 
+const notDeletedWhere = { deletedAt: null };
+
 export const RaffleRepository = () => ({
   async findById(id: string): Promise<RaffleRow | null> {
-    const row = await Raffle.findByPk(id);
+    const row = await Raffle.findOne({ where: { id, ...notDeletedWhere } });
     return row ? toRaffleRow(row) : null;
   },
 
   async listAll(): Promise<RaffleRow[]> {
-    const rows = await Raffle.findAll({ order: [["createdAt", "DESC"]] });
+    const rows = await Raffle.findAll({
+      where: notDeletedWhere,
+      order: [["createdAt", "DESC"]],
+    });
     return rows.map(toRaffleRow);
   },
 
-  async listForApp(userId: number): Promise<RaffleRow[]> {
+  async listForApp(_userId: number): Promise<RaffleRow[]> {
     const rows = await Raffle.findAll({
       where: {
+        ...notDeletedWhere,
         status: {
           [Op.in]: [
             RAFFLE_STATUS.PUBLISHED,
@@ -111,14 +118,24 @@ export const RaffleRepository = () => ({
       winnerUserId: number | null;
       currentDrawId: string | null;
       publishedAt: Date | null;
+      deletedAt: Date | null;
     }>,
   ): Promise<RaffleRow | null> {
-    const row = await Raffle.findByPk(id);
+    const row = await Raffle.findOne({ where: { id, ...notDeletedWhere } });
     if (!row) {
       return null;
     }
     await row.update(data);
     return toRaffleRow(row);
+  },
+
+  async softDelete(id: string): Promise<boolean> {
+    const row = await Raffle.findOne({ where: { id, ...notDeletedWhere } });
+    if (!row) {
+      return false;
+    }
+    await row.update({ deletedAt: new Date() });
+    return true;
   },
 
   async countParticipants(raffleId: string): Promise<number> {
@@ -226,6 +243,17 @@ export const RaffleRepository = () => ({
       order: [["createdAt", "ASC"]],
     });
     return rows.map((r: { toJSON: () => EventRow }) => r.toJSON());
+  },
+
+  async getLatestEvent(
+    raffleId: string,
+    type: string,
+  ): Promise<EventRow | null> {
+    const row = await RaffleEvent.findOne({
+      where: { raffleId, type },
+      order: [["createdAt", "DESC"]],
+    });
+    return row ? (row as { toJSON: () => EventRow }).toJSON() : null;
   },
 
   async findUserById(userId: number) {

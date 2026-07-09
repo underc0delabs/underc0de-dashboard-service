@@ -3,7 +3,7 @@ import { DependencyManager } from "../../../../dependencyManager.js";
 import { IJwtValidator } from "../../../../middlewares/JwtValidator/core/IJwtValidator.js";
 import { jwtOrAppKeyAuth } from "../../../../middlewares/JwtOrAppKeyAuth.js";
 import { requireAdmin } from "../../../../middlewares/RequireAdmin.js";
-import { uploadRaffleImageMiddleware } from "../middlewares/uploadRaffleImageMiddleware.js";
+import { withRaffleImageUpload } from "../middlewares/withRaffleImageUpload.js";
 import { getRaffleControllers } from "../controllers/controllersProvider.js";
 
 const getRaffleRoutes = (dependencyManager: DependencyManager) => {
@@ -24,6 +24,8 @@ const getRaffleRoutes = (dependencyManager: DependencyManager) => {
     drawAdmin,
     redrawAdmin,
     claimAdmin,
+    deleteAdmin,
+    duplicateAdmin,
     listParticipantsAdmin,
     listEventsAdmin,
     listApp,
@@ -38,13 +40,13 @@ const getRaffleRoutes = (dependencyManager: DependencyManager) => {
   router.post(
     "/admin/raffles",
     adminEditorAuth,
-    uploadRaffleImageMiddleware,
+    withRaffleImageUpload,
     createAdmin,
   );
   router.patch(
     "/admin/raffles/:id",
     adminEditorAuth,
-    uploadRaffleImageMiddleware,
+    withRaffleImageUpload,
     updateAdmin,
   );
   router.post("/admin/raffles/:id/publish", adminAuth, publishAdmin);
@@ -52,6 +54,8 @@ const getRaffleRoutes = (dependencyManager: DependencyManager) => {
   router.post("/admin/raffles/:id/draw", adminAuth, drawAdmin);
   router.post("/admin/raffles/:id/redraw", adminAuth, redrawAdmin);
   router.post("/admin/raffles/:id/claim", adminAuth, claimAdmin);
+  router.post("/admin/raffles/:id/duplicate", adminEditorAuth, duplicateAdmin);
+  router.delete("/admin/raffles/:id", adminEditorAuth, deleteAdmin);
   router.get("/admin/raffles/:id/participants", adminEditorAuth, listParticipantsAdmin);
   router.get("/admin/raffles/:id/events", adminEditorAuth, listEventsAdmin);
 

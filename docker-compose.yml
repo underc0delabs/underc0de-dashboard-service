@@ -12,12 +12,63 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d underc0deDashboard"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: underc0de-migrate
+    env_file:
+      - .env.docker
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+    command: ["npx", "sequelize-cli", "db:migrate"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: underc0de-api
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+    ports:
+      - "${PORT:-3002}:3002"
+    volumes:
+      - uploads_data:/app/public/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3002/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 15s
 
 volumes:
   postgres_data:
     driver: local
-
+  uploads_data:
+    driver: local

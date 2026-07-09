@@ -50,40 +50,71 @@ npm install
 
 ## Base de Datos con Docker
 
-### Levantar PostgreSQL
+Hay dos formas de trabajar en local:
 
-Para iniciar la base de datos PostgreSQL usando Docker Compose:
+### Opción A — Todo en Docker (API + PostgreSQL)
+
+1. Creá el archivo de entorno para Docker:
+
+```bash
+cp .env.docker.example .env.docker
+```
+
+2. Levantá el stack (PostgreSQL, migraciones y API):
 
 ```bash
 npm run docker:up
 ```
 
-Este comando levantará un contenedor de PostgreSQL con:
-- **Usuario**: `postgres`
-- **Contraseña**: `postgres`
-- **Base de datos**: `underc0deDashboard`
-- **Puerto**: `5433` (mapeado desde el puerto interno 5432 del contenedor)
+Esto levanta:
+- **PostgreSQL** en `localhost:5433`
+- **Migraciones** (una vez por `up`)
+- **API** en `http://localhost:3002` (`/health`, `/api/v1/...`)
+
+Los uploads de sorteos/comercios se persisten en el volumen `uploads_data`.
+
+```bash
+# Ver logs de la API
+npm run docker:logs
+
+# Detener todo
+npm run docker:down
+
+# Reconstruir imagen tras cambios en el código
+docker compose up -d --build
+```
+
+### Opción B — Solo PostgreSQL en Docker (API con `npm run dev`)
+
+Si preferís hot-reload en el host:
+
+```bash
+npm run docker:db:up
+npm run migrate:up
+npm run dev
+```
+
+Usá `.env.local` con `DB_HOST=localhost` y `DB_PORT=5433` (como en la sección de variables de entorno).
 
 ### Otros comandos útiles de Docker
 
 ```bash
-# Ver logs de la base de datos
-npm run docker:logs
+# Solo base de datos (alias)
+npm run docker:db:logs
+npm run docker:db:down
 
-# Detener la base de datos
-npm run docker:down
-
-# Reiniciar la base de datos
+# Reiniciar API en Docker
 npm run docker:restart
 ```
 
-### Verificar que la base de datos está corriendo
+### Verificar que los servicios están corriendo
 
 ```bash
-docker ps
+docker compose ps
+curl http://localhost:3002/health
 ```
 
-Deberías ver el contenedor `underc0de-postgresql` en ejecución.
+Deberías ver `underc0de-postgresql` y `underc0de-api` en ejecución (opción A).
 
 ## Ejecutar la Aplicación
 

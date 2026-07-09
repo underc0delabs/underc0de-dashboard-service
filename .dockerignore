@@ -1,0 +1,12 @@
+node_modules
+build
+.git
+.env
+.env.local
+.env.docker
+*.md
+docs
+coverage
+.nyc_output
+npm-debug.log*
+.DS_Store

@@ -9,21 +9,37 @@ const getAssetBaseUrl = (): string => {
   return uri.replace(/\/api\/v1\/?$/, "");
 };
 
-const normalizeUploadUrl = (url: string): string =>
-  url.replace(/\/api\/v1(\/uploads\/)/i, "$1");
-
-export const getFileUrl = (filePath: string | null | undefined): string | null => {
+export const normalizeUploadPath = (
+  filePath: string | null | undefined,
+): string | null => {
   if (!filePath) {
     return null;
   }
 
-  if (filePath.startsWith("http://") || filePath.startsWith("https://")) {
-    return normalizeUploadUrl(filePath);
+  const raw = String(filePath).trim();
+  if (!raw) {
+    return null;
+  }
+
+  const uploadsIndex = raw.indexOf("/uploads/");
+  if (uploadsIndex >= 0) {
+    return raw.slice(uploadsIndex);
+  }
+
+  if (raw.startsWith("uploads/")) {
+    return `/${raw}`;
+  }
+
+  return raw.startsWith("/") ? raw : `/${raw}`;
+};
+
+export const getFileUrl = (filePath: string | null | undefined): string | null => {
+  const uploadPath = normalizeUploadPath(filePath);
+  if (!uploadPath) {
+    return null;
   }
 
   const baseUrl = getAssetBaseUrl();
-  const cleanPath = filePath.startsWith("/") ? filePath : `/${filePath}`;
-
-  return `${baseUrl}${cleanPath}`;
+  return `${baseUrl}${uploadPath}`;
 };
 

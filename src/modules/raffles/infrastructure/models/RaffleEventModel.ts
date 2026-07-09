@@ -10,6 +10,8 @@ export const RAFFLE_EVENT_TYPE = {
   REDRAWN: "redrawn",
   PRIZE_CLAIMED: "prize_claimed",
   CLAIM_EXPIRED: "claim_expired",
+  DELETED: "deleted",
+  DUPLICATED: "duplicated",
 } as const;
 
 const RaffleEvent = sequelize.define(
