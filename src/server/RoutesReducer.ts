@@ -12,9 +12,11 @@ import getPartnerL2Routes from "../modules/partnerL2/infrastructure/routes/Partn
 import getCategoryRoutes from "../modules/categories/infrastructure/routes/CategoryRoutes.js"
 import getConnectionRoutes from "../modules/connections/infrastructure/routes/ConnectionRoutes.js"
 import getRaffleRoutes from "../modules/raffles/infrastructure/routes/RaffleRoutes.js"
+import { ConnectRedirectRoute } from "../routes/ConnectRedirectRoute.js"
 
 const prefix = '/api/v1'
 const ReduceRouters = (app: { use: (arg0: string, arg1: any) => void }, dependencyManager: DependencyManager) => {
+    app.use(ConnectRedirectRoute())
     app.use(prefix, getUserRoutes(dependencyManager))
     app.use(prefix, getAdminMemberRoutes(dependencyManager))
     app.use(prefix, getAdminUserRoutes(dependencyManager))
