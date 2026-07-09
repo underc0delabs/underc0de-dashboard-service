@@ -108,23 +108,6 @@ export const SyncMercadoPagoSubscriptionsAction = (
             userUpdatePayload as any,
             String(effectiveUserId)
           )) as [number];
-          if (affectedRows === 0) {
-            console.warn("[MP SYNC] No se encontró usuario para actualizar (id inexistente)", {
-              userId: effectiveUserId,
-              preapprovalId,
-            });
-          } else {
-            console.log("[MP SYNC] Usuario actualizado", {
-              userId: effectiveUserId,
-              is_pro: subscriptionPayload.status === "ACTIVE",
-            });
-          }
-        } else {
-          console.warn("[MP SYNC] Suscripción sin userId (no se encontró usuario por mpPayerId ni por email)", {
-            preapprovalId,
-            payer_id: mpSub.payer_id,
-            payer_email: payerEmail || "(no disponible)",
-          });
         }
 
         for (const mpPayment of mpPayments) {

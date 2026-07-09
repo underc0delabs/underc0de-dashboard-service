@@ -8,7 +8,6 @@ const envFile = process.env.NODE_ENV === 'production' ? '.env' : '.env.local';
 const result = dotenv.config({ path: path.resolve(process.cwd(), envFile), override: true });
 
 if (result.error) {
-    console.warn(`⚠️  No se pudo cargar ${envFile}, intentando con .env`);
     dotenv.config({ override: true });
 }
 

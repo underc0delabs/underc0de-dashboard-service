@@ -137,7 +137,6 @@ export const ReconcileMercadoPagoUserAction = (
     try {
       mpPayments = await mercadoPagoSyncService.syncPayments(mpSub);
     } catch (e) {
-      console.warn("[MP reconcile user] syncPayments", e);
       mpPayments = [];
     }
 
@@ -189,13 +188,6 @@ export const ReconcileMercadoPagoUserAction = (
       userUpdatePayload as any,
       String(targetUserId)
     )) as [number];
-
-    if (affectedRows === 0) {
-      console.warn("[MP reconcile user] Usuario no actualizado", {
-        userId: targetUserId,
-        preapprovalId,
-      });
-    }
 
     let paymentsSaved = 0;
     for (const mpPayment of mpPayments) {

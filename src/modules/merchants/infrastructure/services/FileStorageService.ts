@@ -43,7 +43,11 @@ export const FileStorageService = (): IFileStorageService => {
 
     async deleteFile(filePath: string): Promise<void> {
       try {
-        const fullPath = path.join(process.cwd(), 'public', filePath);
+        const fullPath = path.join(
+          process.cwd(),
+          'public',
+          filePath.replace(/^\//, ''),
+        );
         if (fs.existsSync(fullPath)) {
           fs.unlinkSync(fullPath);
         }

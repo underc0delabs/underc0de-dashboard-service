@@ -84,6 +84,15 @@ export const ConnectionControllers = (actions: IConnectionActions) => {
         .catch((error) => handleError(res, error));
     },
 
+    ensureShareCode(req: Request, res: Response) {
+      actions
+        .ensureShareCode(getActorId(req))
+        .then((result) => {
+          SuccessResponse(res, 200, "Código de compartir obtenido", result);
+        })
+        .catch((error) => handleError(res, error));
+    },
+
     rotateShareCode(req: Request, res: Response) {
       actions
         .rotateShareCode(getActorId(req))

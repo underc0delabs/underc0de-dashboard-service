@@ -61,10 +61,6 @@ export const fetchForumUsernameExists = async (
       lookup: exists === null ? "ambiguous" : "ok",
     };
   } catch (err) {
-    console.warn(
-      "[L2Integration] forum username lookup error:",
-      (err as Error)?.message ?? err
-    );
     return { ok: false, exists: null, lookup: "network_error" };
   }
 };

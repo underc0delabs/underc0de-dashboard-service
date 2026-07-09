@@ -10,6 +10,7 @@ const getConnectionRoutes = (dependencyManager: DependencyManager) => {
   const auth = [jwtOrAppKeyAuth(jwtValidator)];
   const {
     resolve,
+    ensureShareCode,
     rotateShareCode,
     sendFriendRequest,
     acceptFriendRequest,
@@ -36,6 +37,7 @@ const getConnectionRoutes = (dependencyManager: DependencyManager) => {
 
   router.get(`/${path}/resolve`, resolveLimiter, resolve);
 
+  router.get(`/${path}/share-code`, auth, ensureShareCode);
   router.post(`/${path}/share-code/rotate`, auth, rotateShareCode);
 
   router.post(`/${path}/friend-requests`, auth, sendFriendRequest);

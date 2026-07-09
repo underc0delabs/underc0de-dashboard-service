@@ -70,7 +70,6 @@ export const initializeFirebaseAdmin = () => {
     if (error instanceof Error && error.stack) {
       console.error("Stack trace:", error.stack);
     }
-    console.warn("El servidor continuará sin push notifications.");
   }
 };
 

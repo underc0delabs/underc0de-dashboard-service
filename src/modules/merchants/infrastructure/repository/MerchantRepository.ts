@@ -3,7 +3,7 @@ import MerchantModel from "../models/MerchantModel.js";
 import CategoryModel from "../../../categories/infrastructure/models/CategoryModel.js";
 import configs from "../../../../configs.js";
 import IMerchant from "../../core/entities/IMerchant.js";
-import { getFileUrl } from "../../../../helpers/file-url.js";
+import { normalizeUploadPath } from "../../../../helpers/file-url.js";
 
 const enrichMerchant = (merchant: Record<string, unknown>) => {
   const categoryRef = merchant.businessCategory as
@@ -17,7 +17,7 @@ const enrichMerchant = (merchant: Record<string, unknown>) => {
   }
   delete merchant.businessCategory;
   if (merchant.logo) {
-    merchant.logo = getFileUrl(String(merchant.logo));
+    merchant.logo = normalizeUploadPath(String(merchant.logo));
   }
   return merchant as unknown as IMerchant;
 };
@@ -38,7 +38,7 @@ export const MerchantRepository = (): IMerchantRepository => ({
     if (!saved) {
       const merchantData = newMerchant.toJSON() as any;
       if (merchantData.logo) {
-        merchantData.logo = getFileUrl(merchantData.logo);
+        merchantData.logo = normalizeUploadPath(merchantData.logo);
       }
       return merchantData as IMerchant;
     }

@@ -16,7 +16,6 @@ const getJwtValidator = (
   const jwtValidator = async (req: Request, res: Response, next: NextFunction) => {
     const bearerHeader = req.header("authorization");
     if (!bearerHeader) {
-      console.warn("[Auth] 401: No hay header Authorization");
       return res.status(401).json({
         status: 401,
         success: false,
@@ -106,7 +105,6 @@ const getJwtValidator = (
           validateStatus: () => true,
         });
         if (res.status < 200 || res.status >= 300) {
-          console.warn("[Auth] foro-api status:", res.status, "url:", forumApiUrl, "keys:", res.data ? Object.keys(res.data).slice(0, 5) : [], "sample:", JSON.stringify(res.data)?.slice(0, 200));
           return false;
         }
         const data = res.data;
@@ -118,7 +116,6 @@ const getJwtValidator = (
           data?.email
         )?.trim?.();
         if (!email) {
-          console.warn("[Auth] foro-api: sin email en respuesta, keys:", data ? Object.keys(data).slice(0, 8) : []);
           return false;
         }
         let user = await userRepository.getOneByEmailIgnoreCase(email);
@@ -140,7 +137,6 @@ const getJwtValidator = (
         next();
         return true;
       } catch (err: any) {
-        console.warn("[Auth] foro-api error:", err?.message ?? err);
         return false;
       }
     };
@@ -149,7 +145,6 @@ const getJwtValidator = (
       const appSecret = (configs as any).app_auth_secret as string | null;
       const key = req.header("x-app-auth-key")?.trim?.();
       const userId = req.header("x-user-id")?.trim?.();
-      console.warn("[Auth] app-key check:", req.method, req.path, "secretOk=", !!appSecret, "key=", !!key, "userId=", userId || "(vacío)");
       if (!appSecret) {
         if (key || userId) console.warn("[Auth] app-key: APP_AUTH_SECRET no configurado (headers recibidos:", !!key, !!userId, ")");
         return false;
@@ -159,7 +154,6 @@ const getJwtValidator = (
         return false;
       }
       if (key !== appSecret) {
-        console.warn("[Auth] app-key: clave no coincide");
         return false;
       }
       (req as any).auth = { id: userId, isAdmin: false } as AuthPayload;
@@ -185,11 +179,6 @@ const getJwtValidator = (
       const hasForumSecret = Boolean(forumSecret?.trim());
       const hasForumApi = Boolean((configs as any).forum_api_url?.trim());
       const lastErrMsg = (err?.message ?? err?.name ?? "") as string;
-      console.warn("[Auth] 401", req.method, req.path, ":", isExpired
-        ? "Token expirado"
-        : `Token no válido (dashboard: ${secret ? "ok" : "sin secret"}, foro-jwt: ${hasForumSecret ? "ok" : "no"}, foro-api: ${hasForumApi ? "ok" : "no"})`,
-        "lastErr:", lastErrMsg.slice(0, 80)
-      );
       return res.status(401).json({
         status: 401,
         success: false,
