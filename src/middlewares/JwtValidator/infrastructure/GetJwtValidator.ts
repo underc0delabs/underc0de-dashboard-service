@@ -7,7 +7,11 @@ import { IAdminUserRepository } from "../../../modules/adminUsers/core/repositor
 import { IUserRepository } from "../../../modules/users/core/repository/IMongoUserRepository.js";
 import { IJwtValidator } from "../../JwtValidator/core/IJwtValidator.js";
 
-export type AuthPayload = { id: string; isAdmin: boolean };
+export type AuthPayload = {
+  id: string;
+  isAdmin: boolean;
+  isDashboardUser?: boolean;
+};
 
 const getJwtValidator = (
   adminUserRepository: IAdminUserRepository,
@@ -52,17 +56,28 @@ const getJwtValidator = (
     const tryDashboardToken = async (): Promise<boolean> => {
       if (!secret) return false;
       try {
-        const decoded = jwt.verify(token, secret) as { id: string };
+        const decoded = jwt.verify(token, secret) as { id: string | number };
         const id = String(decoded.id);
         const adminUser = await adminUserRepository.getById(id);
-        if (adminUser && adminUser.status) {
-          (req as any).auth = { id, isAdmin: true } as AuthPayload;
+        if (adminUser) {
+          if (!adminUser.status) {
+            return false;
+          }
+          (req as any).auth = {
+            id,
+            isAdmin: true,
+            isDashboardUser: true,
+          } as AuthPayload;
           next();
           return true;
         }
         const appUser = await userRepository.getById(id);
         if (appUser && (appUser as any).status !== false) {
-          (req as any).auth = { id, isAdmin: false } as AuthPayload;
+          (req as any).auth = {
+            id,
+            isAdmin: false,
+            isDashboardUser: false,
+          } as AuthPayload;
           next();
           return true;
         }

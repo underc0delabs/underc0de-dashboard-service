@@ -81,6 +81,54 @@ const winnerDisplayName = async (
   return user?.name?.trim() || user?.username || "Participante";
 };
 
+const drawWinnerIfClosed = async (
+  repo: IRaffleRepository,
+  raffleId: string,
+  adminId: number | null,
+): Promise<RaffleRow | null> => {
+  const raffle = await repo.findById(raffleId);
+  if (!raffle || raffle.status !== RAFFLE_STATUS.CLOSED) {
+    return null;
+  }
+
+  const pool = await repo.listParticipantUserIds(raffleId);
+  if (pool.length === 0) {
+    return null;
+  }
+
+  const winnerUserId = repo.pickRandomParticipant(pool);
+  const drawNumber = await repo.getNextDrawNumber(raffleId);
+  const draw = await repo.createDraw({
+    raffleId,
+    drawNumber,
+    winnerUserId,
+    participantCount: pool.length,
+    drawnByAdminId: adminId,
+  });
+
+  const winnerName = await winnerDisplayName(repo, winnerUserId);
+  const updated = await repo.update(raffleId, {
+    status: RAFFLE_STATUS.DRAWN,
+    winnerUserId,
+    currentDrawId: String(draw.id),
+  });
+
+  await repo.addEvent({
+    raffleId,
+    type: RAFFLE_EVENT_TYPE.DRAWN,
+    payload: {
+      drawNumber,
+      participantCount: pool.length,
+      winnerDisplayName: winnerName,
+      automatic: adminId == null,
+    },
+    actorType: adminId != null ? "admin" : "system",
+    actorId: adminId != null ? String(adminId) : null,
+  });
+
+  return updated ?? null;
+};
+
 export const syncRaffleDeadlines = async (
   repo: IRaffleRepository,
   raffle: RaffleRow,
@@ -135,6 +183,13 @@ export const syncRaffleDeadlines = async (
         payload: {},
         actorType: "system",
       });
+    }
+  }
+
+  if (updated.status === RAFFLE_STATUS.CLOSED) {
+    const drawn = await drawWinnerIfClosed(repo, updated.id, null);
+    if (drawn) {
+      updated = drawn;
     }
   }
 
@@ -362,8 +417,20 @@ export const RaffleActionsProvider = (
 
     raffle = await syncRaffleDeadlines(raffleRepository, raffle);
 
-    if (raffle.status === RAFFLE_STATUS.CLOSED) {
+    if (
+      raffle.status === RAFFLE_STATUS.DRAWN ||
+      raffle.status === RAFFLE_STATUS.COMPLETED
+    ) {
       return mapPublicRaffle(raffleRepository, raffle);
+    }
+
+    if (raffle.status === RAFFLE_STATUS.CLOSED) {
+      const drawn = await drawWinnerIfClosed(
+        raffleRepository,
+        id,
+        adminId,
+      );
+      return mapPublicRaffle(raffleRepository, drawn ?? raffle);
     }
 
     if (raffle.status !== RAFFLE_STATUS.PUBLISHED) {
@@ -385,7 +452,8 @@ export const RaffleActionsProvider = (
       actorId: String(adminId),
     });
 
-    return mapPublicRaffle(raffleRepository, updated!);
+    const drawn = await drawWinnerIfClosed(raffleRepository, id, adminId);
+    return mapPublicRaffle(raffleRepository, drawn ?? updated!);
   },
 
   async drawAdmin(id, adminId) {
@@ -395,45 +463,20 @@ export const RaffleActionsProvider = (
     }
     raffle = await syncRaffleDeadlines(raffleRepository, raffle);
 
+    if (raffle.status === RAFFLE_STATUS.DRAWN) {
+      return mapPublicRaffle(raffleRepository, raffle);
+    }
+
     if (raffle.status !== RAFFLE_STATUS.CLOSED) {
       throw new RaffleConflictException("El sorteo debe estar cerrado para sortear");
     }
 
-    const pool = await raffleRepository.listParticipantUserIds(id);
-    if (pool.length === 0) {
+    const drawn = await drawWinnerIfClosed(raffleRepository, id, adminId);
+    if (!drawn) {
       throw new RaffleConflictException("No hay participantes");
     }
 
-    const winnerUserId = raffleRepository.pickRandomParticipant(pool);
-    const drawNumber = await raffleRepository.getNextDrawNumber(id);
-    const draw = await raffleRepository.createDraw({
-      raffleId: id,
-      drawNumber,
-      winnerUserId,
-      participantCount: pool.length,
-      drawnByAdminId: adminId,
-    });
-
-    const winnerName = await winnerDisplayName(raffleRepository, winnerUserId);
-    const updated = await raffleRepository.update(id, {
-      status: RAFFLE_STATUS.DRAWN,
-      winnerUserId,
-      currentDrawId: String(draw.id),
-    });
-
-    await raffleRepository.addEvent({
-      raffleId: id,
-      type: RAFFLE_EVENT_TYPE.DRAWN,
-      payload: {
-        drawNumber,
-        participantCount: pool.length,
-        winnerDisplayName: winnerName,
-      },
-      actorType: "admin",
-      actorId: String(adminId),
-    });
-
-    return mapPublicRaffle(raffleRepository, updated!);
+    return mapPublicRaffle(raffleRepository, drawn);
   },
 
   async redrawAdmin(id, adminId) {

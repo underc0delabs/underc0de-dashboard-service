@@ -114,9 +114,14 @@ export const RaffleControllers = (actions: IRaffleActions) => {
     closeAdmin(req: Request, res: Response) {
       actions
         .closeAdmin(req.params.id, getAdminId(req))
-        .then(result =>
-          SuccessResponse(res, 200, "Participación cerrada", result),
-        )
+        .then(result => {
+          const status = (result as { status?: string })?.status;
+          const message =
+            status === "drawn"
+              ? "Participación cerrada y ganador sorteado"
+              : "Participación cerrada";
+          SuccessResponse(res, 200, message, result);
+        })
         .catch(error => handleError(res, error));
     },
 

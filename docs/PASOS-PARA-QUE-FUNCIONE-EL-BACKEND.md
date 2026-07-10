@@ -45,6 +45,7 @@ Pegar esto (cambiá `api.underc0de.net` por tu dominio del API):
 server {
     listen 80;
     server_name api.underc0de.net;
+    client_max_body_size 10M;
     location / {
         proxy_pass http://127.0.0.1:3002;
         proxy_http_version 1.1;
@@ -55,6 +56,8 @@ server {
     }
 }
 ```
+
+> **Importante:** sin `client_max_body_size`, Nginx rechaza imágenes mayores a ~1 MB con error **413 Request Entity Too Large** (crear/editar sorteos y comercios con logo). El backend acepta hasta 5 MB; `10M` en Nginx deja margen.
 
 Guardar y salir (Ctrl+O, Enter, Ctrl+X).
 
