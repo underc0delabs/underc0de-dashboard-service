@@ -1,3 +1,4 @@
+import { Application } from "express"
 import { DependencyManager } from "../dependencyManager.js"
 import getUserRoutes from "../modules/users/infrastructure/routes/UserRoutes.js"
 import getAdminUserRoutes from "../modules/adminUsers/infrastructure/routes/UserRoutes.js"
@@ -15,7 +16,7 @@ import getRaffleRoutes from "../modules/raffles/infrastructure/routes/RaffleRout
 import { ConnectRedirectRoute } from "../routes/ConnectRedirectRoute.js"
 
 const prefix = '/api/v1'
-const ReduceRouters = (app: { use: (arg0: string, arg1: any) => void }, dependencyManager: DependencyManager) => {
+const ReduceRouters = (app: Application, dependencyManager: DependencyManager) => {
     app.use(ConnectRedirectRoute())
     app.use(prefix, getUserRoutes(dependencyManager))
     app.use(prefix, getAdminMemberRoutes(dependencyManager))
