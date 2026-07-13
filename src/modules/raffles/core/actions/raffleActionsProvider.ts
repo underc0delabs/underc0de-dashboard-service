@@ -39,7 +39,10 @@ const parseBoolean = (value: unknown, defaultValue = false): boolean => {
   if (value === true || value === 1) {
     return true;
   }
-  if (value === false || value === 0 || value == null) {
+  if (value === false || value === 0) {
+    return false;
+  }
+  if (value == null) {
     return defaultValue;
   }
 
