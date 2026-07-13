@@ -233,6 +233,21 @@ const mapPublicRaffle = async (
   };
 };
 
+const mapAdminRaffle = async (
+  repo: IRaffleRepository,
+  raffle: RaffleRow,
+  viewerUserId?: number,
+) => ({
+  ...(await mapPublicRaffle(repo, raffle, viewerUserId)),
+  visibleInApp: raffle.visibleInApp !== false,
+});
+
+const assertVisibleInApp = (raffle: RaffleRow) => {
+  if (raffle.visibleInApp === false) {
+    throw new RaffleNotFoundException();
+  }
+};
+
 export interface IRaffleActions {
   listAdmin(): Promise<unknown[]>;
   getAdminById(id: string): Promise<unknown>;
@@ -245,6 +260,11 @@ export interface IRaffleActions {
   claimAdmin(id: string, adminId: number): Promise<unknown>;
   deleteAdmin(id: string, adminId: number): Promise<{ id: string }>;
   duplicateAdmin(id: string, adminId: number): Promise<unknown>;
+  setVisibleInAppAdmin(
+    id: string,
+    visibleInApp: boolean,
+    adminId: number,
+  ): Promise<unknown>;
   listParticipantsAdmin(id: string): Promise<unknown[]>;
   listEventsAdmin(id: string): Promise<unknown[]>;
   listApp(userId: number): Promise<unknown[]>;
@@ -280,7 +300,7 @@ export const RaffleActionsProvider = (
       rows.map(r => syncRaffleDeadlines(raffleRepository, r)),
     );
     return Promise.all(
-      synced.map(r => mapPublicRaffle(raffleRepository, r)),
+      synced.map(r => mapAdminRaffle(raffleRepository, r)),
     );
   },
 
@@ -290,7 +310,7 @@ export const RaffleActionsProvider = (
       throw new RaffleNotFoundException();
     }
     const synced = await syncRaffleDeadlines(raffleRepository, raffle);
-    return mapPublicRaffle(raffleRepository, synced);
+    return mapAdminRaffle(raffleRepository, synced);
   },
 
   async createAdmin(input, adminId, file) {
@@ -332,7 +352,7 @@ export const RaffleActionsProvider = (
       actorId: String(adminId),
     });
 
-    return mapPublicRaffle(raffleRepository, raffle);
+    return mapAdminRaffle(raffleRepository, raffle);
   },
 
   async updateAdmin(id, input, file) {
@@ -381,7 +401,7 @@ export const RaffleActionsProvider = (
           : raffle.proOnly,
     });
 
-    return mapPublicRaffle(raffleRepository, updated!);
+    return mapAdminRaffle(raffleRepository, updated!);
   },
 
   async publishAdmin(id, adminId) {
@@ -406,7 +426,7 @@ export const RaffleActionsProvider = (
       actorId: String(adminId),
     });
 
-    return mapPublicRaffle(raffleRepository, updated!);
+    return mapAdminRaffle(raffleRepository, updated!);
   },
 
   async closeAdmin(id, adminId) {
@@ -421,7 +441,7 @@ export const RaffleActionsProvider = (
       raffle.status === RAFFLE_STATUS.DRAWN ||
       raffle.status === RAFFLE_STATUS.COMPLETED
     ) {
-      return mapPublicRaffle(raffleRepository, raffle);
+      return mapAdminRaffle(raffleRepository, raffle);
     }
 
     if (raffle.status === RAFFLE_STATUS.CLOSED) {
@@ -430,7 +450,7 @@ export const RaffleActionsProvider = (
         id,
         adminId,
       );
-      return mapPublicRaffle(raffleRepository, drawn ?? raffle);
+      return mapAdminRaffle(raffleRepository, drawn ?? raffle);
     }
 
     if (raffle.status !== RAFFLE_STATUS.PUBLISHED) {
@@ -453,7 +473,7 @@ export const RaffleActionsProvider = (
     });
 
     const drawn = await drawWinnerIfClosed(raffleRepository, id, adminId);
-    return mapPublicRaffle(raffleRepository, drawn ?? updated!);
+    return mapAdminRaffle(raffleRepository, drawn ?? updated!);
   },
 
   async drawAdmin(id, adminId) {
@@ -464,7 +484,7 @@ export const RaffleActionsProvider = (
     raffle = await syncRaffleDeadlines(raffleRepository, raffle);
 
     if (raffle.status === RAFFLE_STATUS.DRAWN) {
-      return mapPublicRaffle(raffleRepository, raffle);
+      return mapAdminRaffle(raffleRepository, raffle);
     }
 
     if (raffle.status !== RAFFLE_STATUS.CLOSED) {
@@ -476,7 +496,7 @@ export const RaffleActionsProvider = (
       throw new RaffleConflictException("No hay participantes");
     }
 
-    return mapPublicRaffle(raffleRepository, drawn);
+    return mapAdminRaffle(raffleRepository, drawn);
   },
 
   async redrawAdmin(id, adminId) {
@@ -533,7 +553,7 @@ export const RaffleActionsProvider = (
       actorId: String(adminId),
     });
 
-    return mapPublicRaffle(raffleRepository, updated!);
+    return mapAdminRaffle(raffleRepository, updated!);
   },
 
   async claimAdmin(id, adminId) {
@@ -557,7 +577,7 @@ export const RaffleActionsProvider = (
       actorId: String(adminId),
     });
 
-    return mapPublicRaffle(raffleRepository, updated!);
+    return mapAdminRaffle(raffleRepository, updated!);
   },
 
   async deleteAdmin(id, adminId) {
@@ -624,7 +644,33 @@ export const RaffleActionsProvider = (
       actorId: String(adminId),
     });
 
-    return mapPublicRaffle(raffleRepository, copy);
+    return mapAdminRaffle(raffleRepository, copy);
+  },
+
+  async setVisibleInAppAdmin(id, visibleInApp, adminId) {
+    const raffle = await raffleRepository.findById(id);
+    if (!raffle) {
+      throw new RaffleNotFoundException();
+    }
+
+    const nextVisible = parseBoolean(visibleInApp, true);
+    if (raffle.visibleInApp === nextVisible) {
+      return mapAdminRaffle(raffleRepository, raffle);
+    }
+
+    const updated = await raffleRepository.update(id, {
+      visibleInApp: nextVisible,
+    });
+
+    await raffleRepository.addEvent({
+      raffleId: id,
+      type: RAFFLE_EVENT_TYPE.VISIBILITY_CHANGED,
+      payload: { visibleInApp: nextVisible },
+      actorType: "admin",
+      actorId: String(adminId),
+    });
+
+    return mapAdminRaffle(raffleRepository, updated!);
   },
 
   async listParticipantsAdmin(id: string) {
@@ -667,6 +713,7 @@ export const RaffleActionsProvider = (
     if (!raffle || raffle.status === RAFFLE_STATUS.DRAFT) {
       throw new RaffleNotFoundException();
     }
+    assertVisibleInApp(raffle);
     const synced = await syncRaffleDeadlines(raffleRepository, raffle);
     const detail = await mapPublicRaffle(raffleRepository, synced, userId);
     const events = await raffleRepository.listEvents(id);
@@ -686,6 +733,7 @@ export const RaffleActionsProvider = (
     if (!raffle || raffle.status === RAFFLE_STATUS.DRAFT) {
       throw new RaffleNotFoundException();
     }
+    assertVisibleInApp(raffle);
     raffle = await syncRaffleDeadlines(raffleRepository, raffle);
 
     if (raffle.status !== RAFFLE_STATUS.PUBLISHED) {

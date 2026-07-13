@@ -170,6 +170,23 @@ export const RaffleControllers = (actions: IRaffleActions) => {
         .catch(error => handleError(res, error));
     },
 
+    setVisibleInAppAdmin(req: Request, res: Response) {
+      const visibleInApp = req.body?.visibleInApp;
+      actions
+        .setVisibleInAppAdmin(req.params.id, visibleInApp, getAdminId(req))
+        .then(result =>
+          SuccessResponse(
+            res,
+            200,
+            visibleInApp === false
+              ? "Sorteo oculto en la app"
+              : "Sorteo visible en la app",
+            result,
+          ),
+        )
+        .catch(error => handleError(res, error));
+    },
+
     listParticipantsAdmin(req: Request, res: Response) {
       actions
         .listParticipantsAdmin(req.params.id)

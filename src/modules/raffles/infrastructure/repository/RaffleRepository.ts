@@ -24,6 +24,7 @@ export type RaffleRow = {
   winnerUserId: number | null;
   currentDrawId: string | null;
   publishedAt: Date | null;
+  visibleInApp: boolean;
   deletedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -74,6 +75,7 @@ export const RaffleRepository = () => ({
     const rows = await Raffle.findAll({
       where: {
         ...notDeletedWhere,
+        visibleInApp: true,
         status: {
           [Op.in]: [
             RAFFLE_STATUS.PUBLISHED,
@@ -118,6 +120,7 @@ export const RaffleRepository = () => ({
       winnerUserId: number | null;
       currentDrawId: string | null;
       publishedAt: Date | null;
+      visibleInApp: boolean;
       deletedAt: Date | null;
     }>,
   ): Promise<RaffleRow | null> {

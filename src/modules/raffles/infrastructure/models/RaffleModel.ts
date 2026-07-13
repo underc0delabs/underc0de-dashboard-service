@@ -68,6 +68,11 @@ const Raffle = sequelize.define(
       type: DataTypes.DATE,
       allowNull: true,
     },
+    visibleInApp: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
     deletedAt: {
       type: DataTypes.DATE,
       allowNull: true,

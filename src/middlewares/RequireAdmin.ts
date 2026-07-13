@@ -14,7 +14,7 @@ export const requireAdmin = (req: Request, res: Response, next: NextFunction) =>
       type: "auth",
     });
   }
-  if (!auth.isAdmin) {
+  if (!auth.isAdmin && !auth.isDashboardUser) {
     return res.status(403).json({
       status: 403,
       success: false,

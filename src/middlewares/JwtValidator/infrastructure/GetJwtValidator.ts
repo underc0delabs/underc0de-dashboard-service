@@ -13,6 +13,26 @@ export type AuthPayload = {
   isDashboardUser?: boolean;
 };
 
+const isActiveAccount = (status: unknown): boolean => status !== false;
+
+const getAdminRecordStatus = (adminUser: unknown): unknown => {
+  if (!adminUser || typeof adminUser !== "object") {
+    return undefined;
+  }
+  const record = adminUser as {
+    status?: unknown;
+    get?: (key: string) => unknown;
+    toJSON?: () => { status?: unknown };
+  };
+  if (typeof record.get === "function") {
+    return record.get("status");
+  }
+  if (typeof record.toJSON === "function") {
+    return record.toJSON().status;
+  }
+  return record.status;
+};
+
 const getJwtValidator = (
   adminUserRepository: IAdminUserRepository,
   userRepository: IUserRepository
@@ -60,7 +80,7 @@ const getJwtValidator = (
         const id = String(decoded.id);
         const adminUser = await adminUserRepository.getById(id);
         if (adminUser) {
-          if (!adminUser.status) {
+          if (!isActiveAccount(getAdminRecordStatus(adminUser))) {
             return false;
           }
           (req as any).auth = {

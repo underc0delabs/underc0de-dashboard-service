@@ -12,6 +12,7 @@ export const RAFFLE_EVENT_TYPE = {
   CLAIM_EXPIRED: "claim_expired",
   DELETED: "deleted",
   DUPLICATED: "duplicated",
+  VISIBILITY_CHANGED: "visibility_changed",
 } as const;
 
 const RaffleEvent = sequelize.define(

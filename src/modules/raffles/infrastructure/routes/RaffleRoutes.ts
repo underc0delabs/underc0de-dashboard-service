@@ -25,6 +25,7 @@ const getRaffleRoutes = (dependencyManager: DependencyManager) => {
     claimAdmin,
     deleteAdmin,
     duplicateAdmin,
+    setVisibleInAppAdmin,
     listParticipantsAdmin,
     listEventsAdmin,
     listApp,
@@ -54,6 +55,11 @@ const getRaffleRoutes = (dependencyManager: DependencyManager) => {
   router.post("/admin/raffles/:id/redraw", dashboardAuth, redrawAdmin);
   router.post("/admin/raffles/:id/claim", dashboardAuth, claimAdmin);
   router.post("/admin/raffles/:id/duplicate", dashboardAuth, duplicateAdmin);
+  router.patch(
+    "/admin/raffles/:id/visibility",
+    dashboardAuth,
+    setVisibleInAppAdmin,
+  );
   router.delete("/admin/raffles/:id", dashboardAuth, deleteAdmin);
   router.get("/admin/raffles/:id/participants", dashboardAuth, listParticipantsAdmin);
   router.get("/admin/raffles/:id/events", dashboardAuth, listEventsAdmin);
