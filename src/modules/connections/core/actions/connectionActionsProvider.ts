@@ -25,6 +25,7 @@ export interface RelationshipContext {
 }
 
 export interface ResolveProfileResult extends PublicProfile {
+  isSelf?: boolean;
   relationship?: RelationshipContext;
 }
 
@@ -94,6 +95,7 @@ export interface IConnectionActions {
     connectionId: string,
   ) => Promise<{ id: string; status: string }>;
   cancelFriendRequest: (actorId: number, connectionId: string) => Promise<void>;
+  removeFriend: (actorId: number, targetUserId: number) => Promise<void>;
   listFriends: (actorId: number) => Promise<PublicProfile[]>;
   listIncomingRequests: (actorId: number) => Promise<FriendRequestItem[]>;
   listOutgoingRequests: (actorId: number) => Promise<FriendRequestItem[]>;
@@ -174,6 +176,10 @@ export const getConnectionActions = (
       }
 
       const profile = toPublicProfile(user);
+
+      if (viewerId != null && viewerId === user.id) {
+        return { ...profile, isSelf: true };
+      }
 
       if (viewerId && viewerId !== user.id) {
         const relationship = await getRelationshipContext(viewerId, user.id);
@@ -316,6 +322,22 @@ export const getConnectionActions = (
       }
 
       await connectionRepository.deleteConnection(connectionId);
+    },
+
+    async removeFriend(actorId, targetUserId) {
+      await assertActiveUser(connectionRepository, actorId);
+      await assertActiveUser(connectionRepository, targetUserId);
+      assertNotSelf(actorId, targetUserId);
+
+      const connection = await connectionRepository.findAnyConnectionBetween(
+        actorId,
+        targetUserId,
+      );
+      if (!connection || connection.status !== CONNECTION_STATUS.ACCEPTED) {
+        throw new ConnectionNotFoundException();
+      }
+
+      await connectionRepository.deleteConnection(connection.id);
     },
 
     async listFriends(actorId) {

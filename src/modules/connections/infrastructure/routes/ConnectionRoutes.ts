@@ -16,6 +16,7 @@ const getConnectionRoutes = (dependencyManager: DependencyManager) => {
     acceptFriendRequest,
     rejectFriendRequest,
     cancelFriendRequest,
+    removeFriend,
     listFriends,
     listIncomingRequests,
     listOutgoingRequests,
@@ -48,6 +49,7 @@ const getConnectionRoutes = (dependencyManager: DependencyManager) => {
   router.delete(`/${path}/friend-requests/:id`, auth, cancelFriendRequest);
 
   router.get(`/${path}/friends`, auth, listFriends);
+  router.delete(`/${path}/friends/:userId`, auth, removeFriend);
 
   router.get(`/${path}/follows/following`, auth, listFollowing);
   router.get(`/${path}/follows/followers`, auth, listFollowers);

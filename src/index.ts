@@ -8,6 +8,7 @@ import ReduceRouters from "./server/RoutesReducer.js";
 import InitializeServer, { StartServer } from "./server/ServerInitializer.js";
 import ServicesInitializer from "./services/ServicesInitalizer.js";
 import { startMercadoPagoSyncCron } from "./jobs/mercadoPagoSync.cron.js";
+import { startRafflesSyncCron } from "./jobs/rafflesSync.cron.js";
 import "./modules/modelsRelations.js";
 import { initializeFirebaseAdmin } from "./services/pushNotificationService/service/firebaseAdmin.js";
 
@@ -32,6 +33,7 @@ try {
     MiddlewaresInitializer(dependencyManager)
     ReduceRouters(app,dependencyManager)
     startMercadoPagoSyncCron(dependencyManager)
+    startRafflesSyncCron(dependencyManager)
 
     app.get("/health", (_req, res) => res.status(200).send("ok"))
     StartServer(app)

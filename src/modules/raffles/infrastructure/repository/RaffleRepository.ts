@@ -71,6 +71,23 @@ export const RaffleRepository = () => ({
     return rows.map(toRaffleRow);
   },
 
+  async listForDeadlineSync(): Promise<RaffleRow[]> {
+    const rows = await Raffle.findAll({
+      where: {
+        ...notDeletedWhere,
+        status: {
+          [Op.in]: [
+            RAFFLE_STATUS.PUBLISHED,
+            RAFFLE_STATUS.CLOSED,
+            RAFFLE_STATUS.DRAWN,
+          ],
+        },
+      },
+      order: [["participationDeadline", "ASC"]],
+    });
+    return rows.map(toRaffleRow);
+  },
+
   async listForApp(_userId: number): Promise<RaffleRow[]> {
     const rows = await Raffle.findAll({
       where: {

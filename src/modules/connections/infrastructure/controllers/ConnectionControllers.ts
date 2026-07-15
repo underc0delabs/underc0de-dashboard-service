@@ -144,6 +144,21 @@ export const ConnectionControllers = (actions: IConnectionActions) => {
         .catch((error) => handleError(res, error));
     },
 
+    removeFriend(req: Request, res: Response) {
+      const targetUserId = Number(req.params.userId);
+      if (!Number.isFinite(targetUserId)) {
+        ErrorResponse(res, new Error("userId inválido"), 400);
+        return;
+      }
+
+      actions
+        .removeFriend(getActorId(req), targetUserId)
+        .then(() => {
+          SuccessResponse(res, 200, "Amistad eliminada", null);
+        })
+        .catch((error) => handleError(res, error));
+    },
+
     listFriends(req: Request, res: Response) {
       actions
         .listFriends(getActorId(req))

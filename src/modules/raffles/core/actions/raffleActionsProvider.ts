@@ -199,6 +199,27 @@ export const syncRaffleDeadlines = async (
   return updated;
 };
 
+export const syncAllRaffleDeadlines = async (
+  repo: IRaffleRepository,
+): Promise<{ processed: number; updated: number }> => {
+  const rows = await repo.listForDeadlineSync();
+  let updated = 0;
+
+  for (const raffle of rows) {
+    const beforeStatus = raffle.status;
+    const beforeWinner = raffle.winnerUserId;
+    const synced = await syncRaffleDeadlines(repo, raffle);
+    if (
+      synced.status !== beforeStatus ||
+      synced.winnerUserId !== beforeWinner
+    ) {
+      updated += 1;
+    }
+  }
+
+  return { processed: rows.length, updated };
+};
+
 const mapPublicRaffle = async (
   repo: IRaffleRepository,
   raffle: RaffleRow,
@@ -560,10 +581,11 @@ export const RaffleActionsProvider = (
   },
 
   async claimAdmin(id, adminId) {
-    const raffle = await raffleRepository.findById(id);
+    let raffle = await raffleRepository.findById(id);
     if (!raffle) {
       throw new RaffleNotFoundException();
     }
+    raffle = await syncRaffleDeadlines(raffleRepository, raffle);
     if (raffle.status !== RAFFLE_STATUS.DRAWN) {
       throw new RaffleConflictException("El sorteo debe tener ganador sorteado");
     }
