@@ -26,6 +26,15 @@ export const deadlineToInstant = (
     return Number.isFinite(ms) ? ms : null;
   }
 
+  // Postgres / Sequelize: "2026-07-15 01:26:00" o "2026-07-15 01:26:00.000"
+  // son componentes UTC del timestamptz — no usar hora local del servidor.
+  const POSTGRES_NAIVE_UTC =
+    /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(\.\d+)?$/;
+  if (POSTGRES_NAIVE_UTC.test(raw)) {
+    const ms = new Date(`${raw.replace(" ", "T")}Z`).getTime();
+    return Number.isFinite(ms) ? ms : null;
+  }
+
   const ms = new Date(raw).getTime();
   return Number.isFinite(ms) ? ms : null;
 };

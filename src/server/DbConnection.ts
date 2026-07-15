@@ -37,6 +37,7 @@ export const sequelize = new Sequelize(
     logging: configs.env === 'development' ? (msg) => console.log(msg) : false,
     dialect: "postgres",
     port: configs.db.port ? parseInt(configs.db.port) : 5432,
+    timezone: "+00:00",
     dialectOptions: getSSLConfig(),
     omitNull: true,
     pool: {

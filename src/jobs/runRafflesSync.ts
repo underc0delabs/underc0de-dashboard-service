@@ -5,6 +5,16 @@ import type { IRaffleRepository } from "../modules/raffles/infrastructure/reposi
 export type RafflesSyncResult = {
   processed: number;
   updated: number;
+  details: Array<{
+    id: string;
+    title: string;
+    status: string;
+    participationDeadline: string;
+    deadlineMs: number | null;
+    nowMs: number;
+    participationPassed: boolean;
+    action: string;
+  }>;
 };
 
 export const runRafflesSync = async (

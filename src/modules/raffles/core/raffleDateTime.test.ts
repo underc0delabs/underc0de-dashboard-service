@@ -22,3 +22,9 @@ test("isDeadlinePassed is false one millisecond before deadline", () => {
   const deadlineMs = deadlineToInstant(deadline);
   assert.equal(isDeadlinePassed(deadline, deadlineMs! - 1), false);
 });
+
+test("isDeadlinePassed handles postgres naive UTC datetime strings", () => {
+  const now = new Date("2026-07-15T01:30:00.000Z").getTime();
+  assert.equal(isDeadlinePassed("2026-07-15 01:26:00.000", now), true);
+  assert.equal(isDeadlinePassed("2026-07-15 04:26:00.000", now), false);
+});

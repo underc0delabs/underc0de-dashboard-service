@@ -174,6 +174,7 @@ export const CronRoutes = (dependencyManager: DependencyManager) => {
         result: {
           processed: result.processed,
           updated: result.updated,
+          details: result.details,
           finishedAt: new Date().toISOString(),
         },
       });

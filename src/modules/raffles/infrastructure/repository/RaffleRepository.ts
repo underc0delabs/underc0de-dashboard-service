@@ -52,8 +52,30 @@ export type EventRow = {
   createdAt: Date;
 };
 
-const toRaffleRow = (row: unknown): RaffleRow =>
-  (row as { toJSON: () => RaffleRow }).toJSON();
+const toRaffleRow = (row: unknown): RaffleRow => {
+  const model = row as {
+    toJSON: () => RaffleRow;
+    get: (key: string) => unknown;
+  };
+  const plain = model.toJSON();
+  const participationDeadline = model.get("participationDeadline");
+  const claimDeadline = model.get("claimDeadline");
+  const publishedAt = model.get("publishedAt");
+
+  return {
+    ...plain,
+    participationDeadline:
+      participationDeadline instanceof Date
+        ? participationDeadline
+        : plain.participationDeadline,
+    claimDeadline:
+      claimDeadline instanceof Date ? claimDeadline : plain.claimDeadline,
+    publishedAt:
+      publishedAt instanceof Date || publishedAt == null
+        ? (publishedAt as Date | null)
+        : plain.publishedAt,
+  };
+};
 
 const notDeletedWhere = { deletedAt: null };
 

@@ -15,6 +15,7 @@ import {
   isDeadlinePassed,
   parseAdminDateTime,
   serializeRaffleDateTime,
+  deadlineToInstant,
 } from "../raffleDateTime.js";
 
 const dateFieldLabels: Record<string, string> = {
@@ -201,23 +202,72 @@ export const syncRaffleDeadlines = async (
 
 export const syncAllRaffleDeadlines = async (
   repo: IRaffleRepository,
-): Promise<{ processed: number; updated: number }> => {
+): Promise<{
+  processed: number;
+  updated: number;
+  details: Array<{
+    id: string;
+    title: string;
+    status: string;
+    participationDeadline: string;
+    deadlineMs: number | null;
+    nowMs: number;
+    participationPassed: boolean;
+    action: string;
+  }>;
+}> => {
   const rows = await repo.listForDeadlineSync();
+  const nowMs = Date.now();
   let updated = 0;
+  const details: Array<{
+    id: string;
+    title: string;
+    status: string;
+    participationDeadline: string;
+    deadlineMs: number | null;
+    nowMs: number;
+    participationPassed: boolean;
+    action: string;
+  }> = [];
 
   for (const raffle of rows) {
     const beforeStatus = raffle.status;
     const beforeWinner = raffle.winnerUserId;
+    const participationPassed = isDeadlinePassed(
+      raffle.participationDeadline,
+      nowMs,
+    );
     const synced = await syncRaffleDeadlines(repo, raffle);
+
+    let action = "none";
+    if (synced.status !== beforeStatus && synced.winnerUserId !== beforeWinner) {
+      action = `${beforeStatus}->${synced.status}+draw`;
+    } else if (synced.status !== beforeStatus) {
+      action = `${beforeStatus}->${synced.status}`;
+    } else if (synced.winnerUserId !== beforeWinner) {
+      action = "draw";
+    }
+
     if (
       synced.status !== beforeStatus ||
       synced.winnerUserId !== beforeWinner
     ) {
       updated += 1;
     }
+
+    details.push({
+      id: raffle.id,
+      title: raffle.title,
+      status: beforeStatus,
+      participationDeadline: String(raffle.participationDeadline),
+      deadlineMs: deadlineToInstant(raffle.participationDeadline),
+      nowMs,
+      participationPassed,
+      action,
+    });
   }
 
-  return { processed: rows.length, updated };
+  return { processed: rows.length, updated, details };
 };
 
 const mapPublicRaffle = async (
