@@ -611,16 +611,6 @@ export const RaffleActionsProvider = (
       throw new RaffleNotFoundException();
     }
 
-    const deletableStatuses: string[] = [
-      RAFFLE_STATUS.DRAFT,
-      RAFFLE_STATUS.COMPLETED,
-    ];
-    if (!deletableStatuses.includes(raffle.status)) {
-      throw new RaffleConflictException(
-        "Solo se pueden eliminar sorteos en borrador o finalizados",
-      );
-    }
-
     await raffleRepository.addEvent({
       raffleId: id,
       type: RAFFLE_EVENT_TYPE.DELETED,

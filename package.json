@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "tsx --test src/modules/subscriptionPlan/core/domain/subscriptionStatusPolicy.test.ts src/modules/partnerL2/infrastructure/gateways/forumUsernameLookupGateway.test.ts src/helpers/partnerIntegrationAuth.test.ts",
+    "test": "tsx --test src/modules/subscriptionPlan/core/domain/subscriptionStatusPolicy.test.ts src/modules/partnerL2/infrastructure/gateways/forumUsernameLookupGateway.test.ts src/helpers/partnerIntegrationAuth.test.ts src/helpers/forumTimestampEnricher.test.ts",
     "dev": "nodemon --env-file=.env.local",
     "build": "tsc && (cp underc0de-f1e15-39bd5639c220.json build/ 2>/dev/null || true)",
     "start": "node build/index.js",
