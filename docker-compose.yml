@@ -45,6 +45,7 @@ services:
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
+      TZ: America/Argentina/Buenos_Aires
     ports:
       - "${PORT:-3002}:3002"
     volumes:

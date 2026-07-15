@@ -450,7 +450,8 @@ export const RaffleActionsProvider = (
       actorId: String(adminId),
     });
 
-    return mapAdminRaffle(raffleRepository, updated!);
+    const synced = await syncRaffleDeadlines(raffleRepository, updated!);
+    return mapAdminRaffle(raffleRepository, synced);
   },
 
   async closeAdmin(id, adminId) {

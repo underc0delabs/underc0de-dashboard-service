@@ -15,6 +15,11 @@ FROM node:22-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=development
+ENV TZ=America/Argentina/Buenos_Aires
+
+RUN apk add --no-cache tzdata \
+  && cp /usr/share/zoneinfo/America/Argentina/Buenos_Aires /etc/localtime \
+  && echo "America/Argentina/Buenos_Aires" > /etc/timezone
 
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev

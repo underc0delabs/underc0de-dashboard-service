@@ -1,28 +1,30 @@
 import cron from "node-cron";
 import { DependencyManager } from "../dependencyManager.js";
-import { syncAllRaffleDeadlines } from "../modules/raffles/core/actions/raffleActionsProvider.js";
-import type { IRaffleRepository } from "../modules/raffles/infrastructure/repository/RaffleRepository.js";
+import { runRafflesSync } from "./runRafflesSync.js";
+
+const logRafflesSyncResult = (result: { processed: number; updated: number }) => {
+  console.info(
+    `[RAFFLES SYNC] processed=${result.processed} updated=${result.updated}`,
+  );
+};
 
 export function startRafflesSyncCron(dependencyManager: DependencyManager) {
-  cron.schedule(
-    "*/1 * * * *",
-    async () => {
-      try {
-        const raffleRepository = dependencyManager.resolve(
-          "raffleRepository",
-        ) as IRaffleRepository;
-        const result = await syncAllRaffleDeadlines(raffleRepository);
-        if (result.updated > 0) {
-          console.info(
-            `[RAFFLES SYNC] ${result.updated}/${result.processed} sorteos actualizados`,
-          );
-        }
-      } catch (error) {
-        console.error("[RAFFLES SYNC] Sync failed", error);
-      }
-    },
-    {
-      timezone: "America/Argentina/Buenos_Aires",
-    },
-  );
+  const execute = async () => {
+    try {
+      const result = await runRafflesSync(dependencyManager);
+      logRafflesSyncResult(result);
+    } catch (error) {
+      console.error("[RAFFLES SYNC] Sync failed", error);
+    }
+  };
+
+  void execute();
+
+  const scheduled = cron.schedule("*/1 * * * *", execute);
+  if (!scheduled) {
+    console.error("[RAFFLES SYNC] No se pudo registrar el cron");
+    return;
+  }
+
+  console.info("[RAFFLES SYNC] Cron activo (cada 1 minuto)");
 }

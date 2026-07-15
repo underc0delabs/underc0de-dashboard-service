@@ -118,3 +118,5 @@ jobs:
             npx sequelize-cli db:seed:all --config sequelize.config.cjs --env production || true
             pm2 restart underc0de-dashboard-service --update-env || pm2 start build/index.js --name underc0de-dashboard-service
             pm2 save
+            sleep 2
+            curl -fsS -X POST "http://127.0.0.1:${PORT:-3002}/api/v1/cron/raffles-sync" || echo "WARN: raffles-sync no respondió (revisar deploy/logs)"

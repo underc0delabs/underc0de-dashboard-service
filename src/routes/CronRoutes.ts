@@ -8,6 +8,7 @@ import { IUserRepository } from "../modules/users/core/repository/IMongoUserRepo
 import { getSubscriptionPlanActions } from "../modules/subscriptionPlan/core/actions/actionsProvider.js";
 import { IEnvironmentRepository } from "../modules/environments/core/repository/IEnvironmentRepository.js";
 import { MercadoPagoGateway } from "../services/mercadopagoService/core/gateway/mercadoPagoGateway.js";
+import { runRafflesSync } from "../jobs/runRafflesSync.js";
 
 type SyncStatus = "idle" | "running" | "completed" | "failed";
 
@@ -161,6 +162,31 @@ export const CronRoutes = (dependencyManager: DependencyManager) => {
           console.error("[MP SYNC] MP response:", JSON.stringify(error.response.data).slice(0, 300));
         }
       });
+  });
+
+  router.post("/raffles-sync", async (_req: Request, res: Response) => {
+    try {
+      const result = await runRafflesSync(dependencyManager);
+      return res.status(200).json({
+        status: 200,
+        success: true,
+        msg: "Sincronización de sorteos completada",
+        result: {
+          processed: result.processed,
+          updated: result.updated,
+          finishedAt: new Date().toISOString(),
+        },
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("[RAFFLES SYNC] HTTP cron failed:", message);
+      return res.status(500).json({
+        status: 500,
+        success: false,
+        msg: message,
+        result: null,
+      });
+    }
   });
 
   return router;

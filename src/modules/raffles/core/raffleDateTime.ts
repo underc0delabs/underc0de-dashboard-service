@@ -38,7 +38,7 @@ export const isDeadlinePassed = (
   if (deadlineMs == null) {
     return false;
   }
-  return nowMs > deadlineMs;
+  return nowMs >= deadlineMs;
 };
 
 export const serializeRaffleDateTime = (
