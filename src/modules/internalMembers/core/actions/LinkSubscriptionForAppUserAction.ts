@@ -41,11 +41,10 @@ export const LinkSubscriptionForAppUserAction = (
       );
     }
 
-    const email = (user as any).email as string;
     try {
       await linkSubscription.execute({
         suscriptionCode: mpPreapprovalId,
-        email,
+        userId: appUserId,
       });
     } catch (err: any) {
       let member = await internalMemberRepository.findByAppUserId(

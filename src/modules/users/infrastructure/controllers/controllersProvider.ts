@@ -9,6 +9,7 @@ import { ISubscriptionPlanRepository } from "../../../subscriptionPlan/core/repo
 import { IRefreshTokenRepository } from "../../core/repository/IRefreshTokenRepository.js";
 import { IPaymentRepository } from "../../../payment/core/repository/IPaymentRepository.js";
 import { MercadoPagoSyncService } from "../../../../services/mercadopagoService/core/service/mercadoPagoSyncService.js";
+import { MercadoPagoGateway } from "../../../../services/mercadopagoService/core/gateway/mercadoPagoGateway.js";
 import { IInternalMemberRepository } from "../../../internalMembers/core/repository/IInternalMemberRepository.js";
 import { IFileStorageService } from "../../../merchants/infrastructure/services/FileStorageService.js";
 
@@ -29,6 +30,9 @@ export const getUserControllers = (dependencyManager: DependencyManager) => {
   const fileStorageService = dependencyManager.resolve(
     "fileStorageService"
   ) as IFileStorageService;
+  const mercadoPagoGateway = dependencyManager.resolve(
+    "mercadoPagoGateway"
+  ) as MercadoPagoGateway;
   const UserActions = getUserActions(
     UserRepository,
     hashService,
@@ -39,7 +43,8 @@ export const getUserControllers = (dependencyManager: DependencyManager) => {
     paymentRepository,
     mercadoPagoSyncService,
     internalMemberRepository,
-    fileStorageService
+    fileStorageService,
+    mercadoPagoGateway
   );
   return UserControllers(UserActions);
 };

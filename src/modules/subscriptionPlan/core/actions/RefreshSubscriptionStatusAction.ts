@@ -14,6 +14,14 @@ export interface IRefreshSubscriptionStatusAction {
   }>;
 }
 
+const planBelongsToUser = (
+  plan: { userId?: number | string | null },
+  userId: string
+): boolean => {
+  if (plan.userId == null) return true;
+  return String(plan.userId) === String(userId);
+};
+
 export const RefreshSubscriptionStatusAction = (
   userRepository: IUserRepository,
   subscriptionPlanRepository: ISubscriptionPlanRepository,
@@ -22,7 +30,21 @@ export const RefreshSubscriptionStatusAction = (
   return {
     execute: async ({ userId, preapproval_id }) => {
       if (preapproval_id?.trim()) {
-        return syncSubscriptionByPreapprovalId.execute(preapproval_id.trim());
+        const preapprovalId = preapproval_id.trim();
+        const subscription = await subscriptionPlanRepository.getOne({
+          mpPreapprovalId: preapprovalId,
+        });
+        if (subscription) {
+          const subJson =
+            (subscription as any).toJSON?.() ?? subscription;
+          if (!planBelongsToUser(subJson, userId)) {
+            return {
+              success: false,
+              message: "No autorizado para sincronizar esa suscripción",
+            };
+          }
+        }
+        return syncSubscriptionByPreapprovalId.execute(preapprovalId);
       }
 
       const result = await subscriptionPlanRepository.get({

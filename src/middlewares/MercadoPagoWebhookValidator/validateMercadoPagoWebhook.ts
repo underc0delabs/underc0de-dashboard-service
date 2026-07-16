@@ -21,7 +21,8 @@ export const validateMercadoPagoWebhook = (
   const xRequestId = req.headers["x-request-id"] as string | undefined;
 
   if (!xSignature) {
-    return next();
+    res.status(401).json({ error: "Missing webhook signature" });
+    return;
   }
 
   const parts = xSignature.split(",").reduce<Record<string, string>>(

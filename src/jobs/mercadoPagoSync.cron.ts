@@ -8,40 +8,60 @@ import { IUserRepository } from "../modules/users/core/repository/IMongoUserRepo
 import { MercadoPagoGateway } from "../services/mercadopagoService/core/gateway/mercadoPagoGateway.js";
 import { IEnvironmentRepository } from "../modules/environments/core/repository/IEnvironmentRepository.js";
 
+const resolveSubscriptionPlanActions = (dependencyManager: DependencyManager) => {
+  const subscriptionPlanRepository = dependencyManager.resolve(
+    "subscriptionPlanRepository"
+  ) as ISubscriptionPlanRepository;
+  const mercadoPagoSyncService = dependencyManager.resolve(
+    "mercadoPagoSyncService"
+  ) as MercadoPagoSyncService;
+  const paymentRepository = dependencyManager.resolve(
+    "paymentRepository"
+  ) as IPaymentRepository;
+  const userRepository = dependencyManager.resolve(
+    "userRepository"
+  ) as IUserRepository;
+  const mercadoPagoGateway = dependencyManager.resolve(
+    "mercadoPagoGateway"
+  ) as MercadoPagoGateway;
+  const environmentRepository = dependencyManager.resolve(
+    "environmentRepository"
+  ) as IEnvironmentRepository;
+
+  return getSubscriptionPlanActions(
+    subscriptionPlanRepository,
+    mercadoPagoSyncService,
+    paymentRepository,
+    userRepository,
+    mercadoPagoGateway,
+    environmentRepository
+  );
+};
+
+const runMercadoPagoSync = async (dependencyManager: DependencyManager) => {
+  const startedAt = Date.now();
+  const subscriptionPlanActions = resolveSubscriptionPlanActions(dependencyManager);
+  const result = await subscriptionPlanActions.syncMercadoPago.execute();
+  console.log("[MP SYNC cron] Completado", {
+    durationMs: Date.now() - startedAt,
+    subscriptionsCreated: result?.subscriptionsCreated ?? 0,
+    subscriptionsUpdated: result?.subscriptionsUpdated ?? 0,
+    paymentsSaved: result?.paymentsSaved ?? 0,
+    usersRevoked: result?.usersRevoked ?? 0,
+    stalePlansCancelled: result?.stalePlansCancelled ?? 0,
+  });
+  return result;
+};
+
 export function startMercadoPagoSyncCron(dependencyManager: DependencyManager) {
+  /** Cada 6 horas (03:00, 09:00, 15:00, 21:00 ART). Complementa webhook + sync manual del admin. */
   cron.schedule(
-    "0 3 * * *",
+    "0 */6 * * *",
     async () => {
       try {
-        const subscriptionPlanRepository = dependencyManager.resolve(
-          "subscriptionPlanRepository"
-        ) as ISubscriptionPlanRepository;
-        const mercadoPagoSyncService = dependencyManager.resolve(
-          "mercadoPagoSyncService"
-        ) as MercadoPagoSyncService;
-        const paymentRepository = dependencyManager.resolve(
-          "paymentRepository"
-        ) as IPaymentRepository;
-        const userRepository = dependencyManager.resolve(
-          "userRepository"
-        ) as IUserRepository;
-        const mercadoPagoGateway = dependencyManager.resolve(
-          "mercadoPagoGateway"
-        ) as MercadoPagoGateway;
-        const environmentRepository = dependencyManager.resolve(
-          "environmentRepository"
-        ) as IEnvironmentRepository;
-        const subscriptionPlanActions = getSubscriptionPlanActions(
-          subscriptionPlanRepository,
-          mercadoPagoSyncService,
-          paymentRepository,
-          userRepository,
-          mercadoPagoGateway,
-          environmentRepository
-        );
-        await subscriptionPlanActions.syncMercadoPago.execute();
+        await runMercadoPagoSync(dependencyManager);
       } catch (error) {
-        console.error("[MP SYNC] Sync failed", error);
+        console.error("[MP SYNC cron] Sync failed", error);
       }
     },
     {

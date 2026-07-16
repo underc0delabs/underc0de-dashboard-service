@@ -8,6 +8,28 @@ import { MpSubscription } from "../../../../services/mercadopagoService/core/typ
 import { ISubscriptionPlanRepository } from "../repository/ISubscriptionPlanRepository.js";
 import { IPaymentRepository } from "../../../payment/core/repository/IPaymentRepository.js";
 import { IUserRepository } from "../../../users/core/repository/IMongoUserRepository.js";
+import { isInternalPreapprovalId } from "../domain/subscriptionPlanHelpers.js";
+import { mapMpDetailStatusToModel } from "../domain/subscriptionStatusPolicy.js";
+
+const demoteOtherActiveSubscriptions = async (
+  userId: number | string,
+  exceptSubscriptionId: string | number,
+  subscriptionPlanRepository: ISubscriptionPlanRepository
+) => {
+  const result = await subscriptionPlanRepository.get({
+    userId,
+    status: "ACTIVE",
+    page_count: 200,
+    page_number: 0,
+  });
+  const plans = result?.subscriptionPlans ?? [];
+  for (const row of plans) {
+    const plan = (row as any).toJSON?.() ?? row;
+    const id = plan.id ?? plan.dataValues?.id;
+    if (id == null || String(id) === String(exceptSubscriptionId)) continue;
+    await subscriptionPlanRepository.edit({ status: "CANCELLED" } as any, String(id));
+  }
+};
 
 export type ReconcileMercadoPagoUserResult =
   | {
@@ -60,8 +82,7 @@ export const ReconcileMercadoPagoUserAction = (
     const jsonPlans = plans.map((p: any) => (p.toJSON ? p.toJSON() : p));
     const candidates = jsonPlans.filter(
       (p: any) =>
-        p.mpPreapprovalId &&
-        !String(p.mpPreapprovalId).startsWith("owner-")
+        p.mpPreapprovalId && !isInternalPreapprovalId(p.mpPreapprovalId)
     );
     const byRecency = (a: any, b: any) => {
       const ta = a?.createdAt ? new Date(a.createdAt).getTime() : 0;
@@ -115,6 +136,7 @@ export const ReconcileMercadoPagoUserAction = (
     }
 
     const mpStatusRaw = String((detail as any).status ?? "");
+    const mappedStatus = mapMpDetailStatusToModel(mpStatusRaw);
     const mpSub: MpSubscription = {
       id: preapprovalId,
       status: mpStatusRaw === "authorized" ? "authorized" : "cancelled",
@@ -155,7 +177,7 @@ export const ReconcileMercadoPagoUserAction = (
 
     const subscriptionPayload = {
       userId: targetUserId,
-      status: mpSub.status === "authorized" ? "ACTIVE" : "CANCELLED",
+      status: mappedStatus,
       startedAt: new Date(mpSub.date_created),
       nextPaymentDate: calculateNextPaymentDate(mpSub as any),
       mpPreapprovalId: preapprovalId,
@@ -174,8 +196,19 @@ export const ReconcileMercadoPagoUserAction = (
       persistedSubscription = existing;
     }
 
+    const persistedId =
+      (persistedSubscription as any).id ??
+      (persistedSubscription as any).toJSON?.()?.id ??
+      planWithMp.id;
+
+    await demoteOtherActiveSubscriptions(
+      targetUserId,
+      persistedId,
+      subscriptionPlanRepository
+    );
+
     const userUpdatePayload: Record<string, unknown> = {
-      is_pro: subscriptionPayload.status === "ACTIVE",
+      is_pro: mappedStatus === "ACTIVE",
       mpPayerId: String(mpSub.payer_id),
     };
     const userJson = (user as any).toJSON ? (user as any).toJSON() : user;
@@ -212,8 +245,8 @@ export const ReconcileMercadoPagoUserAction = (
     return {
       ok: true,
       mp_status: mpStatusRaw,
-      local_subscription_status: subscriptionPayload.status,
-      user_is_pro: subscriptionPayload.status === "ACTIVE",
+      local_subscription_status: mappedStatus,
+      user_is_pro: mappedStatus === "ACTIVE",
       payments_saved: paymentsSaved,
     };
   },

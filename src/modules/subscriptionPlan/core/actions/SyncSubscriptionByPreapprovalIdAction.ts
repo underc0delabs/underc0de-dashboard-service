@@ -2,6 +2,7 @@ import { MercadoPagoGateway } from "../../../../services/mercadopagoService/core
 import { IUserRepository } from "../../../users/core/repository/IMongoUserRepository.js";
 import { ISubscriptionPlanRepository } from "../repository/ISubscriptionPlanRepository.js";
 import {
+  isTerminalSubscriptionStatus,
   mapMpDetailStatusToModel,
   shouldRejectAuthorizedOnTerminalRow,
   type SubscriptionPlanStatus,
@@ -107,12 +108,14 @@ export const SyncSubscriptionByPreapprovalIdAction = (
         }
       }
 
-      if (mappedStatus === "ACTIVE" && subJson.userId) {
-        await demoteOtherActiveSubscriptions(
-          Number(subJson.userId),
-          subJson.id,
-          subscriptionPlanRepository
-        );
+      if (subJson.userId) {
+        if (mappedStatus === "ACTIVE" || isTerminalSubscriptionStatus(mappedStatus)) {
+          await demoteOtherActiveSubscriptions(
+            Number(subJson.userId),
+            subJson.id,
+            subscriptionPlanRepository
+          );
+        }
       }
 
       await subscriptionPlanRepository.edit(

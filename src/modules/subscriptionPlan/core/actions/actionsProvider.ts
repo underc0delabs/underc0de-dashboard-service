@@ -111,7 +111,8 @@ export const getSubscriptionPlanActions = (
     cancelSubscription: CancelSubscriptionAction(
       SubscriptionPlanRepository,
       mercadoPagoGateway,
-      syncSubscriptionByPreapprovalId
+      syncSubscriptionByPreapprovalId,
+      userRepository
     ),
   };
   return SubscriptionPlanActions;

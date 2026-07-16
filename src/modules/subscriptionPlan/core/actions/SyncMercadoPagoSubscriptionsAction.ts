@@ -2,6 +2,76 @@ import { MercadoPagoSyncService } from "../../../../services/mercadopagoService/
 import { ISubscriptionPlanRepository } from "../repository/ISubscriptionPlanRepository.js";
 import { IPaymentRepository } from "../../../payment/core/repository/IPaymentRepository.js";
 import { IUserRepository } from "../../../users/core/repository/IMongoUserRepository.js";
+import {
+  isInternalPreapprovalId,
+  isMpManagedPreapprovalId,
+} from "../domain/subscriptionPlanHelpers.js";
+
+const cancelStaleActiveMpPlans = async (
+  mpAuthorizedIds: Set<string>,
+  subscriptionPlanRepository: ISubscriptionPlanRepository
+): Promise<number> => {
+  let cancelled = 0;
+  let page = 0;
+  const pageSize = 500;
+
+  while (true) {
+    const result = await subscriptionPlanRepository.get({
+      status: "ACTIVE",
+      page_count: pageSize,
+      page_number: page,
+    });
+    const plans = result?.subscriptionPlans ?? [];
+    if (!plans.length) break;
+
+    for (const row of plans) {
+      const plan = (row as any).toJSON?.() ?? row;
+      const mpId = String(plan.mpPreapprovalId ?? "");
+      if (!isMpManagedPreapprovalId(mpId)) continue;
+      if (mpAuthorizedIds.has(mpId)) continue;
+
+      await subscriptionPlanRepository.edit(
+        { status: "CANCELLED" } as any,
+        String(plan.id)
+      );
+      cancelled++;
+      console.log("[MP SYNC] Cancelled stale ACTIVE plan (not authorized in MP)", {
+        planId: plan.id,
+        mpPreapprovalId: mpId,
+        userId: plan.userId,
+      });
+    }
+
+    if (plans.length < pageSize) break;
+    page++;
+  }
+
+  return cancelled;
+};
+
+const cancelUserStaleActiveMpPlans = async (
+  userId: number | string,
+  mpAuthorizedIds: Set<string>,
+  subscriptionPlanRepository: ISubscriptionPlanRepository
+): Promise<void> => {
+  const result = await subscriptionPlanRepository.get({
+    userId,
+    status: "ACTIVE",
+    page_count: 50,
+    page_number: 0,
+  });
+  const plans = result?.subscriptionPlans ?? [];
+  for (const row of plans) {
+    const plan = (row as any).toJSON?.() ?? row;
+    const mpId = String(plan.mpPreapprovalId ?? "");
+    if (!isMpManagedPreapprovalId(mpId)) continue;
+    if (mpAuthorizedIds.has(mpId)) continue;
+    await subscriptionPlanRepository.edit(
+      { status: "CANCELLED" } as any,
+      String(plan.id)
+    );
+  }
+};
 
 export interface ISyncMercadoPagoSubscriptionsAction {
   execute: () => Promise<any>;
@@ -17,13 +87,12 @@ export const SyncMercadoPagoSubscriptionsAction = (
     execute: async () => {
       const mpSubscriptions = await mercadoPagoSyncService.syncSubscriptions();
       console.log("[MP SYNC] Suscripciones desde MP:", mpSubscriptions.length);
-      if (!mpSubscriptions.length) {
-        return { success: true, synced: 0 };
-      }
+
       let subscriptionsCreated = 0;
       let subscriptionsUpdated = 0;
       let paymentsSaved = 0;
 
+      if (mpSubscriptions.length > 0) {
       for (const mpSub of mpSubscriptions) {
         const preapprovalId = String(mpSub.id);
 
@@ -132,38 +201,51 @@ export const SyncMercadoPagoSubscriptionsAction = (
           paymentsSaved++;
         }
       }
+      }
+
+      const mpAuthorizedIds = new Set(
+        mpSubscriptions
+          .filter((s: any) => s.status === "authorized")
+          .map((s: any) => String(s.id))
+      );
 
       let revokedCount = 0;
-      if (mpSubscriptions.length > 0) {
-        const mpAuthorizedIds = new Set(
-          mpSubscriptions
-            .filter((s: any) => s.status === "authorized")
-            .map((s: any) => String(s.id))
+      let stalePlansCancelled = 0;
+
+      stalePlansCancelled = await cancelStaleActiveMpPlans(
+        mpAuthorizedIds,
+        subscriptionPlanRepository
+      );
+
+      const proUsersResult = await userRepository.get({ is_pro: true });
+      const proUsers = proUsersResult?.users ?? [];
+      for (const u of proUsers) {
+        const userJson = u.toJSON ? u.toJSON() : u;
+        const plans = userJson.subscriptionPlans ?? [];
+        const hasInternalPlan = plans.some((p: any) =>
+          isInternalPreapprovalId(p.mpPreapprovalId)
         );
-        const proUsersResult = await userRepository.get({ is_pro: true });
-        const proUsers = proUsersResult?.users ?? [];
-        for (const u of proUsers) {
-          const userJson = u.toJSON ? u.toJSON() : u;
-          const plans = userJson.subscriptionPlans ?? [];
-          const hasOwnerPlan = plans.some(
-            (p: any) => String(p.mpPreapprovalId ?? "").startsWith("owner-")
-          );
-          if (hasOwnerPlan) continue;
-          const hasActiveInMp = plans.some(
-            (p: any) =>
-              p.status === "ACTIVE" &&
-              mpAuthorizedIds.has(String(p.mpPreapprovalId ?? ""))
-          );
-          if (hasActiveInMp) continue;
-          await userRepository.edit(
-            { ...userJson, is_pro: false } as any,
-            String(userJson.id)
-          );
-          revokedCount++;
-          console.log("[MP SYNC] Revoked is_pro (no active subscription in MP)", {
-            userId: userJson.id,
-          });
-        }
+        if (hasInternalPlan) continue;
+        const hasActiveInMp = plans.some(
+          (p: any) =>
+            p.status === "ACTIVE" &&
+            mpAuthorizedIds.has(String(p.mpPreapprovalId ?? ""))
+        );
+        if (hasActiveInMp) continue;
+
+        await cancelUserStaleActiveMpPlans(
+          userJson.id,
+          mpAuthorizedIds,
+          subscriptionPlanRepository
+        );
+        await userRepository.edit(
+          { ...userJson, is_pro: false } as any,
+          String(userJson.id)
+        );
+        revokedCount++;
+        console.log("[MP SYNC] Revoked is_pro (no active subscription in MP)", {
+          userId: userJson.id,
+        });
       }
 
       return {
@@ -172,6 +254,7 @@ export const SyncMercadoPagoSubscriptionsAction = (
         subscriptionsUpdated,
         paymentsSaved,
         usersRevoked: revokedCount,
+        stalePlansCancelled,
       };
     },
   };

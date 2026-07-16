@@ -51,7 +51,13 @@ export const UserControllers = ({
         });
     },
     edit(req: Request, res: Response) {
-      const editExecution = edit.execute(req.body, req.params.id);
+      const auth = (req as any).auth as
+        | { isAdmin?: boolean; isDashboardUser?: boolean }
+        | undefined;
+      const isAdminEdit = Boolean(auth?.isAdmin || auth?.isDashboardUser);
+      const editExecution = edit.execute(req.body, req.params.id, {
+        isAdminEdit,
+      });
       editExecution
         .then((user) => {
           const message = `${name} editad${pronoun} correctamente`;
@@ -187,9 +193,15 @@ export const UserControllers = ({
         });
     },
     linkSubscription(req: Request, res: Response) {
+      const auth = (req as any).auth as { id: string } | undefined;
+      if (!auth?.id) {
+        return ErrorResponse(res, new Error("No autorizado"), 401);
+      }
+      const body = req.body as { suscriptionCode?: string; email?: string };
       const linkSubscriptionExecution = linkSubscription.execute({
-        suscriptionCode: (req.body as { suscriptionCode: string }).suscriptionCode,
-        email: (req.body as { email: string }).email,
+        suscriptionCode: String(body.suscriptionCode ?? ""),
+        email: body.email,
+        userId: auth.id,
       });
       linkSubscriptionExecution
         .then((result) => {

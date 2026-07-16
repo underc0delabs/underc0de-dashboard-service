@@ -1,4 +1,5 @@
 import { MercadoPagoGateway } from "../../../../services/mercadopagoService/core/gateway/mercadoPagoGateway.js";
+import { IUserRepository } from "../../../users/core/repository/IMongoUserRepository.js";
 import { ISubscriptionPlanRepository } from "../repository/ISubscriptionPlanRepository.js";
 import { ISyncSubscriptionByPreapprovalIdAction } from "./SyncSubscriptionByPreapprovalIdAction.js";
 
@@ -49,7 +50,8 @@ export interface ICancelSubscriptionAction {
 export const CancelSubscriptionAction = (
   subscriptionPlanRepository: ISubscriptionPlanRepository,
   mercadoPagoGateway: MercadoPagoGateway,
-  syncSubscriptionByPreapprovalId: ISyncSubscriptionByPreapprovalIdAction
+  syncSubscriptionByPreapprovalId: ISyncSubscriptionByPreapprovalIdAction,
+  userRepository: IUserRepository
 ): ICancelSubscriptionAction => ({
   execute: async (userId: string) => {
     const result = await subscriptionPlanRepository.get({
@@ -80,11 +82,22 @@ export const CancelSubscriptionAction = (
       preapprovalId
     );
     if (!syncResult.success) {
-      const err = new Error(
-        syncResult.message ?? "Error al sincronizar el estado tras cancelar"
+      await subscriptionPlanRepository.edit(
+        { status: "CANCELLED" } as any,
+        String(plan.id)
       );
-      (err as any).name = "SubscriptionSyncAfterCancelError";
-      throw err;
+      await userRepository.edit({ is_pro: false } as any, userId);
+      console.warn("[CancelSubscription] Sync failed after MP cancel; local state demoted", {
+        userId,
+        preapprovalId,
+        syncMessage: syncResult.message,
+      });
+      return {
+        success: true,
+        subscription_status: "CANCELLED",
+        user_is_pro: false,
+        message: "cancelled_locally_after_mp",
+      };
     }
 
     return syncResult;

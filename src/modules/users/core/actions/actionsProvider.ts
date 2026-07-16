@@ -31,10 +31,7 @@ import { IRefreshTokenRepository } from "../repository/IRefreshTokenRepository.j
 import { ISubscriptionPlanRepository } from "../../../subscriptionPlan/core/repository/ISubscriptionPlanRepository.js";
 import { IPaymentRepository } from "../../../payment/core/repository/IPaymentRepository.js";
 import { MercadoPagoSyncService } from "../../../../services/mercadopagoService/core/service/mercadoPagoSyncService.js";
-import {
-  IReconcileMercadoPagoUserAction,
-  ReconcileMercadoPagoUserAction,
-} from "../../../subscriptionPlan/core/actions/ReconcileMercadoPagoUserAction.js";
+import { MercadoPagoGateway } from "../../../../services/mercadopagoService/core/gateway/mercadoPagoGateway.js";
 import { IInternalMemberRepository } from "../../../internalMembers/core/repository/IInternalMemberRepository.js";
 import {
   IUploadAvatarAction,
@@ -45,6 +42,10 @@ import {
   IDeactivateAccountAction,
 } from "./DeactivateAccountAction.js";
 import { IFileStorageService } from "../../../merchants/infrastructure/services/FileStorageService.js";
+import {
+  IReconcileMercadoPagoUserAction,
+  ReconcileMercadoPagoUserAction,
+} from "../../../subscriptionPlan/core/actions/ReconcileMercadoPagoUserAction.js";
 
 export interface IUserActions {
   save: ISaveUserAction;
@@ -74,7 +75,8 @@ export const getUserActions = (
   paymentRepository: IPaymentRepository,
   mercadoPagoSyncService: MercadoPagoSyncService,
   internalMemberRepository: IInternalMemberRepository,
-  fileStorageService: IFileStorageService
+  fileStorageService: IFileStorageService,
+  mercadoPagoGateway: MercadoPagoGateway
 ) => {
   const UserActions: IUserActions = {
     save: SaveUserAction(UserRepository, hashService),
@@ -105,7 +107,8 @@ export const getUserActions = (
     linkSubscription: LinkSubscriptionAction(
       UserRepository,
       subscriptionPlanRepository,
-      paymentRepository
+      paymentRepository,
+      mercadoPagoGateway
     ),
     reconcileMercadoPagoUser: ReconcileMercadoPagoUserAction(
       mercadoPagoSyncService,

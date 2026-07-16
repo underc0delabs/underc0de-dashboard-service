@@ -20,8 +20,14 @@ const EDIT_ALLOWED_KEYS = [
   "password",
 ] as const;
 
+const PRIVILEGED_EDIT_KEYS = new Set(["is_pro", "mpPayerId"]);
+
 /** Normaliza body: acepta mercadopagoEmail (camelCase) y subscriptionStatus / suscription del front */
-const buildUpdatePayload = (body: any, hashService: IHashService): Record<string, unknown> => {
+const buildUpdatePayload = (
+  body: any,
+  hashService: IHashService,
+  isAdminEdit: boolean
+): Record<string, unknown> => {
   const raw: Record<string, unknown> = {
     ...body,
     mercadopago_email:
@@ -29,6 +35,7 @@ const buildUpdatePayload = (body: any, hashService: IHashService): Record<string
   };
   const payload: Record<string, unknown> = {};
   for (const key of EDIT_ALLOWED_KEYS) {
+    if (!isAdminEdit && PRIVILEGED_EDIT_KEYS.has(key)) continue;
     if (raw[key] !== undefined && raw[key] !== null) {
       payload[key] = raw[key];
     }
@@ -82,7 +89,11 @@ const normalizeSubscriptionStatus = (v: unknown): "ACTIVE" | "CANCELLED" | null 
 };
 
 export interface IEditUserAction {
-  execute: (body: IUser, id: string) => Promise<any>;
+  execute: (
+    body: IUser,
+    id: string,
+    options?: { isAdminEdit?: boolean }
+  ) => Promise<any>;
 }
 export const EditUserAction = (
   UserRepository: IUserRepository,
@@ -90,9 +101,10 @@ export const EditUserAction = (
   subscriptionPlanRepository: ISubscriptionPlanRepository
 ): IEditUserAction => {
   return {
-    execute(body, id) {
+    execute(body, id, options) {
       return new Promise(async (resolve, reject) => {
         try {
+          const isAdminEdit = options?.isAdminEdit === true;
           const rawBody = body || {};
           const rawSub =
             (rawBody as any).subscriptionStatus ??
@@ -100,8 +112,10 @@ export const EditUserAction = (
             (rawBody as any).subscription ??
             (rawBody as any).Subscription ??
             (rawBody as any).estadoSuscripcion;
-          const subscriptionStatus = normalizeSubscriptionStatus(rawSub);
-          const payload = buildUpdatePayload(rawBody, hashService);
+          const subscriptionStatus = isAdminEdit
+            ? normalizeSubscriptionStatus(rawSub)
+            : null;
+          const payload = buildUpdatePayload(rawBody, hashService, isAdminEdit);
           if (subscriptionStatus !== null) {
             payload.is_pro = subscriptionStatus === "ACTIVE";
           }

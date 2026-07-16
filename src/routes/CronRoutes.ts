@@ -1,6 +1,8 @@
 import axios from "axios";
 import { Router, Request, Response } from "express";
 import { DependencyManager } from "../dependencyManager.js";
+import { IJwtValidator } from "../middlewares/JwtValidator/core/IJwtValidator.js";
+import { requireCronOrAdmin } from "../middlewares/RequireCronOrAdmin.js";
 import { ISubscriptionPlanRepository } from "../modules/subscriptionPlan/core/repository/ISubscriptionPlanRepository.js";
 import { MercadoPagoSyncService } from "../services/mercadopagoService/core/service/mercadoPagoSyncService.js";
 import { IPaymentRepository } from "../modules/payment/core/repository/IPaymentRepository.js";
@@ -19,6 +21,8 @@ interface MercadoPagoSyncState {
   subscriptionsCreated?: number;
   subscriptionsUpdated?: number;
   paymentsSaved?: number;
+  usersRevoked?: number;
+  stalePlansCancelled?: number;
   error?: string;
 }
 
@@ -26,9 +30,13 @@ let mercadopagoSyncState: MercadoPagoSyncState = { status: "idle" };
 
 export const CronRoutes = (dependencyManager: DependencyManager) => {
   const router = Router();
+  const jwtValidator = dependencyManager.resolve(
+    "jwtValidator"
+  ) as IJwtValidator;
+  const cronAuth = requireCronOrAdmin(jwtValidator);
 
   /** Debug: llama a MP preapproval/search y devuelve la respuesta cruda para diagnosticar 403 */
-  router.get("/mercadopago-debug", async (_req: Request, res: Response) => {
+  router.get("/mercadopago-debug", cronAuth, async (_req: Request, res: Response) => {
     const token = process.env.MP_ACCESS_TOKEN;
     if (!token?.trim()) {
       return res.status(400).json({
@@ -82,7 +90,7 @@ export const CronRoutes = (dependencyManager: DependencyManager) => {
     }
   });
 
-  router.get("/mercadopago-sync/status", (_req: Request, res: Response) => {
+  router.get("/mercadopago-sync/status", cronAuth, (_req: Request, res: Response) => {
     return res.status(200).json({
       status: 200,
       success: true,
@@ -91,7 +99,7 @@ export const CronRoutes = (dependencyManager: DependencyManager) => {
     });
   });
 
-  router.post("/mercadopago-sync", (req: Request, res: Response) => {
+  router.post("/mercadopago-sync", cronAuth, (req: Request, res: Response) => {
     const startedAt = new Date().toISOString();
     mercadopagoSyncState = { status: "running", startedAt };
     console.log("[MP SYNC] Iniciando sincronización en background...");
@@ -142,11 +150,15 @@ export const CronRoutes = (dependencyManager: DependencyManager) => {
           subscriptionsCreated: result?.subscriptionsCreated ?? 0,
           subscriptionsUpdated: result?.subscriptionsUpdated ?? 0,
           paymentsSaved: result?.paymentsSaved ?? 0,
+          usersRevoked: result?.usersRevoked ?? 0,
+          stalePlansCancelled: result?.stalePlansCancelled ?? 0,
         };
         console.log("[MP SYNC] Sincronización completada.", {
           subscriptionsCreated: result?.subscriptionsCreated ?? 0,
           subscriptionsUpdated: result?.subscriptionsUpdated ?? 0,
           paymentsSaved: result?.paymentsSaved ?? 0,
+          usersRevoked: result?.usersRevoked ?? 0,
+          stalePlansCancelled: result?.stalePlansCancelled ?? 0,
           duration: `${((Date.now() - new Date(startedAt).getTime()) / 1000).toFixed(1)}s`,
         });
       })
@@ -164,7 +176,7 @@ export const CronRoutes = (dependencyManager: DependencyManager) => {
       });
   });
 
-  router.post("/raffles-sync", async (_req: Request, res: Response) => {
+  router.post("/raffles-sync", cronAuth, async (_req: Request, res: Response) => {
     try {
       const result = await runRafflesSync(dependencyManager);
       return res.status(200).json({

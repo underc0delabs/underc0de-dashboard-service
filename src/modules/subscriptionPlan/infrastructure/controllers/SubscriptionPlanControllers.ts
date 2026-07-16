@@ -117,7 +117,7 @@ export const SubscriptionPlanControllers = ({
         })
         .catch((error) => {
           console.error("[webhook/mercadopago] Error processing webhook:", error?.message ?? error);
-          res.status(200).json({ received: true });
+          res.status(500).json({ received: false, error: "processing_failed" });
         });
     },
     refreshSubscriptionStatus(req: Request, res: Response) {

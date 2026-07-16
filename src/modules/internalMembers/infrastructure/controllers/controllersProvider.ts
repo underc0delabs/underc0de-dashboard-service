@@ -4,6 +4,7 @@ import { IHashService } from "../../../users/core/services/IHashService.js";
 import { IInternalMemberRepository } from "../../core/repository/IInternalMemberRepository.js";
 import { ISubscriptionPlanRepository } from "../../../subscriptionPlan/core/repository/ISubscriptionPlanRepository.js";
 import { IPaymentRepository } from "../../../payment/core/repository/IPaymentRepository.js";
+import { MercadoPagoGateway } from "../../../../services/mercadopagoService/core/gateway/mercadoPagoGateway.js";
 import { LinkSubscriptionAction } from "../../../users/core/actions/LinkSubscriptionAction.js";
 import { ProvisionAppUserAndMemberAction } from "../../core/actions/ProvisionAppUserAndMemberAction.js";
 import { GetMemberBundleByAppUserIdAction } from "../../core/actions/GetMemberBundleByAppUserIdAction.js";
@@ -26,6 +27,9 @@ export const getAdminMemberControllers = (dependencyManager: DependencyManager) 
   const paymentRepository = dependencyManager.resolve(
     "paymentRepository"
   ) as IPaymentRepository;
+  const mercadoPagoGateway = dependencyManager.resolve(
+    "mercadoPagoGateway"
+  ) as MercadoPagoGateway;
 
   const provision = ProvisionAppUserAndMemberAction(
     hashService,
@@ -47,7 +51,8 @@ export const getAdminMemberControllers = (dependencyManager: DependencyManager) 
   const linkSubscription = LinkSubscriptionAction(
     userRepository,
     subscriptionPlanRepository,
-    paymentRepository
+    paymentRepository,
+    mercadoPagoGateway
   );
   const linkSub = LinkSubscriptionForAppUserAction(
     userRepository,
