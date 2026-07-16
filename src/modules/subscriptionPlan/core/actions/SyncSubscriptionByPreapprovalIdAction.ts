@@ -7,6 +7,10 @@ import {
   shouldRejectAuthorizedOnTerminalRow,
   type SubscriptionPlanStatus,
 } from "../domain/subscriptionStatusPolicy.js";
+import { isInternalPreapprovalId } from "../domain/subscriptionPlanHelpers.js";
+import {
+  resolveIsProAfterMpSync,
+} from "../../../users/core/domain/userVipPolicy.js";
 
 const logWebhook = (msg: string, extra?: Record<string, unknown>) => {
   console.warn(`[SubscriptionWebhook] ${msg}`, extra ? JSON.stringify(extra) : "");
@@ -26,6 +30,8 @@ const demoteOtherActiveSubscriptions = async (
   const plans = result?.subscriptionPlans ?? [];
   for (const row of plans) {
     const id = (row as any).id ?? (row as any).dataValues?.id;
+    const plan = (row as any).toJSON?.() ?? row;
+    if (isInternalPreapprovalId(plan.mpPreapprovalId)) continue;
     if (id == null || String(id) === String(exceptSubscriptionId)) continue;
     await subscriptionPlanRepository.edit({ status: "CANCELLED" } as any, String(id));
   }
@@ -87,7 +93,11 @@ export const SyncSubscriptionByPreapprovalIdAction = (
         const userId = subJson.userId;
         if (userId) {
           const user = await userRepository.getById(String(userId));
-          const expectPro = mappedStatus === "ACTIVE";
+          const plans = (user as any)?.subscriptionPlans ?? [];
+          const expectPro = resolveIsProAfterMpSync(
+            mappedStatus === "ACTIVE",
+            plans
+          );
           if (
             user &&
             Boolean((user as any).is_pro) === expectPro
@@ -129,7 +139,11 @@ export const SyncSubscriptionByPreapprovalIdAction = (
       if (subJson.userId) {
         const user = await userRepository.getById(String(subJson.userId));
         if (user) {
-          const isPro = mappedStatus === "ACTIVE";
+          const plans = (user as any)?.subscriptionPlans ?? [];
+          const isPro = resolveIsProAfterMpSync(
+            mappedStatus === "ACTIVE",
+            plans
+          );
           await userRepository.edit(
             {
               ...user,
@@ -137,6 +151,12 @@ export const SyncSubscriptionByPreapprovalIdAction = (
             } as any,
             user.id.toString()
           );
+
+          return {
+            success: true,
+            subscription_status: mappedStatus,
+            user_is_pro: isPro,
+          };
         }
       }
 

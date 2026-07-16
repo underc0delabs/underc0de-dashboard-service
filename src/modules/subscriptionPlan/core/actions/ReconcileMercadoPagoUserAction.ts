@@ -10,6 +10,7 @@ import { IPaymentRepository } from "../../../payment/core/repository/IPaymentRep
 import { IUserRepository } from "../../../users/core/repository/IMongoUserRepository.js";
 import { isInternalPreapprovalId } from "../domain/subscriptionPlanHelpers.js";
 import { mapMpDetailStatusToModel } from "../domain/subscriptionStatusPolicy.js";
+import { resolveIsProAfterMpSync } from "../../../users/core/domain/userVipPolicy.js";
 
 const demoteOtherActiveSubscriptions = async (
   userId: number | string,
@@ -26,6 +27,7 @@ const demoteOtherActiveSubscriptions = async (
   for (const row of plans) {
     const plan = (row as any).toJSON?.() ?? row;
     const id = plan.id ?? plan.dataValues?.id;
+    if (isInternalPreapprovalId(plan.mpPreapprovalId)) continue;
     if (id == null || String(id) === String(exceptSubscriptionId)) continue;
     await subscriptionPlanRepository.edit({ status: "CANCELLED" } as any, String(id));
   }
@@ -207,8 +209,15 @@ export const ReconcileMercadoPagoUserAction = (
       subscriptionPlanRepository
     );
 
+    const refreshedUser = await userRepository.getById(String(targetUserId));
+    const userPlans = (refreshedUser as any)?.subscriptionPlans ?? [];
+    const resolvedIsPro = resolveIsProAfterMpSync(
+      mappedStatus === "ACTIVE",
+      userPlans
+    );
+
     const userUpdatePayload: Record<string, unknown> = {
-      is_pro: mappedStatus === "ACTIVE",
+      is_pro: resolvedIsPro,
       mpPayerId: String(mpSub.payer_id),
     };
     const userJson = (user as any).toJSON ? (user as any).toJSON() : user;
@@ -246,7 +255,7 @@ export const ReconcileMercadoPagoUserAction = (
       ok: true,
       mp_status: mpStatusRaw,
       local_subscription_status: mappedStatus,
-      user_is_pro: mappedStatus === "ACTIVE",
+      user_is_pro: resolvedIsPro,
       payments_saved: paymentsSaved,
     };
   },

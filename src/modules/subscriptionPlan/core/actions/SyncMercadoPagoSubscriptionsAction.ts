@@ -6,6 +6,10 @@ import {
   isInternalPreapprovalId,
   isMpManagedPreapprovalId,
 } from "../domain/subscriptionPlanHelpers.js";
+import {
+  resolveIsProAfterMpSync,
+  userHasActiveInternalGrant,
+} from "../../../users/core/domain/userVipPolicy.js";
 
 const cancelStaleActiveMpPlans = async (
   mpAuthorizedIds: Set<string>,
@@ -165,8 +169,13 @@ export const SyncMercadoPagoSubscriptionsAction = (
 
         const effectiveUserId = subscriptionPayload.userId;
         if (effectiveUserId != null) {
+          const userJson = (user as any)?.toJSON?.() ?? user;
+          const plans = userJson?.subscriptionPlans ?? [];
           const userUpdatePayload: Record<string, unknown> = {
-            is_pro: subscriptionPayload.status === "ACTIVE",
+            is_pro: resolveIsProAfterMpSync(
+              subscriptionPayload.status === "ACTIVE",
+              plans
+            ),
             mpPayerId: String(mpSub.payer_id),
           };
           const hasMercadopagoEmail = (user as any)?.mercadopago_email?.trim?.();
@@ -222,9 +231,7 @@ export const SyncMercadoPagoSubscriptionsAction = (
       for (const u of proUsers) {
         const userJson = u.toJSON ? u.toJSON() : u;
         const plans = userJson.subscriptionPlans ?? [];
-        const hasInternalPlan = plans.some((p: any) =>
-          isInternalPreapprovalId(p.mpPreapprovalId)
-        );
+        const hasInternalPlan = userHasActiveInternalGrant(plans);
         if (hasInternalPlan) continue;
         const hasActiveInMp = plans.some(
           (p: any) =>

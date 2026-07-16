@@ -2,6 +2,7 @@ import { MercadoPagoGateway } from "../../../../services/mercadopagoService/core
 import { IUserRepository } from "../../../users/core/repository/IMongoUserRepository.js";
 import { ISubscriptionPlanRepository } from "../repository/ISubscriptionPlanRepository.js";
 import { ISyncSubscriptionByPreapprovalIdAction } from "./SyncSubscriptionByPreapprovalIdAction.js";
+import { resolveIsProAfterMpSync } from "../../../users/core/domain/userVipPolicy.js";
 
 const toRow = (p: any) => (p?.toJSON ? p.toJSON() : p);
 
@@ -86,7 +87,10 @@ export const CancelSubscriptionAction = (
         { status: "CANCELLED" } as any,
         String(plan.id)
       );
-      await userRepository.edit({ is_pro: false } as any, userId);
+      const user = await userRepository.getById(userId);
+      const remainingPlans = (user as any)?.subscriptionPlans ?? plans;
+      const isPro = resolveIsProAfterMpSync(false, remainingPlans);
+      await userRepository.edit({ is_pro: isPro } as any, userId);
       console.warn("[CancelSubscription] Sync failed after MP cancel; local state demoted", {
         userId,
         preapprovalId,
@@ -95,7 +99,7 @@ export const CancelSubscriptionAction = (
       return {
         success: true,
         subscription_status: "CANCELLED",
-        user_is_pro: false,
+        user_is_pro: isPro,
         message: "cancelled_locally_after_mp",
       };
     }

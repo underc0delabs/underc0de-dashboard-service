@@ -10,6 +10,8 @@ import {
   normalizeUserLookupKey,
   sanitizeIlikeLiteralFragment,
 } from "../../../../helpers/userLookupNormalize.js";
+import { isInternalPreapprovalId } from "../../../subscriptionPlan/core/domain/subscriptionPlanHelpers.js";
+import { resolveUserVip } from "../../core/domain/userVipPolicy.js";
 
 const flattenInternalMember = (userJson: Record<string, unknown>) => {
   const im = userJson.internalMember as Record<string, unknown> | null | undefined;
@@ -235,21 +237,25 @@ export const MongoUserRepository = (): IUserRepository => ({
           ? 'CANCELLED'
           : subscriptionStatus;
 
-      const proFromCancelled =
-        !!cancelledSubscription && isUpToDate === true;
+      if (
+        activeSubscription &&
+        isInternalPreapprovalId(activeSubscription.mpPreapprovalId)
+      ) {
+        isUpToDate = true;
+      }
 
-      /** is_pro lo marca MP al sincronizar; isUpToDate se deriva de fechas y a veces falla justo tras el pago. */
-      const activeProVip =
-        !!activeSubscription &&
-        (isUpToDate !== false || userJson.is_pro === true);
+      const vip = resolveUserVip({
+        is_pro: userJson.is_pro,
+        activeSubscription,
+        cancelledSubscription,
+        isUpToDate,
+        subscriptionPlans: userJson.subscriptionPlans,
+      });
 
       return {
         ...userJson,
         fullName: fullNameWithoutDuplicate(userJson.name, userJson.lastname),
-        vip:
-          activeProVip ||
-          proFromCancelled ||
-          (!!userJson.is_pro && !activeSubscription && !cancelledSubscription),
+        vip,
         subscription: subscriptionPlan ? {
           id: subscriptionPlan.id,
           status: displayStatus,
@@ -464,18 +470,20 @@ export const MongoUserRepository = (): IUserRepository => ({
         ? "CANCELLED"
         : subscriptionStatus;
 
-    const proFromCancelled =
-      !!cancelledSubscription && isUpToDate === true;
+    if (
+      activeSubscription &&
+      isInternalPreapprovalId(activeSubscription.mpPreapprovalId)
+    ) {
+      isUpToDate = true;
+    }
 
-    /** is_pro refleja el último sync con MP; no ocultar PRO si las fechas aún no alinean (p. ej. recién pagó). */
-    const activeProVip =
-      !!activeSubscription &&
-      (isUpToDate !== false || userJson.is_pro === true);
-
-    const resolvedVip =
-      activeProVip ||
-      proFromCancelled ||
-      (!!userJson.is_pro && !activeSubscription && !cancelledSubscription);
+    const resolvedVip = resolveUserVip({
+      is_pro: userJson.is_pro,
+      activeSubscription,
+      cancelledSubscription,
+      isUpToDate,
+      subscriptionPlans: userJson.subscriptionPlans,
+    });
 
     return {
       ...userJson,

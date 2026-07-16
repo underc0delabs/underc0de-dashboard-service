@@ -2,6 +2,7 @@ import IUser from "../entities/IUser.js";
 import { IUserRepository } from "../repository/IMongoUserRepository.js";
 import { IHashService } from "../services/IHashService.js";
 import { ISubscriptionPlanRepository } from "../../../subscriptionPlan/core/repository/ISubscriptionPlanRepository.js";
+import { lifetimeNextPaymentDate } from "../domain/userVipPolicy.js";
 
 const EDIT_ALLOWED_KEYS = [
   "username",
@@ -127,13 +128,7 @@ export const EditUserAction = (
 
           if (subscriptionStatus !== null) {
             const userIdNum = Number(id);
-            const firstDayNextMonth = (() => {
-              const d = new Date();
-              d.setMonth(d.getMonth() + 1);
-              d.setDate(1);
-              d.setHours(0, 0, 0, 0);
-              return d;
-            })();
+            const adminNextPaymentDate = lifetimeNextPaymentDate();
             
             /** Suscripción más reciente del usuario (get ordena por createdAt DESC) */
             let subscription: any = null;
@@ -168,7 +163,7 @@ export const EditUserAction = (
                 await subscriptionPlanRepository.edit(
                   {
                     status: "ACTIVE",
-                    nextPaymentDate: firstDayNextMonth,
+                    nextPaymentDate: adminNextPaymentDate,
                   } as any,
                   String(subId)
                 );
@@ -182,7 +177,7 @@ export const EditUserAction = (
                   userId: userIdNum,
                   status: "ACTIVE",
                   startedAt: new Date(),
-                  nextPaymentDate: firstDayNextMonth,
+                  nextPaymentDate: adminNextPaymentDate,
                   mpPreapprovalId: adminPreapprovalId,
                 } as any);
               }
