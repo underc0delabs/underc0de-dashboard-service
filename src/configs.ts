@@ -27,6 +27,7 @@ const configs = {
         port: process.env.DB_PORT,
     },
     secret_key: process.env.SECRETPRIVATEKEY,
+    google_client_id: process.env.GOOGLE_CLIENT_ID?.trim() || null,
     app_auth_secret: process.env.APP_AUTH_SECRET?.trim() || null,
     forum_jwt_secret: process.env.FORUM_JWT_SECRET || process.env.SMF_JWT_SECRET,
     forum_api_url: process.env.FORUM_API_URL || 'https://underc0de.org/foro/extern/api.php',

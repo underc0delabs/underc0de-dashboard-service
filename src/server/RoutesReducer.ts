@@ -13,6 +13,7 @@ import getPartnerL2Routes from "../modules/partnerL2/infrastructure/routes/Partn
 import getCategoryRoutes from "../modules/categories/infrastructure/routes/CategoryRoutes.js"
 import getConnectionRoutes from "../modules/connections/infrastructure/routes/ConnectionRoutes.js"
 import getRaffleRoutes from "../modules/raffles/infrastructure/routes/RaffleRoutes.js"
+import getBingoRoutes from "../modules/bingo/infrastructure/routes/BingoRoutes.js"
 import getForumRoutes from "../modules/forum/infrastructure/routes/ForumRoutes.js"
 import { ConnectRedirectRoute } from "../routes/ConnectRedirectRoute.js"
 
@@ -30,6 +31,7 @@ const ReduceRouters = (app: Application, dependencyManager: DependencyManager) =
     app.use(prefix, getCategoryRoutes(dependencyManager))
     app.use(prefix, getConnectionRoutes(dependencyManager))
     app.use(prefix, getRaffleRoutes(dependencyManager))
+    app.use(prefix, getBingoRoutes(dependencyManager))
     app.use(prefix, getPartnerL2Routes(dependencyManager))
     app.use(prefix, getForumRoutes())
     app.use(prefix + '/cron', CronRoutes(dependencyManager))

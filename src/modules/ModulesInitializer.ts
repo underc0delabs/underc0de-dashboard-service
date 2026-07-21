@@ -10,6 +10,7 @@ import { InternalMemberModuleInitializer } from "./internalMembers/internalMembe
 import { CategoryModuleInitializer } from "./categories/categoryModule.js"
 import { ConnectionModuleInitializer } from "./connections/connectionModule.js"
 import { RaffleModuleInitializer } from "./raffles/raffleModule.js"
+import { BingoModuleInitializer } from "./bingo/bingoModule.js"
 
 const ModulesInitializer = (dependencyManager:DependencyManager) => {
     UserModuleInitializer(dependencyManager)
@@ -18,6 +19,7 @@ const ModulesInitializer = (dependencyManager:DependencyManager) => {
     CategoryModuleInitializer(dependencyManager)
     ConnectionModuleInitializer(dependencyManager)
     RaffleModuleInitializer(dependencyManager)
+    BingoModuleInitializer(dependencyManager)
     PushNotificationModuleInitializer(dependencyManager)
     SubscriptionPlanModuleInitializer(dependencyManager)
     PaymentModuleInitializer(dependencyManager)
