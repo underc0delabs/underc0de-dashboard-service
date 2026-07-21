@@ -18,6 +18,7 @@ const getBingoRoutes = (dependencyManager: DependencyManager) => {
     createEvent,
     updateEvent,
     activateEvent,
+    reactivateEvent,
     closeEvent,
     deleteEvent,
     createStand,
@@ -45,6 +46,7 @@ const getBingoRoutes = (dependencyManager: DependencyManager) => {
   router.post("/admin/bingo-events", dashboardAuth, createEvent);
   router.patch("/admin/bingo-events/:id", dashboardAuth, updateEvent);
   router.post("/admin/bingo-events/:id/activate", dashboardAuth, activateEvent);
+  router.post("/admin/bingo-events/:id/reactivate", dashboardAuth, reactivateEvent);
   router.post("/admin/bingo-events/:id/close", dashboardAuth, closeEvent);
   router.delete("/admin/bingo-events/:id", dashboardAuth, deleteEvent);
   router.post("/admin/bingo-events/:id/stands", dashboardAuth, createStand);

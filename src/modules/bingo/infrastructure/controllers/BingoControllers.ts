@@ -92,6 +92,13 @@ export const BingoControllers = (actions: IBingoActions) => {
         .catch(error => handleError(res, error));
     },
 
+    reactivateEvent(req: Request, res: Response) {
+      actions
+        .reactivateEvent(req.params.id)
+        .then(result => SuccessResponse(res, 200, "Evento reactivado", result))
+        .catch(error => handleError(res, error));
+    },
+
     closeEvent(req: Request, res: Response) {
       actions
         .closeEvent(req.params.id)

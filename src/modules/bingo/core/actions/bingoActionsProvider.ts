@@ -10,28 +10,89 @@ import {
   BingoStandNotFoundException,
   BingoValidationException,
 } from "../exceptions/BingoExceptions.js";
+import {
+  emptyBingoEventMetrics,
+  type BingoEventMetrics,
+} from "../domain/bingoEventMetrics.js";
+import {
+  canActivateBingoEvent,
+  isBingoEventActive,
+  isBingoEventClosed,
+  isBingoEventDraft,
+  normalizeBingoEventStatus,
+} from "../domain/bingoEventStatus.js";
 
 const parseDate = (value: unknown): Date | null => {
   if (value == null || value === "") {
     return null;
   }
-  const date = new Date(value as string);
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+  const raw = String(value).trim();
+  const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
+  if (match) {
+    const [, year, month, day, hour, minute] = match;
+    const utcGuess = Date.UTC(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      Number(hour),
+      Number(minute),
+    );
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Argentina/Buenos_Aires",
+      hour12: false,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    for (let offsetHours = -3; offsetHours <= 3; offsetHours += 1) {
+      const candidate = new Date(utcGuess + offsetHours * 60 * 60 * 1000);
+      const parts = formatter.formatToParts(candidate);
+      const read = (type: Intl.DateTimeFormatPartTypes) =>
+        parts.find(part => part.type === type)?.value ?? "";
+      const candidateLocal = `${read("year")}-${read("month")}-${read("day")}T${read("hour")}:${read("minute")}`;
+      if (candidateLocal === raw) {
+        return candidate;
+      }
+    }
+  }
+  const date = new Date(raw);
   if (Number.isNaN(date.getTime())) {
     throw new BingoValidationException("Fecha inválida");
   }
   return date;
 };
 
-const mapEvent = (event: BingoEventRow, standCount = 0, participantCount = 0) => ({
+const serializeOptionalDate = (value: unknown): string | null => {
+  if (value == null || value === "") {
+    return null;
+  }
+  const date = value instanceof Date ? value : new Date(value as string);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+  return date.toISOString();
+};
+
+const mapEvent = (
+  event: BingoEventRow,
+  standCount = 0,
+  metrics: BingoEventMetrics = emptyBingoEventMetrics(standCount),
+) => ({
   id: event.id,
   name: event.name,
   description: event.description,
-  status: event.status,
-  startDate: event.startDate,
-  endDate: event.endDate,
+  status: normalizeBingoEventStatus(event.status),
+  startDate: serializeOptionalDate(event.startDate),
+  endDate: serializeOptionalDate(event.endDate),
   standCount,
-  participantCount,
-  createdAt: event.createdAt,
+  participantCount: metrics.participantCount,
+  metrics,
+  createdAt: serializeOptionalDate(event.createdAt) ?? event.createdAt,
 });
 
 const mapStand = (stand: BingoStandRow & { merchant?: { id: string; name: string; logo: string | null } }) => ({
@@ -49,6 +110,7 @@ export interface IBingoActions {
   createEvent(input: Record<string, unknown>, adminId: number): Promise<unknown>;
   updateEvent(id: string, input: Record<string, unknown>): Promise<unknown>;
   activateEvent(id: string): Promise<unknown>;
+  reactivateEvent(id: string): Promise<unknown>;
   closeEvent(id: string): Promise<unknown>;
   listEventsAdmin(): Promise<unknown[]>;
   getEventAdmin(id: string): Promise<unknown>;
@@ -84,7 +146,19 @@ const buildBoard = async (
   };
 };
 
-export const BingoActionsProvider = (repo: IBingoRepository): IBingoActions => ({
+export const BingoActionsProvider = (repo: IBingoRepository): IBingoActions => {
+  const promoteBingoEventToActive = async (id: string) => {
+    const stands = await repo.listStandsByEvent(id);
+    if (stands.length === 0) {
+      throw new BingoConflictException("El evento necesita al menos un stand para activarse");
+    }
+    await repo.closeAllActiveEventsExcept(id);
+    const updated = await repo.updateEvent(id, { status: BINGO_EVENT_STATUS.ACTIVE });
+    const metrics = await repo.getEventMetrics(id);
+    return mapEvent(updated!, stands.length, metrics);
+  };
+
+  return {
   async createEvent(input, adminId) {
     const name = String(input.name ?? "").trim();
     if (!name) {
@@ -97,7 +171,7 @@ export const BingoActionsProvider = (repo: IBingoRepository): IBingoActions => (
       endDate: parseDate(input.endDate),
       createdByAdminId: adminId,
     });
-    return mapEvent(event);
+    return mapEvent(event, 0, emptyBingoEventMetrics(0));
   },
 
   async updateEvent(id, input) {
@@ -105,6 +179,26 @@ export const BingoActionsProvider = (repo: IBingoRepository): IBingoActions => (
     if (!existing) {
       throw new BingoEventNotFoundException();
     }
+
+    if (input.status !== undefined && input.status !== null && input.status !== "") {
+      const requested = normalizeBingoEventStatus(String(input.status));
+      const current = normalizeBingoEventStatus(existing.status);
+      if (requested !== current) {
+        if (requested === BINGO_EVENT_STATUS.ACTIVE && canActivateBingoEvent(current)) {
+          return promoteBingoEventToActive(id);
+        }
+        if (requested === BINGO_EVENT_STATUS.CLOSED && isBingoEventActive(current)) {
+          const updated = await repo.updateEvent(id, { status: BINGO_EVENT_STATUS.CLOSED });
+          const stands = await repo.listStandsByEvent(id);
+          const metrics = await repo.getEventMetrics(id);
+          return mapEvent(updated!, stands.length, metrics);
+        }
+        throw new BingoConflictException(
+          `No se puede cambiar el estado de "${current}" a "${requested}"`,
+        );
+      }
+    }
+
     const updated = await repo.updateEvent(id, {
       name: input.name != null ? String(input.name).trim() : existing.name,
       description:
@@ -114,7 +208,9 @@ export const BingoActionsProvider = (repo: IBingoRepository): IBingoActions => (
       startDate: input.startDate !== undefined ? parseDate(input.startDate) : existing.startDate,
       endDate: input.endDate !== undefined ? parseDate(input.endDate) : existing.endDate,
     });
-    return mapEvent(updated!);
+    const stands = await repo.listStandsByEvent(id);
+    const metrics = await repo.getEventMetrics(id);
+    return mapEvent(updated!, stands.length, metrics);
   },
 
   async activateEvent(id) {
@@ -122,15 +218,25 @@ export const BingoActionsProvider = (repo: IBingoRepository): IBingoActions => (
     if (!event) {
       throw new BingoEventNotFoundException();
     }
-    if (event.status !== BINGO_EVENT_STATUS.DRAFT) {
-      throw new BingoConflictException("Solo se pueden activar eventos en borrador");
+    const status = normalizeBingoEventStatus(event.status);
+    if (!canActivateBingoEvent(status)) {
+      throw new BingoConflictException(
+        `No se puede activar un evento en estado "${status}". Solo borradores o inactivos.`,
+      );
     }
-    const stands = await repo.listStandsByEvent(id);
-    if (stands.length === 0) {
-      throw new BingoConflictException("El evento necesita al menos un stand para activarse");
+    return promoteBingoEventToActive(id);
+  },
+
+  async reactivateEvent(id) {
+    const event = await repo.findEventById(id);
+    if (!event) {
+      throw new BingoEventNotFoundException();
     }
-    const updated = await repo.updateEvent(id, { status: BINGO_EVENT_STATUS.ACTIVE });
-    return mapEvent(updated!, stands.length);
+    const status = normalizeBingoEventStatus(event.status);
+    if (!isBingoEventClosed(status)) {
+      throw new BingoConflictException("Solo se pueden reactivar eventos inactivos");
+    }
+    return promoteBingoEventToActive(id);
   },
 
   async closeEvent(id) {
@@ -138,11 +244,13 @@ export const BingoActionsProvider = (repo: IBingoRepository): IBingoActions => (
     if (!event) {
       throw new BingoEventNotFoundException();
     }
-    if (event.status !== BINGO_EVENT_STATUS.ACTIVE) {
-      throw new BingoConflictException("Solo se pueden cerrar eventos activos");
+    if (!isBingoEventActive(event.status)) {
+      throw new BingoConflictException("Solo se pueden desactivar eventos activos");
     }
     const updated = await repo.updateEvent(id, { status: BINGO_EVENT_STATUS.CLOSED });
-    return mapEvent(updated!);
+    const stands = await repo.listStandsByEvent(id);
+    const metrics = await repo.getEventMetrics(id);
+    return mapEvent(updated!, stands.length, metrics);
   },
 
   async listEventsAdmin() {
@@ -150,8 +258,8 @@ export const BingoActionsProvider = (repo: IBingoRepository): IBingoActions => (
     return Promise.all(
       events.map(async event => {
         const stands = await repo.listStandsByEvent(event.id);
-        const entries = await repo.listBoardEntriesByEvent(event.id);
-        return mapEvent(event, stands.length, entries.length);
+        const metrics = await repo.getEventMetrics(event.id);
+        return mapEvent(event, stands.length, metrics);
       }),
     );
   },
@@ -162,9 +270,9 @@ export const BingoActionsProvider = (repo: IBingoRepository): IBingoActions => (
       throw new BingoEventNotFoundException();
     }
     const stands = await repo.listStandsByEvent(id);
-    const entries = await repo.listBoardEntriesByEvent(id);
+    const metrics = await repo.getEventMetrics(id, { includeStandVisits: true });
     return {
-      ...mapEvent(event, stands.length, entries.length),
+      ...mapEvent(event, stands.length, metrics),
       stands: stands.map(s => mapStand(s as BingoStandRow & { merchant?: { id: string; name: string; logo: string | null } })),
     };
   },
@@ -174,7 +282,7 @@ export const BingoActionsProvider = (repo: IBingoRepository): IBingoActions => (
     if (!event) {
       throw new BingoEventNotFoundException();
     }
-    if (event.status !== BINGO_EVENT_STATUS.DRAFT) {
+    if (!isBingoEventDraft(event.status)) {
       throw new BingoConflictException("Solo se pueden eliminar eventos en borrador");
     }
     await repo.deleteEvent(id);
@@ -276,7 +384,7 @@ export const BingoActionsProvider = (repo: IBingoRepository): IBingoActions => (
 
   async joinEvent(eventId, participantId) {
     const event = await repo.findEventById(eventId);
-    if (!event || event.status !== BINGO_EVENT_STATUS.ACTIVE) {
+    if (!event || !isBingoEventActive(event.status)) {
       throw new BingoEventNotFoundException();
     }
     const existing = await repo.findBoardEntry(eventId, participantId);
@@ -306,7 +414,7 @@ export const BingoActionsProvider = (repo: IBingoRepository): IBingoActions => (
 
   async checkin(eventId, participantId, code) {
     const event = await repo.findEventById(eventId);
-    if (!event || event.status !== BINGO_EVENT_STATUS.ACTIVE) {
+    if (!event || !isBingoEventActive(event.status)) {
       throw new BingoEventNotFoundException();
     }
     const entry = await repo.findBoardEntry(eventId, participantId);
@@ -348,4 +456,5 @@ export const BingoActionsProvider = (repo: IBingoRepository): IBingoActions => (
     const board = await buildBoard(repo, eventId, entry.id, completedAt);
     return { ...board, justCompleted, alreadyChecked: Boolean(alreadyChecked) };
   },
-});
+};
+};

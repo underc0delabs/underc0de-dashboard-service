@@ -1,4 +1,5 @@
 import { randomBytes, randomInt } from "crypto";
+import { Op } from "sequelize";
 import BingoEvent, {
   BINGO_EVENT_STATUS,
   type BingoEventStatus,
@@ -11,6 +12,10 @@ import BingoCheckin from "../models/BingoCheckinModel.js";
 import BingoRaffleEntry from "../models/BingoRaffleEntryModel.js";
 import BingoDraw from "../models/BingoDrawModel.js";
 import Merchant from "../../../merchants/infrastructure/models/MerchantModel.js";
+import {
+  buildBingoEventMetrics,
+  type BingoEventMetrics,
+} from "../../core/domain/bingoEventMetrics.js";
 
 export type BingoEventRow = {
   id: string;
@@ -87,6 +92,19 @@ export const BingoRepository = () => ({
   async listEvents(): Promise<BingoEventRow[]> {
     const rows = await BingoEvent.findAll({ order: [["createdAt", "DESC"]] });
     return rows.map(r => toJson<BingoEventRow>(r));
+  },
+
+  async closeAllActiveEventsExcept(exceptId: string): Promise<number> {
+    const [count] = await BingoEvent.update(
+      { status: BINGO_EVENT_STATUS.CLOSED },
+      {
+        where: {
+          status: BINGO_EVENT_STATUS.ACTIVE,
+          id: { [Op.ne]: exceptId },
+        },
+      },
+    );
+    return count;
   },
 
   async updateEvent(
@@ -342,6 +360,103 @@ export const BingoRepository = () => ({
       order: [["drawnAt", "DESC"]],
     });
     return rows.map(r => toJson(r));
+  },
+
+  async getEventMetrics(
+    bingoEventId: string,
+    options?: { includeStandVisits?: boolean },
+  ): Promise<BingoEventMetrics> {
+    const stands = await BingoStand.findAll({
+      where: { bingoEventId },
+      attributes: ["id", "label"],
+      order: [["createdAt", "ASC"]],
+    });
+    const standCount = stands.length;
+
+    const [
+      participantCount,
+      completedCount,
+      raffleEligibleCount,
+      drawCount,
+      totalCheckins,
+      lastDrawRow,
+    ] = await Promise.all([
+      BingoBoardEntry.count({ where: { bingoEventId } }),
+      BingoBoardEntry.count({
+        where: { bingoEventId, completedAt: { [Op.not]: null } },
+      }),
+      BingoRaffleEntry.count({ where: { bingoEventId } }),
+      BingoDraw.count({ where: { bingoEventId } }),
+      BingoCheckin.count({
+        include: [
+          {
+            model: BingoBoardEntry,
+            as: "boardEntry",
+            where: { bingoEventId },
+            attributes: [],
+            required: true,
+          },
+        ],
+      }),
+      BingoDraw.findOne({
+        where: { bingoEventId },
+        order: [["drawnAt", "DESC"]],
+        include: [
+          {
+            model: BingoParticipant,
+            as: "winner",
+            attributes: ["name", "email"],
+          },
+        ],
+      }),
+    ]);
+
+    const lastDrawJson = lastDrawRow ? toJson<any>(lastDrawRow) : null;
+    const lastDraw = lastDrawJson
+      ? {
+          id: String(lastDrawJson.id),
+          winnerName:
+            lastDrawJson.winner?.name ??
+            lastDrawJson.winner?.email ??
+            "Participante",
+          participantCount: Number(lastDrawJson.participantCount ?? 0),
+          drawnAt: new Date(lastDrawJson.drawnAt),
+          superseded: Boolean(lastDrawJson.superseded),
+        }
+      : null;
+
+    let standVisits: BingoEventMetrics["standVisits"];
+    if (options?.includeStandVisits && stands.length > 0) {
+      standVisits = await Promise.all(
+        stands.map(async (standRow) => {
+          const stand = toJson<{ id: string; label: string }>(standRow);
+          const visitCount = await BingoCheckin.count({
+            where: { bingoStandId: stand.id },
+          });
+          const visitRate =
+            participantCount > 0
+              ? Math.round((visitCount / participantCount) * 1000) / 10
+              : 0;
+          return {
+            standId: stand.id,
+            label: stand.label,
+            visitCount,
+            visitRate,
+          };
+        }),
+      );
+    }
+
+    return buildBingoEventMetrics({
+      participantCount,
+      completedCount,
+      raffleEligibleCount,
+      totalCheckins,
+      standCount,
+      drawCount,
+      lastDraw,
+      standVisits,
+    });
   },
 
   pickRandomParticipant(participantIds: string[]): string {
