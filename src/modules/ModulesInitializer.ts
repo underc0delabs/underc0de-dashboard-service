@@ -11,6 +11,7 @@ import { CategoryModuleInitializer } from "./categories/categoryModule.js"
 import { ConnectionModuleInitializer } from "./connections/connectionModule.js"
 import { RaffleModuleInitializer } from "./raffles/raffleModule.js"
 import { BingoModuleInitializer } from "./bingo/bingoModule.js"
+import { EventModuleInitializer } from "./events/eventModule.js"
 
 const ModulesInitializer = (dependencyManager:DependencyManager) => {
     UserModuleInitializer(dependencyManager)
@@ -20,6 +21,7 @@ const ModulesInitializer = (dependencyManager:DependencyManager) => {
     ConnectionModuleInitializer(dependencyManager)
     RaffleModuleInitializer(dependencyManager)
     BingoModuleInitializer(dependencyManager)
+    EventModuleInitializer(dependencyManager)
     PushNotificationModuleInitializer(dependencyManager)
     SubscriptionPlanModuleInitializer(dependencyManager)
     PaymentModuleInitializer(dependencyManager)

@@ -8,6 +8,8 @@ export default interface IUser {
     password: string,
     userType: number,
     birthday: Date,
+    country?: string,
+    province?: string,
     vip?: boolean,
     suscription?: string,
     status?: boolean,

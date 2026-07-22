@@ -73,6 +73,8 @@ export const GetUserByUsernameAction = (
             idNumber: full.idNumber,
             userType: full.userType,
             birthday: full.birthday,
+            country: (full as any).country ?? null,
+            province: (full as any).province ?? null,
             vip: (full as any).vip,
             suscription: sub?.status ?? null,
             subscription: sub ?? null,

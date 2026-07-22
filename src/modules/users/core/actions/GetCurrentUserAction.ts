@@ -39,6 +39,8 @@ export const GetCurrentUserAction = (
         idNumber: user.idNumber,
         userType: user.userType,
         birthday: user.birthday,
+        country: (user as any).country ?? null,
+        province: (user as any).province ?? null,
         vip: (user as any).vip,
         suscription: sub?.status ?? null,
         subscription: sub ?? null,

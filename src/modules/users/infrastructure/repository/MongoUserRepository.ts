@@ -115,6 +115,8 @@ export const MongoUserRepository = (): IUserRepository => ({
       'idNumber',
       'userType',
       'birthday',
+      'country',
+      'province',
       'status',
       'fcmToken',
       'mpPayerId',
@@ -601,5 +603,80 @@ export const MongoUserRepository = (): IUserRepository => ({
         } : null,
       } : null,
     };
+  },
+
+  async listUsersWithBirthdays() {
+    const fullNameWithoutDuplicate = (
+      name?: string | null,
+      lastname?: string | null,
+    ): string => {
+      const n = (name ?? "").trim();
+      const l = (lastname ?? "").trim();
+      if (!n) return l;
+      if (!l) return n;
+      if (n === l) return n;
+      if (l && n.endsWith(l)) return n;
+      return `${n} ${l}`.trim();
+    };
+
+    const users = await UserModel.findAll({
+      where: {
+        status: true,
+        birthday: { [Op.ne]: null },
+      },
+      attributes: [
+        "id",
+        "username",
+        "name",
+        "lastname",
+        "phone",
+        "birthday",
+        "country",
+      ],
+      order: [["name", "ASC"]],
+    });
+
+    return users
+      .map((user) => {
+        const row = user.toJSON() as {
+          id: number;
+          username: string;
+          name: string;
+          lastname: string | null;
+          phone: string | null;
+          birthday: string | Date | null;
+          country: string | null;
+        };
+
+        if (!row.birthday) {
+          return null;
+        }
+
+        const birthday =
+          row.birthday instanceof Date
+            ? row.birthday.toISOString().slice(0, 10)
+            : String(row.birthday).slice(0, 10);
+
+        return {
+          id: row.id,
+          username: row.username,
+          name: row.name,
+          lastname: row.lastname,
+          displayName: fullNameWithoutDuplicate(row.name, row.lastname),
+          phone: row.phone?.trim() ? row.phone.trim() : null,
+          birthday,
+          country: row.country?.trim() ? row.country.trim() : null,
+        };
+      })
+      .filter(Boolean) as Array<{
+      id: number;
+      username: string;
+      name: string;
+      lastname: string | null;
+      displayName: string;
+      phone: string | null;
+      birthday: string;
+      country: string | null;
+    }>;
   },
 });

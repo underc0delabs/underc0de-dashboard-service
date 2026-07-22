@@ -63,6 +63,57 @@ const parseBoolean = (value: unknown, defaultValue = false): boolean => {
   return defaultValue;
 };
 
+const parseOptionalString = (value: unknown): string | null => {
+  if (value == null) {
+    return null;
+  }
+  const normalized = String(value).trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
+const parseRaffleLocationInput = (input: Record<string, unknown>) => {
+  const allowedCountry = parseOptionalString(input.allowedCountry);
+  const allowedProvince = parseOptionalString(input.allowedProvince);
+  if (allowedProvince && !allowedCountry) {
+    throw new RaffleValidationException(
+      "Seleccioná un país antes de definir la provincia del sorteo",
+    );
+  }
+  return { allowedCountry, allowedProvince };
+};
+
+const assertUserLocationEligibleForRaffle = (
+  raffle: RaffleRow,
+  user: { country?: string | null; province?: string | null },
+) => {
+  const requiredCountry = raffle.allowedCountry?.trim();
+  if (!requiredCountry) {
+    return;
+  }
+
+  const userCountry = user.country?.trim() ?? "";
+  const userProvince = user.province?.trim() ?? "";
+
+  if (!userCountry || !userProvince) {
+    throw new RaffleForbiddenException(
+      "Completá tu país y provincia en el perfil para participar en este sorteo",
+    );
+  }
+
+  if (userCountry !== requiredCountry) {
+    throw new RaffleForbiddenException(
+      "Este sorteo no está disponible para tu país",
+    );
+  }
+
+  const requiredProvince = raffle.allowedProvince?.trim();
+  if (requiredProvince && userProvince !== requiredProvince) {
+    throw new RaffleForbiddenException(
+      "Este sorteo no está disponible para tu provincia",
+    );
+  }
+};
+
 const assertActiveUser = async (
   repo: IRaffleRepository,
   userId: number,
@@ -298,6 +349,8 @@ const mapPublicRaffle = async (
     participationDeadline: serializeRaffleDateTime(raffle.participationDeadline),
     claimDeadline: serializeRaffleDateTime(raffle.claimDeadline),
     proOnly: raffle.proOnly,
+    allowedCountry: raffle.allowedCountry ?? null,
+    allowedProvince: raffle.allowedProvince ?? null,
     status: raffle.status,
     publishedAt: serializeRaffleDateTime(raffle.publishedAt),
     participationOpen,
@@ -404,6 +457,8 @@ export const RaffleActionsProvider = (
       imageUrl = await fileStorageService.saveFile(file, "raffles");
     }
 
+    const location = parseRaffleLocationInput(input);
+
     const raffle = await raffleRepository.create({
       title: String(input.title ?? "").trim(),
       description: String(input.description ?? "").trim(),
@@ -411,6 +466,8 @@ export const RaffleActionsProvider = (
       participationDeadline,
       claimDeadline,
       proOnly: parseBoolean(input.proOnly, false),
+      allowedCountry: location.allowedCountry,
+      allowedProvince: location.allowedProvince,
       createdByAdminId: adminId,
     });
 
@@ -460,6 +517,14 @@ export const RaffleActionsProvider = (
       imageUrl = null;
     }
 
+    const location =
+      input.allowedCountry !== undefined || input.allowedProvince !== undefined
+        ? parseRaffleLocationInput(input)
+        : {
+            allowedCountry: raffle.allowedCountry,
+            allowedProvince: raffle.allowedProvince,
+          };
+
     const updated = await raffleRepository.update(id, {
       title: input.title != null ? String(input.title).trim() : raffle.title,
       description:
@@ -473,6 +538,8 @@ export const RaffleActionsProvider = (
         input.proOnly != null
           ? parseBoolean(input.proOnly, raffle.proOnly)
           : raffle.proOnly,
+      allowedCountry: location.allowedCountry,
+      allowedProvince: location.allowedProvince,
     });
 
     return mapAdminRaffle(raffleRepository, updated!);
@@ -691,6 +758,8 @@ export const RaffleActionsProvider = (
       participationDeadline: new Date(source.participationDeadline),
       claimDeadline: new Date(source.claimDeadline),
       proOnly: source.proOnly,
+      allowedCountry: source.allowedCountry,
+      allowedProvince: source.allowedProvince,
       createdByAdminId: adminId,
     });
 
@@ -813,6 +882,8 @@ export const RaffleActionsProvider = (
     if (raffle.proOnly && !(await isProMember(userRepository, userId))) {
       throw new RaffleForbiddenException("Sorteo exclusivo para miembros PRO");
     }
+
+    assertUserLocationEligibleForRaffle(raffle, user);
 
     if (await raffleRepository.hasParticipated(id, userId)) {
       throw new RaffleConflictException("Ya participás en este sorteo");

@@ -34,6 +34,15 @@ export type UserRow = {
   status: boolean;
   is_pro: boolean | null;
   shareCode: string | null;
+  birthday?: string | null;
+};
+
+export type FriendBirthdayRow = {
+  id: number;
+  name: string;
+  lastname: string | null;
+  birthday: string;
+  avatar: string | null;
 };
 
 const toConnectionRow = (row: { toJSON: () => unknown }): ConnectionRow =>
@@ -364,6 +373,54 @@ export const ConnectionRepository = () => ({
     return followerIds
       .map((id) => userMap.get(id))
       .filter(Boolean) as UserRow[];
+  },
+
+  async listFriendsBirthdays(userId: number): Promise<FriendBirthdayRow[]> {
+    const connections = await UserConnectionModel.findAll({
+      where: {
+        status: CONNECTION_STATUS.ACCEPTED,
+        [Op.or]: [{ requesterId: userId }, { addresseeId: userId }],
+      },
+    });
+
+    const friendIds = connections.map((c) => {
+      const row = toConnectionRow(c);
+      return row.requesterId === userId ? row.addresseeId : row.requesterId;
+    });
+
+    if (friendIds.length === 0) return [];
+
+    const users = await UserModel.findAll({
+      where: {
+        id: { [Op.in]: friendIds },
+        ...activeUserWhere,
+        birthday: { [Op.ne]: null },
+      },
+      attributes: ["id", "name", "lastname", "birthday", "avatar"],
+      order: [["name", "ASC"]],
+    });
+
+    return users
+      .map((user) => {
+        const row = user.toJSON() as {
+          id: number;
+          name: string;
+          lastname: string | null;
+          birthday: string | null;
+          avatar: string | null;
+        };
+        if (!row.birthday) {
+          return null;
+        }
+        return {
+          id: row.id,
+          name: row.name,
+          lastname: row.lastname,
+          birthday: row.birthday,
+          avatar: row.avatar,
+        };
+      })
+      .filter(Boolean) as FriendBirthdayRow[];
   },
 });
 

@@ -2,6 +2,10 @@ import { IUserRepository } from "../repository/IMongoUserRepository.js";
 import { IHashService } from "../services/IHashService.js";
 import { EditUserAction, IEditUserAction } from "./EditUserAction.js";
 import { GetAllUsersAction, IGetAllUsersAction } from "./GetAllUsersAction.js";
+import {
+  GetUsersBirthdaysAction,
+  IGetUsersBirthdaysAction,
+} from "./GetUsersBirthdaysAction.js";
 import { GetOneUserAction, IGetOneUserAction } from "./GetOneUserAction.js";
 import { GetUserByIdAction, IGetUserByIdAction } from "./GetUserByIdAction.js";
 import { ILoginUserAction, LoginUserAction } from "./LoginUserAction.js";
@@ -52,6 +56,7 @@ export interface IUserActions {
   edit: IEditUserAction;
   remove: IRemoveUserAction;
   getAll: IGetAllUsersAction;
+  getUsersBirthdays: IGetUsersBirthdaysAction;
   getOne: IGetOneUserAction;
   getById: IGetUserByIdAction;
   login: ILoginUserAction;
@@ -83,6 +88,7 @@ export const getUserActions = (
     edit: EditUserAction(UserRepository, hashService, subscriptionPlanRepository),
     remove: RemoveUserAction(UserRepository),
     getAll: GetAllUsersAction(UserRepository),
+    getUsersBirthdays: GetUsersBirthdaysAction(UserRepository),
     getById: GetUserByIdAction(UserRepository),
     getOne: GetOneUserAction(UserRepository),
     login: LoginUserAction(UserRepository, hashService, refreshTokenRepository),

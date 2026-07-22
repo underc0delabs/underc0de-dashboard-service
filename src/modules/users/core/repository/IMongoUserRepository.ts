@@ -14,4 +14,14 @@ export interface IUserRepository {
         includePassword?: boolean
     ) => Promise<any>,
     getById: (id:string) => Promise<any>,
+    listUsersWithBirthdays: () => Promise<Array<{
+        id: number;
+        username: string;
+        name: string;
+        lastname: string | null;
+        displayName: string;
+        phone: string | null;
+        birthday: string;
+        country: string | null;
+    }>>,
 }

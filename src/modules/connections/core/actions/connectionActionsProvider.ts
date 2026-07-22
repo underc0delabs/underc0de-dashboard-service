@@ -10,6 +10,7 @@ import {
   PublicProfile,
   toPublicProfile,
 } from "../helpers/publicProfile.js";
+import { getFileUrl } from "../../../../helpers/file-url.js";
 import { CONNECTION_STATUS } from "../../infrastructure/models/UserConnectionModel.js";
 import { IConnectionRepository } from "../../infrastructure/repository/ConnectionRepository.js";
 
@@ -74,6 +75,13 @@ const assertNotBlocked = async (
   }
 };
 
+export interface FriendBirthday {
+  userId: number;
+  displayName: string;
+  birthday: string;
+  avatarUrl: string | null;
+}
+
 export interface IConnectionActions {
   resolveProfile: (input: {
     shareCode?: string;
@@ -97,6 +105,7 @@ export interface IConnectionActions {
   cancelFriendRequest: (actorId: number, connectionId: string) => Promise<void>;
   removeFriend: (actorId: number, targetUserId: number) => Promise<void>;
   listFriends: (actorId: number) => Promise<PublicProfile[]>;
+  listFriendsBirthdays: (actorId: number) => Promise<FriendBirthday[]>;
   listIncomingRequests: (actorId: number) => Promise<FriendRequestItem[]>;
   listOutgoingRequests: (actorId: number) => Promise<FriendRequestItem[]>;
   followUser: (actorId: number, targetUserId: number) => Promise<{ id: string }>;
@@ -344,6 +353,17 @@ export const getConnectionActions = (
       await assertActiveUser(connectionRepository, actorId);
       const users = await connectionRepository.listFriends(actorId);
       return users.map(toPublicProfile);
+    },
+
+    async listFriendsBirthdays(actorId) {
+      await assertActiveUser(connectionRepository, actorId);
+      const rows = await connectionRepository.listFriendsBirthdays(actorId);
+      return rows.map((row) => ({
+        userId: row.id,
+        displayName: toPublicProfile(row).displayName,
+        birthday: row.birthday,
+        avatarUrl: getFileUrl(row.avatar ?? null),
+      }));
     },
 
     async listIncomingRequests(actorId) {

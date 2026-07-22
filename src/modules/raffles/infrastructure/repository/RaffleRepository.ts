@@ -19,6 +19,8 @@ export type RaffleRow = {
   participationDeadline: Date;
   claimDeadline: Date;
   proOnly: boolean;
+  allowedCountry: string | null;
+  allowedProvince: string | null;
   status: RaffleStatus;
   createdByAdminId: number | null;
   winnerUserId: number | null;
@@ -137,6 +139,8 @@ export const RaffleRepository = () => ({
     participationDeadline: Date;
     claimDeadline: Date;
     proOnly: boolean;
+    allowedCountry?: string | null;
+    allowedProvince?: string | null;
     createdByAdminId: number | null;
   }): Promise<RaffleRow> {
     const row = await Raffle.create({
@@ -155,6 +159,8 @@ export const RaffleRepository = () => ({
       participationDeadline: Date;
       claimDeadline: Date;
       proOnly: boolean;
+      allowedCountry?: string | null;
+      allowedProvince?: string | null;
       status: RaffleStatus;
       winnerUserId: number | null;
       currentDrawId: string | null;
@@ -309,6 +315,8 @@ export const RaffleRepository = () => ({
       username: string;
       status: boolean;
       is_pro: boolean;
+      country?: string | null;
+      province?: string | null;
     };
   },
 

@@ -13,6 +13,7 @@ export const UserControllers = ({
   edit,
   remove,
   getAll,
+  getUsersBirthdays,
   getById,
   login,
   refreshToken,
@@ -87,6 +88,21 @@ export const UserControllers = ({
         })
         .catch((error) => {
           errorResponses[error.name](res, error);
+        });
+    },
+    getUsersBirthdays(_req: Request, res: Response) {
+      getUsersBirthdays
+        .execute()
+        .then((birthdays) => {
+          SuccessResponse(
+            res,
+            200,
+            "Cumpleaños de usuarios obtenidos",
+            birthdays,
+          );
+        })
+        .catch((error) => {
+          errorResponses[error.name]?.(res, error) ?? ErrorResponse(res, error);
         });
     },
     getById(req: Request, res: Response) {

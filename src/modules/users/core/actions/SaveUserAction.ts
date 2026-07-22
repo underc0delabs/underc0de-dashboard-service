@@ -1,16 +1,6 @@
 import crypto from "crypto";
 import IUser from "../entities/IUser.js";
-
-const parseBirthday = (str: string): Date => {
-  if (!str) return new Date();
-  const [d, m, y] = str.split("/");
-  if (d && m && y) {
-    const date = new Date(Number(y), Number(m) - 1, Number(d));
-    return isNaN(date.getTime()) ? new Date() : date;
-  }
-  const parsed = new Date(str);
-  return isNaN(parsed.getTime()) ? new Date() : parsed;
-};
+import { parseBirthday } from "../../../../helpers/parseBirthday.js";
 import { IUserRepository } from "../repository/IMongoUserRepository.js";
 import { IHashService } from "../services/IHashService.js";
 
@@ -34,7 +24,14 @@ export const SaveUserAction = (
               phone: body.phone,
               email: body.email,
               idNumber: body.idNumber,
-              birthday: body.birthday,
+              birthday:
+                body.birthday instanceof Date
+                  ? body.birthday
+                  : typeof body.birthday === "string"
+                    ? parseBirthday(body.birthday)
+                    : body.birthday,
+              country: (body as any).country,
+              province: (body as any).province,
             };
             if (body.password) {
               payload.password = hashService.hash(body.password);
@@ -60,6 +57,8 @@ export const SaveUserAction = (
             userType: body.userType ?? 0,
             status: body.status ?? true,
             birthday,
+            country: (body as any).country ?? null,
+            province: (body as any).province ?? null,
             is_pro: body.vip ?? false,
             mercadopago_email:
               (body as any).mercadopago_email ??

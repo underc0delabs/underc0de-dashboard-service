@@ -4,6 +4,7 @@ import { allowOnlySelfOrAdmin } from "../../../../middlewares/AllowOnlySelfOrAdm
 import { IJwtValidator } from "../../../../middlewares/JwtValidator/core/IJwtValidator.js";
 import { jwtOrAppKeyAuth } from "../../../../middlewares/JwtOrAppKeyAuth.js";
 import { requireAdmin } from "../../../../middlewares/RequireAdmin.js";
+import { requireDashboardUser } from "../../../../middlewares/RequireDashboardUser.js";
 import { getUserControllers } from "../controllers/controllersProvider.js";
 import { uploadAvatarMiddleware } from "../middlewares/uploadAvatarMiddleware.js";
 
@@ -15,6 +16,7 @@ const getUserRoutes = (dependencyManager: DependencyManager) => {
     edit,
     remove,
     get,
+    getUsersBirthdays,
     getById,
     login,
     refreshToken,
@@ -34,6 +36,11 @@ const getUserRoutes = (dependencyManager: DependencyManager) => {
   userRouter.post(`/${path}/refresh-token`, refreshToken);
   userRouter.post(`/${path}`, [jwtValidator], save);
   userRouter.get(`/${path}`, [jwtValidator], get);
+  userRouter.get(
+    `/admin/${path}/birthdays`,
+    [jwtValidator, requireDashboardUser],
+    getUsersBirthdays,
+  );
   userRouter.get(`/${path}/metrics`, [jwtValidator], getMetrics);
   userRouter.post(`/${path}/fcm-token`, [jwtOrAppKeyAuth(jwtValidator)], saveFcmToken);
   userRouter.post(

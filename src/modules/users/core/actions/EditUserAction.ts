@@ -3,6 +3,7 @@ import { IUserRepository } from "../repository/IMongoUserRepository.js";
 import { IHashService } from "../services/IHashService.js";
 import { ISubscriptionPlanRepository } from "../../../subscriptionPlan/core/repository/ISubscriptionPlanRepository.js";
 import { lifetimeNextPaymentDate } from "../domain/userVipPolicy.js";
+import { parseBirthday } from "../../../../helpers/parseBirthday.js";
 
 const EDIT_ALLOWED_KEYS = [
   "username",
@@ -13,6 +14,8 @@ const EDIT_ALLOWED_KEYS = [
   "idNumber",
   "userType",
   "birthday",
+  "country",
+  "province",
   "status",
   "fcmToken",
   "mpPayerId",
@@ -43,6 +46,9 @@ const buildUpdatePayload = (
   }
   if (payload.password) {
     payload.password = hashService.hash(String(payload.password));
+  }
+  if (payload.birthday != null && typeof payload.birthday === "string") {
+    payload.birthday = parseBirthday(String(payload.birthday));
   }
   return payload;
 };

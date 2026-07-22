@@ -76,6 +76,14 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         allowNull: true,
     },
+    country: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    province: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
     shareCode: {
         type: DataTypes.STRING(64),
         allowNull: true,

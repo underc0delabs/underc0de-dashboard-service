@@ -47,6 +47,14 @@ const Raffle = sequelize.define(
       allowNull: false,
       defaultValue: false,
     },
+    allowedCountry: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    allowedProvince: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     status: {
       type: DataTypes.STRING(20),
       allowNull: false,

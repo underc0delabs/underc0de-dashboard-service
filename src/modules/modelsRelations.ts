@@ -20,6 +20,7 @@ import BingoBoardEntry from "./bingo/infrastructure/models/BingoBoardEntryModel.
 import BingoCheckin from "./bingo/infrastructure/models/BingoCheckinModel.js";
 import BingoRaffleEntry from "./bingo/infrastructure/models/BingoRaffleEntryModel.js";
 import BingoDraw from "./bingo/infrastructure/models/BingoDrawModel.js";
+import Event from "./events/infrastructure/models/EventModel.js";
 
 // Definir relaciones después de que todos los modelos estén inicializados
 User.hasMany(RefreshToken, { foreignKey: "userId", as: "refreshTokens" });

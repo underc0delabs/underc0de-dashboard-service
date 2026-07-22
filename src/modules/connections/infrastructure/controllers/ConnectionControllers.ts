@@ -168,6 +168,15 @@ export const ConnectionControllers = (actions: IConnectionActions) => {
         .catch((error) => handleError(res, error));
     },
 
+    listFriendsBirthdays(req: Request, res: Response) {
+      actions
+        .listFriendsBirthdays(getActorId(req))
+        .then((birthdays) => {
+          SuccessResponse(res, 200, "Cumpleaños de amigos obtenidos", birthdays);
+        })
+        .catch((error) => handleError(res, error));
+    },
+
     listIncomingRequests(req: Request, res: Response) {
       actions
         .listIncomingRequests(getActorId(req))
