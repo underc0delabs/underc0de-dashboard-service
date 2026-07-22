@@ -579,11 +579,34 @@ export const RaffleActionsProvider = (
 
     raffle = await syncRaffleDeadlines(raffleRepository, raffle);
 
-    if (
-      raffle.status === RAFFLE_STATUS.DRAWN ||
-      raffle.status === RAFFLE_STATUS.COMPLETED
-    ) {
+    if (raffle.status === RAFFLE_STATUS.COMPLETED) {
       return mapAdminRaffle(raffleRepository, raffle);
+    }
+
+    const participationAlreadyClosed =
+      raffle.status === RAFFLE_STATUS.CLOSED ||
+      raffle.status === RAFFLE_STATUS.DRAWN ||
+      raffle.status === RAFFLE_STATUS.EXPIRED;
+
+    if (!participationAlreadyClosed) {
+      const participantCount = await raffleRepository.countParticipants(id);
+      const updated = await raffleRepository.update(id, {
+        status: RAFFLE_STATUS.CLOSED,
+      });
+
+      await raffleRepository.addEvent({
+        raffleId: id,
+        type: RAFFLE_EVENT_TYPE.PARTICIPATION_CLOSED,
+        payload: {
+          participantCount,
+          forced: true,
+          previousStatus: raffle.status,
+        },
+        actorType: "admin",
+        actorId: String(adminId),
+      });
+
+      raffle = updated ?? raffle;
     }
 
     if (raffle.status === RAFFLE_STATUS.CLOSED) {
@@ -592,30 +615,10 @@ export const RaffleActionsProvider = (
         id,
         adminId,
       );
-      return mapAdminRaffle(raffleRepository, drawn ?? raffle);
+      raffle = drawn ?? raffle;
     }
 
-    if (raffle.status !== RAFFLE_STATUS.PUBLISHED) {
-      throw new RaffleConflictException(
-        "Solo se puede cerrar la participación de un sorteo publicado",
-      );
-    }
-
-    const participantCount = await raffleRepository.countParticipants(id);
-    const updated = await raffleRepository.update(id, {
-      status: RAFFLE_STATUS.CLOSED,
-    });
-
-    await raffleRepository.addEvent({
-      raffleId: id,
-      type: RAFFLE_EVENT_TYPE.PARTICIPATION_CLOSED,
-      payload: { participantCount, forced: true },
-      actorType: "admin",
-      actorId: String(adminId),
-    });
-
-    const drawn = await drawWinnerIfClosed(raffleRepository, id, adminId);
-    return mapAdminRaffle(raffleRepository, drawn ?? updated!);
+    return mapAdminRaffle(raffleRepository, raffle);
   },
 
   async drawAdmin(id, adminId) {
@@ -704,8 +707,18 @@ export const RaffleActionsProvider = (
       throw new RaffleNotFoundException();
     }
     raffle = await syncRaffleDeadlines(raffleRepository, raffle);
-    if (raffle.status !== RAFFLE_STATUS.DRAWN) {
-      throw new RaffleConflictException("El sorteo debe tener ganador sorteado");
+
+    if (raffle.status === RAFFLE_STATUS.COMPLETED) {
+      return mapAdminRaffle(raffleRepository, raffle);
+    }
+
+    if (
+      raffle.status !== RAFFLE_STATUS.DRAWN &&
+      raffle.status !== RAFFLE_STATUS.EXPIRED
+    ) {
+      throw new RaffleConflictException(
+        "Solo se puede finalizar un sorteo con ganador sorteado o con reclamo vencido",
+      );
     }
 
     const updated = await raffleRepository.update(id, {
@@ -715,7 +728,10 @@ export const RaffleActionsProvider = (
     await raffleRepository.addEvent({
       raffleId: id,
       type: RAFFLE_EVENT_TYPE.PRIZE_CLAIMED,
-      payload: {},
+      payload: {
+        previousStatus: raffle.status,
+        manualCompletion: raffle.status === RAFFLE_STATUS.EXPIRED,
+      },
       actorType: "admin",
       actorId: String(adminId),
     });
