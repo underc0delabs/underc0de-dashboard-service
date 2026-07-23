@@ -52,6 +52,14 @@ import {
   CancelSubscriptionAction,
   ICancelSubscriptionAction,
 } from "./CancelSubscriptionAction.js";
+import {
+  IRestoreAppleSubscriptionAction,
+  RestoreAppleSubscriptionAction,
+} from "./RestoreAppleSubscriptionAction.js";
+import {
+  IVerifyAppleSubscriptionAction,
+  VerifyAppleSubscriptionAction,
+} from "./VerifyAppleSubscriptionAction.js";
 
 export interface ISubscriptionPlanActions {
   save: ISaveSubscriptionPlanAction;
@@ -66,6 +74,8 @@ export interface ISubscriptionPlanActions {
   syncSubscriptionByPreapprovalId: ISyncSubscriptionByPreapprovalIdAction;
   refreshSubscriptionStatus: IRefreshSubscriptionStatusAction;
   cancelSubscription: ICancelSubscriptionAction;
+  verifyAppleSubscription: IVerifyAppleSubscriptionAction;
+  restoreAppleSubscription: IRestoreAppleSubscriptionAction;
 }
 export const getSubscriptionPlanActions = (
   SubscriptionPlanRepository: ISubscriptionPlanRepository,
@@ -113,6 +123,13 @@ export const getSubscriptionPlanActions = (
       mercadoPagoGateway,
       syncSubscriptionByPreapprovalId,
       userRepository
+    ),
+    verifyAppleSubscription: VerifyAppleSubscriptionAction(
+      SubscriptionPlanRepository,
+      userRepository,
+    ),
+    restoreAppleSubscription: RestoreAppleSubscriptionAction(
+      VerifyAppleSubscriptionAction(SubscriptionPlanRepository, userRepository),
     ),
   };
   return SubscriptionPlanActions;

@@ -4,7 +4,7 @@ import { createHashMap } from "../../../../helpers/utils.js";
 import { ISubscriptionPlanActions } from "../../core/actions/actionsProvider.js";
 import { InvalidIdException } from "../../core/exceptions/InvalidIdException.js";
 import { SubscriptionPlanNotExistException } from "../../core/exceptions/SubscriptionPlanNotExistException.js";
-import { NoActiveSubscriptionToCancelError } from "../../core/actions/CancelSubscriptionAction.js";
+import { NoActiveSubscriptionToCancelError, AppleSubscriptionManageInSettingsError } from "../../core/actions/CancelSubscriptionAction.js";
 
 const SUBSCRIPTION_SUCCESS_HTML = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="1;url=underc0de://subscriptions/success"><title>Pago completado</title></head><body style="font-family:sans-serif;text-align:center;padding:2rem;"><h1>Pago completado</h1><p>Volviendo a la app...</p><script>setTimeout(function(){window.location.href="underc0de://subscriptions/success";},800);</script></body></html>`;
 
@@ -22,6 +22,8 @@ export const SubscriptionPlanControllers = ({
     syncSubscriptionByPreapprovalId,
     refreshSubscriptionStatus,
     cancelSubscription,
+    verifyAppleSubscription,
+    restoreAppleSubscription,
   }: ISubscriptionPlanActions) => {
     
   const errorResponses = createHashMap({
@@ -156,6 +158,9 @@ export const SubscriptionPlanControllers = ({
           if (error instanceof NoActiveSubscriptionToCancelError) {
             return ErrorResponse(res, error, 400);
           }
+          if (error instanceof AppleSubscriptionManageInSettingsError) {
+            return ErrorResponse(res, error, 409);
+          }
           if (error.name === "MercadoPagoPreapprovalNotFoundError") {
             return ErrorResponse(res, error, 404);
           }
@@ -165,6 +170,77 @@ export const SubscriptionPlanControllers = ({
           errorResponses[error?.name]
             ? errorResponses[error.name](res, error)
             : ErrorResponse(res, error, 500);
+        });
+    },
+    verifyAppleSubscription(req: Request, res: Response) {
+      const auth = (req as any).auth;
+      if (!auth?.id) {
+        return ErrorResponse(res, new Error("No hay token en la petición") as any, 401);
+      }
+      const body = (req.body || {}) as {
+        transactionId?: string;
+        originalTransactionId?: string;
+        productId?: string;
+        signedTransactionInfo?: string;
+        environment?: string;
+      };
+      verifyAppleSubscription
+        .execute({
+          userId: String(auth.id),
+          transactionId: String(body.transactionId ?? "").trim(),
+          originalTransactionId: String(body.originalTransactionId ?? "").trim(),
+          productId: String(body.productId ?? "").trim(),
+          signedTransactionInfo: String(body.signedTransactionInfo ?? "").trim(),
+          environment: body.environment ?? null,
+        })
+        .then((result) => {
+          SuccessResponse(res, 200, "Suscripción verificada", result);
+        })
+        .catch((error: Error) => {
+          ErrorResponse(res, error, 400);
+        });
+    },
+    restoreAppleSubscription(req: Request, res: Response) {
+      const auth = (req as any).auth;
+      if (!auth?.id) {
+        return ErrorResponse(res, new Error("No hay token en la petición") as any, 401);
+      }
+      const body = (req.body || {}) as {
+        transactions?: Array<{
+          transactionId?: string;
+          originalTransactionId?: string;
+          productId?: string;
+          signedTransactionInfo?: string;
+          environment?: string;
+        }>;
+      };
+      const transactions = Array.isArray(body.transactions)
+        ? body.transactions
+            .map((tx) => ({
+              transactionId: String(tx.transactionId ?? "").trim(),
+              originalTransactionId: String(tx.originalTransactionId ?? "").trim(),
+              productId: String(tx.productId ?? "").trim(),
+              signedTransactionInfo: String(tx.signedTransactionInfo ?? "").trim(),
+              environment: tx.environment ?? null,
+            }))
+            .filter(
+              (tx) =>
+                tx.transactionId &&
+                tx.originalTransactionId &&
+                tx.productId &&
+                tx.signedTransactionInfo,
+            )
+        : [];
+      restoreAppleSubscription
+        .execute({
+          userId: String(auth.id),
+          transactions,
+        })
+        .then((result) => {
+          SuccessResponse(res, 200, "Restauración procesada", result);
+        })
+        .catch((error: Error) => {
+          ErrorResponse(res, error, 400);
         });
     },
     async subscriptionSuccess(req: Request, res: Response) {

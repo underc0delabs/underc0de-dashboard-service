@@ -10,6 +10,26 @@ const toRow = (p: any) => (p?.toJSON ? p.toJSON() : p);
  * Misma idea que en users (MongoUserRepository): entre varios ACTIVE, el más reciente.
  * Excluye planes `owner-*` (no cancelables vía MP desde la app).
  */
+const pickLatestAppleActivePlan = (plans: any[] | undefined): any | null => {
+  if (!plans?.length) return null;
+  const actives = plans
+    .map(toRow)
+    .filter(
+      (p: any) =>
+        p?.status === "ACTIVE" &&
+        String(p?.provider ?? "") === "apple" &&
+        p?.originalTransactionId,
+    );
+  if (actives.length === 0) return null;
+  return actives.reduce((best: any, p: any) => {
+    const bt = best?.createdAt ? new Date(best.createdAt).getTime() : 0;
+    const pt = p?.createdAt ? new Date(p.createdAt).getTime() : 0;
+    if (pt > bt) return p;
+    if (pt === bt && Number(p?.id) > Number(best?.id)) return p;
+    return best;
+  });
+};
+
 const pickLatestMercadoPagoActivePlan = (plans: any[] | undefined): any | null => {
   if (!plans?.length) return null;
   const actives = plans
@@ -18,7 +38,8 @@ const pickLatestMercadoPagoActivePlan = (plans: any[] | undefined): any | null =
       (p: any) =>
         p?.status === "ACTIVE" &&
         p?.mpPreapprovalId &&
-        !String(p.mpPreapprovalId).startsWith("owner-")
+        !String(p.mpPreapprovalId).startsWith("owner-") &&
+        String(p?.provider ?? "mercadopago") !== "apple",
     );
   if (actives.length === 0) return null;
   return actives.reduce((best: any, p: any) => {
@@ -36,6 +57,15 @@ export class NoActiveSubscriptionToCancelError extends Error {
       "No tenés una suscripción activa de Mercado Pago para cancelar."
     );
     this.name = "NoActiveSubscriptionToCancelError";
+  }
+}
+
+export class AppleSubscriptionManageInSettingsError extends Error {
+  constructor() {
+    super(
+      "Tu suscripción Pro se gestiona desde Ajustes de Apple. Abrí la administración de suscripciones del sistema."
+    );
+    this.name = "AppleSubscriptionManageInSettingsError";
   }
 }
 
@@ -61,9 +91,18 @@ export const CancelSubscriptionAction = (
       page_number: 0,
     });
     const plans = result?.subscriptionPlans ?? [];
+    const applePlan = pickLatestAppleActivePlan(plans);
+    if (applePlan) {
+      throw new AppleSubscriptionManageInSettingsError();
+    }
     const plan = pickLatestMercadoPagoActivePlan(plans);
     if (!plan?.mpPreapprovalId) {
       throw new NoActiveSubscriptionToCancelError();
+    }
+
+    const provider = String((plan as any).provider ?? "mercadopago");
+    if (provider === "apple") {
+      throw new AppleSubscriptionManageInSettingsError();
     }
 
     const preapprovalId = String(plan.mpPreapprovalId);
