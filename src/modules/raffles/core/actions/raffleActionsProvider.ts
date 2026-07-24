@@ -17,6 +17,7 @@ import {
   serializeRaffleDateTime,
   deadlineToInstant,
 } from "../raffleDateTime.js";
+import { formatWinnerDisplayName } from "../raffleWinnerDisplayName.js";
 
 const dateFieldLabels: Record<string, string> = {
   participationDeadline: "Fecha de cierre de participación",
@@ -133,7 +134,10 @@ const winnerDisplayName = async (
   userId: number,
 ): Promise<string> => {
   const user = await repo.findUserById(userId);
-  return user?.name?.trim() || user?.username || "Participante";
+  if (!user) {
+    return "Participante";
+  }
+  return formatWinnerDisplayName(user);
 };
 
 const drawWinnerIfClosed = async (

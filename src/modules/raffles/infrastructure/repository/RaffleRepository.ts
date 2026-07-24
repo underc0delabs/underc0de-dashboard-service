@@ -312,6 +312,7 @@ export const RaffleRepository = () => ({
     return (row as { toJSON: () => Record<string, unknown> }).toJSON() as {
       id: number;
       name: string;
+      lastname: string | null;
       username: string;
       status: boolean;
       is_pro: boolean;
