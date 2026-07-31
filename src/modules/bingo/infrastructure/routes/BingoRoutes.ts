@@ -3,6 +3,7 @@ import { DependencyManager } from "../../../../dependencyManager.js";
 import { IJwtValidator } from "../../../../middlewares/JwtValidator/core/IJwtValidator.js";
 import { requireDashboardUser } from "../../../../middlewares/RequireDashboardUser.js";
 import { getBingoJwtValidator } from "../middlewares/BingoJwtValidator.js";
+import { withStandLogoUpload } from "../middlewares/withStandLogoUpload.js";
 import { getBingoAuthControllers, getBingoControllers } from "../controllers/controllersProvider.js";
 import type { IBingoRepository } from "../repository/BingoRepository.js";
 
@@ -49,8 +50,13 @@ const getBingoRoutes = (dependencyManager: DependencyManager) => {
   router.post("/admin/bingo-events/:id/reactivate", dashboardAuth, reactivateEvent);
   router.post("/admin/bingo-events/:id/close", dashboardAuth, closeEvent);
   router.delete("/admin/bingo-events/:id", dashboardAuth, deleteEvent);
-  router.post("/admin/bingo-events/:id/stands", dashboardAuth, createStand);
-  router.patch("/admin/bingo-events/:id/stands/:standId", dashboardAuth, updateStand);
+  router.post("/admin/bingo-events/:id/stands", dashboardAuth, withStandLogoUpload, createStand);
+  router.patch(
+    "/admin/bingo-events/:id/stands/:standId",
+    dashboardAuth,
+    withStandLogoUpload,
+    updateStand,
+  );
   router.delete("/admin/bingo-events/:id/stands/:standId", dashboardAuth, deleteStand);
   router.get("/admin/bingo-events/:id/participants", dashboardAuth, listParticipantsAdmin);
   router.post("/admin/bingo-events/:id/draw", dashboardAuth, drawAdmin);
