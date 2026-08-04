@@ -188,5 +188,19 @@ export const BingoControllers = (actions: IBingoActions) => {
         .then(result => SuccessResponse(res, 200, "Check-in registrado", result))
         .catch(error => handleError(res, error));
     },
+
+    updatePhone(req: Request, res: Response) {
+      const participantId = requireParticipant(req, res);
+      if (!participantId) return;
+      const phone = String(req.body?.phone ?? "").trim();
+      if (!phone) {
+        ErrorResponse(res, new Error("El teléfono es obligatorio"), 400);
+        return;
+      }
+      actions
+        .updateParticipantPhone(participantId, phone)
+        .then(result => SuccessResponse(res, 200, "Teléfono actualizado", result))
+        .catch(error => handleError(res, error));
+    },
   };
 };

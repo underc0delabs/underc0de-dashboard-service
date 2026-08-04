@@ -27,6 +27,10 @@ const BingoParticipant = sequelize.define(
       type: DataTypes.STRING(500),
       allowNull: true,
     },
+    phone: {
+      type: DataTypes.STRING(30),
+      allowNull: true,
+    },
   },
   {
     tableName: "BingoParticipants",

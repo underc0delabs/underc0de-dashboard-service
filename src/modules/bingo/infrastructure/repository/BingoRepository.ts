@@ -45,6 +45,7 @@ export type BingoParticipantRow = {
   email: string;
   name: string | null;
   avatarUrl: string | null;
+  phone: string | null;
 };
 
 export type BingoBoardEntryRow = {
@@ -213,7 +214,7 @@ export const BingoRepository = () => ({
 
   async updateParticipant(
     id: string,
-    data: Partial<{ email: string; name: string | null; avatarUrl: string | null }>,
+    data: Partial<{ email: string; name: string | null; avatarUrl: string | null; phone: string | null }>,
   ): Promise<BingoParticipantRow | null> {
     const row = await BingoParticipant.findByPk(id);
     if (!row) {
@@ -274,14 +275,14 @@ export const BingoRepository = () => ({
     const rows = await BingoBoardEntry.findAll({
       where: { bingoEventId },
       include: [
-        { model: BingoParticipant, as: "participant", attributes: ["id", "name", "email", "avatarUrl"] },
+        { model: BingoParticipant, as: "participant", attributes: ["id", "name", "email", "avatarUrl", "phone"] },
       ],
       order: [["joinedAt", "ASC"]],
     });
     return rows.map(r =>
       toJson<
         BingoBoardEntryRow & {
-          participant?: { id: string; name: string | null; email: string; avatarUrl: string | null };
+          participant?: { id: string; name: string | null; email: string; avatarUrl: string | null; phone: string | null };
         }
       >(r),
     );
