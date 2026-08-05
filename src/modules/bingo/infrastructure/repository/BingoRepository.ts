@@ -35,6 +35,7 @@ export type BingoStandRow = {
   merchantId: string | null;
   code: string;
   label: string;
+  logo: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -136,6 +137,7 @@ export const BingoRepository = () => ({
     merchantId: string | null;
     label: string;
     code?: string;
+    logo?: string | null;
   }): Promise<BingoStandRow> {
     const code = data.code?.trim() || generateStandCode();
     const row = await BingoStand.create({
@@ -143,6 +145,7 @@ export const BingoRepository = () => ({
       merchantId: data.merchantId,
       label: data.label,
       code,
+      logo: data.logo ?? null,
     });
     return toJson(row);
   },
@@ -171,7 +174,7 @@ export const BingoRepository = () => ({
 
   async updateStand(
     id: string,
-    data: Partial<{ label: string; merchantId: string | null }>,
+    data: Partial<{ label: string; merchantId: string | null; logo: string | null }>,
   ): Promise<BingoStandRow | null> {
     const row = await BingoStand.findByPk(id);
     if (!row) {

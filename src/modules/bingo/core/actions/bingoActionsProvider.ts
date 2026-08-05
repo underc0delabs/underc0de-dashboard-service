@@ -1,3 +1,4 @@
+import { getFileUrl } from "../../../../helpers/file-url.js";
 import { BINGO_EVENT_STATUS } from "../../infrastructure/models/BingoEventModel.js";
 import type {
   IBingoRepository,
@@ -67,6 +68,13 @@ const parseDate = (value: unknown): Date | null => {
   return date;
 };
 
+const parseBoolean = (value: unknown): boolean => {
+  if (typeof value === "boolean") {
+    return value;
+  }
+  return String(value ?? "").trim().toLowerCase() === "true";
+};
+
 const serializeOptionalDate = (value: unknown): string | null => {
   if (value == null || value === "") {
     return null;
@@ -103,6 +111,7 @@ const mapStand = (stand: BingoStandRow & { merchant?: { id: string; name: string
   merchantId: stand.merchantId,
   merchantName: stand.merchant?.name ?? null,
   merchantLogo: stand.merchant?.logo ?? null,
+  logoUrl: getFileUrl(stand.logo ?? null),
 });
 
 export interface IBingoActions {
@@ -115,8 +124,13 @@ export interface IBingoActions {
   listEventsAdmin(): Promise<unknown[]>;
   getEventAdmin(id: string): Promise<unknown>;
   deleteEvent(id: string): Promise<{ id: string }>;
-  createStand(eventId: string, input: Record<string, unknown>): Promise<unknown>;
-  updateStand(eventId: string, standId: string, input: Record<string, unknown>): Promise<unknown>;
+  createStand(eventId: string, input: Record<string, unknown>, file?: Express.Multer.File): Promise<unknown>;
+  updateStand(
+    eventId: string,
+    standId: string,
+    input: Record<string, unknown>,
+    file?: Express.Multer.File,
+  ): Promise<unknown>;
   deleteStand(eventId: string, standId: string): Promise<{ id: string }>;
   listParticipantsAdmin(eventId: string): Promise<unknown[]>;
   drawAdmin(eventId: string, adminId: number): Promise<unknown>;
@@ -146,7 +160,12 @@ const buildBoard = async (
   };
 };
 
-export const BingoActionsProvider = (repo: IBingoRepository): IBingoActions => {
+export const BingoActionsProvider = (
+  repo: IBingoRepository,
+  fileStorageService: {
+    saveFile: (file: Express.Multer.File, subfolder: string) => Promise<string>;
+  },
+): IBingoActions => {
   const promoteBingoEventToActive = async (id: string) => {
     const stands = await repo.listStandsByEvent(id);
     if (stands.length === 0) {
@@ -289,7 +308,7 @@ export const BingoActionsProvider = (repo: IBingoRepository): IBingoActions => {
     return { id };
   },
 
-  async createStand(eventId, input) {
+  async createStand(eventId, input, file) {
     const event = await repo.findEventById(eventId);
     if (!event) {
       throw new BingoEventNotFoundException();
@@ -298,23 +317,35 @@ export const BingoActionsProvider = (repo: IBingoRepository): IBingoActions => {
     if (!label) {
       throw new BingoValidationException("El nombre del stand es obligatorio");
     }
+    let logo: string | null = null;
+    if (file) {
+      logo = await fileStorageService.saveFile(file, "bingo-stands");
+    }
     const stand = await repo.createStand({
       bingoEventId: eventId,
       label,
       merchantId: input.merchantId ? String(input.merchantId) : null,
       code: input.code ? String(input.code).trim() : undefined,
+      logo,
     });
     return mapStand(stand as BingoStandRow & { merchant?: { id: string; name: string; logo: string | null } });
   },
 
-  async updateStand(eventId, standId, input) {
+  async updateStand(eventId, standId, input, file) {
     const stand = await repo.findStandById(standId);
     if (!stand || stand.bingoEventId !== eventId) {
       throw new BingoStandNotFoundException();
     }
+    let logo = stand.logo ?? null;
+    if (file) {
+      logo = await fileStorageService.saveFile(file, "bingo-stands");
+    } else if (parseBoolean(input.removeLogo)) {
+      logo = null;
+    }
     const updated = await repo.updateStand(standId, {
       label: input.label != null ? String(input.label).trim() : stand.label,
       merchantId: input.merchantId !== undefined ? (input.merchantId ? String(input.merchantId) : null) : stand.merchantId,
+      logo,
     });
     return mapStand(updated as BingoStandRow & { merchant?: { id: string; name: string; logo: string | null } });
   },

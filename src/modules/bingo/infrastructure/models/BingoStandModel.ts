@@ -26,6 +26,10 @@ const BingoStand = sequelize.define(
       type: DataTypes.STRING(200),
       allowNull: false,
     },
+    logo: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   },
   {
     tableName: "BingoStands",

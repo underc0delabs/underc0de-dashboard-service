@@ -115,14 +115,14 @@ export const BingoControllers = (actions: IBingoActions) => {
 
     createStand(req: Request, res: Response) {
       actions
-        .createStand(req.params.id, req.body ?? {})
+        .createStand(req.params.id, req.body ?? {}, req.file)
         .then(result => SuccessResponse(res, 201, "Stand creado", result))
         .catch(error => handleError(res, error));
     },
 
     updateStand(req: Request, res: Response) {
       actions
-        .updateStand(req.params.id, req.params.standId, req.body ?? {})
+        .updateStand(req.params.id, req.params.standId, req.body ?? {}, req.file)
         .then(result => SuccessResponse(res, 200, "Stand actualizado", result))
         .catch(error => handleError(res, error));
     },

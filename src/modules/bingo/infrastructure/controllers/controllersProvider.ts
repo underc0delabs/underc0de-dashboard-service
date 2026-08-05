@@ -11,7 +11,10 @@ const getBingoRepository = (dependencyManager: DependencyManager) => {
 
 export const getBingoControllers = (dependencyManager: DependencyManager) => {
   const bingoRepository = getBingoRepository(dependencyManager);
-  const actions = BingoActionsProvider(bingoRepository);
+  const fileStorageService = dependencyManager.resolve("fileStorageService") as {
+    saveFile: (file: Express.Multer.File, subfolder: string) => Promise<string>;
+  };
+  const actions = BingoActionsProvider(bingoRepository, fileStorageService);
   return BingoControllers(actions);
 };
 
