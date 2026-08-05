@@ -23,6 +23,8 @@ import {
   normalizeBingoEventStatus,
 } from "../domain/bingoEventStatus.js";
 
+const PHONE_REGEX = /^[0-9+\-().\s]{6,25}$/;
+
 const parseDate = (value: unknown): Date | null => {
   if (value == null || value === "") {
     return null;
@@ -140,6 +142,7 @@ export interface IBingoActions {
   joinEvent(eventId: string, participantId: string): Promise<unknown>;
   getBoard(eventId: string, participantId: string): Promise<unknown>;
   checkin(eventId: string, participantId: string, code: string): Promise<unknown>;
+  updateParticipantPhone(participantId: string, phone: string): Promise<unknown>;
 }
 
 const buildBoard = async (
@@ -371,6 +374,7 @@ export const BingoActionsProvider = (
         participantId: entry.participantId,
         name: entry.participant?.name ?? null,
         email: entry.participant?.email ?? null,
+        phone: entry.participant?.phone ?? null,
         joinedAt: entry.joinedAt,
         completedAt: entry.completedAt,
         checkedCount: await repo.countCheckins(entry.id),
@@ -486,6 +490,24 @@ export const BingoActionsProvider = (
 
     const board = await buildBoard(repo, eventId, entry.id, completedAt);
     return { ...board, justCompleted, alreadyChecked: Boolean(alreadyChecked) };
+  },
+
+  async updateParticipantPhone(participantId, phone) {
+    const normalized = phone.trim();
+    if (!PHONE_REGEX.test(normalized)) {
+      throw new BingoValidationException("Ingresá un teléfono válido");
+    }
+    const updated = await repo.updateParticipant(participantId, { phone: normalized });
+    if (!updated) {
+      throw new BingoValidationException("Participante no encontrado");
+    }
+    return {
+      id: updated.id,
+      name: updated.name,
+      email: updated.email,
+      avatarUrl: updated.avatarUrl,
+      phone: updated.phone,
+    };
   },
 };
 };

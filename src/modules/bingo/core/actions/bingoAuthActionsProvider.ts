@@ -10,7 +10,7 @@ export interface IBingoAuthActions {
     accessToken: string;
     refreshToken: string;
     expiresIn: number;
-    participant: { id: string; name: string | null; email: string; avatarUrl: string | null };
+    participant: { id: string; name: string | null; email: string; avatarUrl: string | null; phone: string | null };
   }>;
   refresh(refreshToken: string): Promise<{
     accessToken: string;
@@ -85,6 +85,7 @@ export const BingoAuthActionsProvider = (
           name: participant.name,
           email: participant.email,
           avatarUrl: participant.avatarUrl,
+          phone: participant.phone,
         },
       };
     },

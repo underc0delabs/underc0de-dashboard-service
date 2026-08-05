@@ -31,6 +31,7 @@ const getBingoRoutes = (dependencyManager: DependencyManager) => {
     joinEvent,
     getBoard,
     checkin,
+    updatePhone,
   } = getBingoControllers(dependencyManager);
 
   const { loginWithGoogle, refresh } = getBingoAuthControllers(dependencyManager);
@@ -66,6 +67,7 @@ const getBingoRoutes = (dependencyManager: DependencyManager) => {
   router.post("/bingo/events/:id/join", participantAuth, joinEvent);
   router.get("/bingo/events/:id/board", participantAuth, getBoard);
   router.post("/bingo/events/:id/checkin", participantAuth, checkin);
+  router.patch("/bingo/participants/me/phone", participantAuth, updatePhone);
 
   return router;
 };
