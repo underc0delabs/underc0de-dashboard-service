@@ -39,6 +39,7 @@
     "@types/morgan": "^1.9.10",
     "@types/multer": "^2.0.0",
     "@types/node": "^24.10.1",
+    "@types/node-fetch": "^2.6.13",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
@@ -60,6 +61,7 @@
     "multer": "^2.0.2",
     "mysql2": "^3.15.3",
     "node-cron": "^4.2.1",
+    "node-fetch": "^2.7.0",
     "nodemon": "^3.1.11",
     "pg": "^8.16.3",
     "sequelize": "^6.37.7",
