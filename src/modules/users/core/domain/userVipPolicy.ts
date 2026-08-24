@@ -1,4 +1,7 @@
-import { isInternalPreapprovalId } from "../../../subscriptionPlan/core/domain/subscriptionPlanHelpers.js";
+import {
+  isInternalPreapprovalId,
+  isMpManagedPreapprovalId,
+} from "../../../subscriptionPlan/core/domain/subscriptionPlanHelpers.js";
 
 const toPlanRow = (sub: any) =>
   sub && typeof sub.toJSON === "function" ? sub.toJSON() : sub;
@@ -32,8 +35,15 @@ export const resolveUserVip = (params: {
   const active = params.activeSubscription;
   const cancelled = params.cancelledSubscription;
 
+  const paidActiveSubscription =
+    !!active &&
+    active.status === "ACTIVE" &&
+    (active.provider === "apple" ||
+      isMpManagedPreapprovalId(active.mpPreapprovalId));
+
   const activeProVip =
-    !!active && (params.isUpToDate !== false || userIsPro);
+    !!active &&
+    (userIsPro || params.isUpToDate !== false || paidActiveSubscription);
 
   const proFromCancelled = !!cancelled && params.isUpToDate === true;
 

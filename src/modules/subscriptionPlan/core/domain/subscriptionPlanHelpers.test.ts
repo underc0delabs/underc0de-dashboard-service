@@ -15,6 +15,7 @@ describe("subscriptionPlanHelpers", () => {
   it("isMpManagedPreapprovalId", () => {
     assert.equal(isMpManagedPreapprovalId("abc123"), true);
     assert.equal(isMpManagedPreapprovalId("owner-1"), false);
+    assert.equal(isMpManagedPreapprovalId("apple-abc123"), false);
     assert.equal(isMpManagedPreapprovalId(""), false);
   });
 });

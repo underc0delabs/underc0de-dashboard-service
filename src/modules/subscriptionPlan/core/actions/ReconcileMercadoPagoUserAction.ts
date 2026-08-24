@@ -8,7 +8,10 @@ import { MpSubscription } from "../../../../services/mercadopagoService/core/typ
 import { ISubscriptionPlanRepository } from "../repository/ISubscriptionPlanRepository.js";
 import { IPaymentRepository } from "../../../payment/core/repository/IPaymentRepository.js";
 import { IUserRepository } from "../../../users/core/repository/IMongoUserRepository.js";
-import { isInternalPreapprovalId } from "../domain/subscriptionPlanHelpers.js";
+import {
+  calculateNextPaymentDateFromMpDetail,
+  isInternalPreapprovalId,
+} from "../domain/subscriptionPlanHelpers.js";
 import { mapMpDetailStatusToModel } from "../domain/subscriptionStatusPolicy.js";
 import { resolveIsProAfterMpSync } from "../../../users/core/domain/userVipPolicy.js";
 
@@ -46,22 +49,6 @@ export type ReconcileMercadoPagoUserResult =
 export interface IReconcileMercadoPagoUserAction {
   execute: (appUserId: string) => Promise<ReconcileMercadoPagoUserResult>;
 }
-
-const calculateNextPaymentDate = (mpSubscription: any): Date | null => {
-  if (mpSubscription.next_payment_date)
-    return new Date(mpSubscription.next_payment_date);
-  if (!mpSubscription.auto_recurring?.start_date) return null;
-
-  const start = new Date(mpSubscription.auto_recurring.start_date);
-  const freq = mpSubscription.auto_recurring.frequency || 1;
-  const type = mpSubscription.auto_recurring.frequency_type || "months";
-
-  const next = new Date(start);
-  if (type === "months") next.setMonth(next.getMonth() + freq);
-  if (type === "days") next.setDate(next.getDate() + freq);
-
-  return next;
-};
 
 export const ReconcileMercadoPagoUserAction = (
   mercadoPagoSyncService: MercadoPagoSyncService,
@@ -181,7 +168,7 @@ export const ReconcileMercadoPagoUserAction = (
       userId: targetUserId,
       status: mappedStatus,
       startedAt: new Date(mpSub.date_created),
-      nextPaymentDate: calculateNextPaymentDate(mpSub as any),
+      nextPaymentDate: calculateNextPaymentDateFromMpDetail(mpSub as any),
       mpPreapprovalId: preapprovalId,
     };
 

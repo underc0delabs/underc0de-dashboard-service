@@ -1,5 +1,6 @@
 import { IUserRepository } from "../../../users/core/repository/IMongoUserRepository.js";
 import { ISubscriptionPlanRepository } from "../repository/ISubscriptionPlanRepository.js";
+import { pickMercadoPagoPlanForSync } from "../domain/subscriptionPlanHelpers.js";
 import { ISyncSubscriptionByPreapprovalIdAction } from "./SyncSubscriptionByPreapprovalIdAction.js";
 
 export interface IRefreshSubscriptionStatusAction {
@@ -49,13 +50,15 @@ export const RefreshSubscriptionStatusAction = (
 
       const result = await subscriptionPlanRepository.get({
         userId,
-        page_count: 1,
+        page_count: 100,
         page_number: 0,
       });
-      const plans = result?.subscriptionPlans ?? [];
-      const mostRecent = Array.isArray(plans) ? plans[0] : null;
+      const plans = (result?.subscriptionPlans ?? []).map((p: any) =>
+        p?.toJSON?.() ?? p
+      );
+      const planForSync = pickMercadoPagoPlanForSync(plans);
 
-      if (!mostRecent?.mpPreapprovalId) {
+      if (!planForSync?.mpPreapprovalId) {
         return {
           success: false,
           message: "No subscription found for user",
@@ -63,7 +66,7 @@ export const RefreshSubscriptionStatusAction = (
       }
 
       return syncSubscriptionByPreapprovalId.execute(
-        String(mostRecent.mpPreapprovalId)
+        String(planForSync.mpPreapprovalId)
       );
     },
   };

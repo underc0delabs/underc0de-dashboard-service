@@ -63,6 +63,46 @@ describe("resolveUserVip", () => {
       false
     );
   });
+
+  it("grants vip for active Mercado Pago plan even when is_pro false and dates stale", () => {
+    assert.equal(
+      resolveUserVip({
+        is_pro: false,
+        activeSubscription: {
+          status: "ACTIVE",
+          mpPreapprovalId: "mp-preapproval-123",
+          provider: "mercadopago",
+          nextPaymentDate: "2020-01-01",
+        },
+        cancelledSubscription: null,
+        isUpToDate: false,
+        subscriptionPlans: [
+          {
+            status: "ACTIVE",
+            mpPreapprovalId: "mp-preapproval-123",
+            provider: "mercadopago",
+          },
+        ],
+      }),
+      true
+    );
+  });
+
+  it("grants vip for active Apple plan even when is_pro false and dates stale", () => {
+    assert.equal(
+      resolveUserVip({
+        is_pro: false,
+        activeSubscription: {
+          status: "ACTIVE",
+          mpPreapprovalId: "apple-abc",
+          provider: "apple",
+        },
+        cancelledSubscription: null,
+        isUpToDate: false,
+      }),
+      true
+    );
+  });
 });
 
 describe("resolveIsProAfterMpSync", () => {

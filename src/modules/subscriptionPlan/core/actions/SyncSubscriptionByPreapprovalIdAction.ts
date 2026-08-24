@@ -7,7 +7,10 @@ import {
   shouldRejectAuthorizedOnTerminalRow,
   type SubscriptionPlanStatus,
 } from "../domain/subscriptionStatusPolicy.js";
-import { isInternalPreapprovalId } from "../domain/subscriptionPlanHelpers.js";
+import {
+  calculateNextPaymentDateFromMpDetail,
+  isInternalPreapprovalId,
+} from "../domain/subscriptionPlanHelpers.js";
 import {
   resolveIsProAfterMpSync,
 } from "../../../users/core/domain/userVipPolicy.js";
@@ -32,6 +35,7 @@ const demoteOtherActiveSubscriptions = async (
     const id = (row as any).id ?? (row as any).dataValues?.id;
     const plan = (row as any).toJSON?.() ?? row;
     if (isInternalPreapprovalId(plan.mpPreapprovalId)) continue;
+    if (String(plan.provider ?? "").toLowerCase() === "apple") continue;
     if (id == null || String(id) === String(exceptSubscriptionId)) continue;
     await subscriptionPlanRepository.edit({ status: "CANCELLED" } as any, String(id));
   }
@@ -128,10 +132,13 @@ export const SyncSubscriptionByPreapprovalIdAction = (
         }
       }
 
+      const nextPaymentDate = calculateNextPaymentDateFromMpDetail(detail);
+
       await subscriptionPlanRepository.edit(
         {
           ...subJson,
           status: mappedStatus,
+          ...(nextPaymentDate ? { nextPaymentDate } : {}),
         } as any,
         String(subJson.id)
       );

@@ -3,9 +3,11 @@ import { ISubscriptionPlanRepository } from "../repository/ISubscriptionPlanRepo
 import { IPaymentRepository } from "../../../payment/core/repository/IPaymentRepository.js";
 import { IUserRepository } from "../../../users/core/repository/IMongoUserRepository.js";
 import {
-  isInternalPreapprovalId,
+  calculateNextPaymentDateFromMpDetail,
+  isMercadoPagoProvider,
   isMpManagedPreapprovalId,
 } from "../domain/subscriptionPlanHelpers.js";
+import { mapMpDetailStatusToModel } from "../domain/subscriptionStatusPolicy.js";
 import {
   resolveIsProAfterMpSync,
   userHasActiveInternalGrant,
@@ -30,6 +32,7 @@ const cancelStaleActiveMpPlans = async (
 
     for (const row of plans) {
       const plan = (row as any).toJSON?.() ?? row;
+      if (!isMercadoPagoProvider(plan.provider)) continue;
       const mpId = String(plan.mpPreapprovalId ?? "");
       if (!isMpManagedPreapprovalId(mpId)) continue;
       if (mpAuthorizedIds.has(mpId)) continue;
@@ -67,6 +70,7 @@ const cancelUserStaleActiveMpPlans = async (
   const plans = result?.subscriptionPlans ?? [];
   for (const row of plans) {
     const plan = (row as any).toJSON?.() ?? row;
+    if (!isMercadoPagoProvider(plan.provider)) continue;
     const mpId = String(plan.mpPreapprovalId ?? "");
     if (!isMpManagedPreapprovalId(mpId)) continue;
     if (mpAuthorizedIds.has(mpId)) continue;
@@ -148,10 +152,11 @@ export const SyncMercadoPagoSubscriptionsAction = (
 
         const subscriptionPayload = {
           userId: user?.id ?? existingUserId ?? null,
-          status: mpSub.status === "authorized" ? "ACTIVE" : "CANCELLED",
+          status: mapMpDetailStatusToModel(mpSub.status),
           startedAt: new Date(mpSub.date_created),
-          nextPaymentDate: calculateNextPaymentDate(mpSub),
+          nextPaymentDate: calculateNextPaymentDateFromMpDetail(mpSub),
           mpPreapprovalId: preapprovalId,
+          provider: "mercadopago",
         };
         let persistedSubscription;
         if (!existing) {
@@ -233,6 +238,10 @@ export const SyncMercadoPagoSubscriptionsAction = (
         const plans = userJson.subscriptionPlans ?? [];
         const hasInternalPlan = userHasActiveInternalGrant(plans);
         if (hasInternalPlan) continue;
+        const hasActiveApple = plans.some(
+          (p: any) => p.status === "ACTIVE" && p.provider === "apple"
+        );
+        if (hasActiveApple) continue;
         const hasActiveInMp = plans.some(
           (p: any) =>
             p.status === "ACTIVE" &&
@@ -265,20 +274,4 @@ export const SyncMercadoPagoSubscriptionsAction = (
       };
     },
   };
-};
-
-const calculateNextPaymentDate = (mpSubscription: any): Date | null => {
-  if (mpSubscription.next_payment_date)
-    return new Date(mpSubscription.next_payment_date);
-  if (!mpSubscription.auto_recurring?.start_date) return null;
-
-  const start = new Date(mpSubscription.auto_recurring.start_date);
-  const freq = mpSubscription.auto_recurring.frequency || 1;
-  const type = mpSubscription.auto_recurring.frequency_type || "months";
-
-  const next = new Date(start);
-  if (type === "months") next.setMonth(next.getMonth() + freq);
-  if (type === "days") next.setDate(next.getDate() + freq);
-
-  return next;
 };
