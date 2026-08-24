@@ -1,3 +1,4 @@
+import "./polyfills.js";
 import { Application } from "express";
 import { DependencyManager } from "./dependencyManager.js";
 import MiddlewaresInitializer from "./middlewares/MidlewaresInitalizer.js";

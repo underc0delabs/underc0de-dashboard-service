@@ -66,6 +66,7 @@
     "sequelize-cli": "^6.6.3",
     "sinon": "^21.0.0",
     "sinon-express-mock": "^2.2.1",
-    "ts-sinon": "^2.0.2"
+    "ts-sinon": "^2.0.2",
+    "undici": "^5.29.0"
   }
 }
