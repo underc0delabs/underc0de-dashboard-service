@@ -13,6 +13,7 @@ import {
   isInternalPreapprovalId,
 } from "../domain/subscriptionPlanHelpers.js";
 import { mapMpDetailStatusToModel } from "../domain/subscriptionStatusPolicy.js";
+import { resolveMercadoPagoPreapprovalForReconcile } from "../domain/resolveMercadoPagoPreapprovalForReconcile.js";
 import { resolveIsProAfterMpSync } from "../../../users/core/domain/userVipPolicy.js";
 
 const demoteOtherActiveSubscriptions = async (
@@ -43,6 +44,8 @@ export type ReconcileMercadoPagoUserResult =
       local_subscription_status: string;
       user_is_pro: boolean;
       payments_saved: number;
+      preapproval_id: string;
+      match_source: string;
     }
   | { ok: false; status: 404 | 422 | 502; message: string };
 
@@ -69,40 +72,17 @@ export const ReconcileMercadoPagoUserAction = (
     });
     const plans = plansResult?.subscriptionPlans ?? [];
     const jsonPlans = plans.map((p: any) => (p.toJSON ? p.toJSON() : p));
-    const candidates = jsonPlans.filter(
-      (p: any) =>
-        p.mpPreapprovalId && !isInternalPreapprovalId(p.mpPreapprovalId)
-    );
-    const byRecency = (a: any, b: any) => {
-      const ta = a?.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const tb = b?.createdAt ? new Date(b.createdAt).getTime() : 0;
-      if (tb !== ta) return tb - ta;
-      return Number(b?.id ?? 0) - Number(a?.id ?? 0);
-    };
-    const sorted = [...candidates].sort(byRecency);
-    const newest = sorted[0];
-    // Si el intento más reciente es PENDING, reconciliarlo (p. ej. re-suscripción con fila
-    // ACTIVE vieja aún no bajada); no usar .find(ACTIVE) sobre toda la lista, que devolvía
-    // un ACTIVE obsoleto antes que el PENDING más nuevo.
-    const planWithMp =
-      newest?.status === "PENDING"
-        ? newest
-        : sorted.find((p: any) => p.status === "ACTIVE") ?? newest;
+    const userJson = (user as any).toJSON ? (user as any).toJSON() : user;
 
-    if (!planWithMp?.mpPreapprovalId) {
-      return {
-        ok: false,
-        status: 422,
-        message:
-          "El usuario no tiene una suscripción MercadoPago asociada en el sistema",
-      };
-    }
-
-    const preapprovalId = String(planWithMp.mpPreapprovalId);
-
-    let detail: any;
+    let resolvedPreapproval: Awaited<
+      ReturnType<typeof resolveMercadoPagoPreapprovalForReconcile>
+    >;
     try {
-      detail = await mercadoPagoSyncService.getPreapprovalById(preapprovalId);
+      resolvedPreapproval = await resolveMercadoPagoPreapprovalForReconcile(
+        mercadoPagoSyncService,
+        userJson,
+        jsonPlans
+      );
     } catch (e: any) {
       console.error(
         "[MP reconcile user] MercadoPago error",
@@ -116,16 +96,27 @@ export const ReconcileMercadoPagoUserAction = (
       };
     }
 
-    if (!detail) {
+    if (!resolvedPreapproval) {
       return {
         ok: false,
-        status: 404,
-        message: "Preapproval no encontrado en MercadoPago",
+        status: 422,
+        message:
+          "El usuario no tiene una suscripción MercadoPago asociada en el sistema",
       };
     }
 
-    const mpStatusRaw = String((detail as any).status ?? "");
+    const preapprovalId = resolvedPreapproval.preapprovalId;
+    const detail = resolvedPreapproval.detail;
+
+    const mpStatusRaw = String(detail.status ?? "");
     const mappedStatus = mapMpDetailStatusToModel(mpStatusRaw);
+    console.log("[MP reconcile user] resolved preapproval", {
+      userId: targetUserId,
+      preapprovalId,
+      matchSource: resolvedPreapproval.matchSource,
+      mpStatusRaw,
+      mappedStatus,
+    });
     const mpSub: MpSubscription = {
       id: preapprovalId,
       status: mpStatusRaw === "authorized" ? "authorized" : "cancelled",
@@ -168,8 +159,9 @@ export const ReconcileMercadoPagoUserAction = (
       userId: targetUserId,
       status: mappedStatus,
       startedAt: new Date(mpSub.date_created),
-      nextPaymentDate: calculateNextPaymentDateFromMpDetail(mpSub as any),
+      nextPaymentDate: calculateNextPaymentDateFromMpDetail(detail),
       mpPreapprovalId: preapprovalId,
+      provider: "mercadopago",
     };
 
     let persistedSubscription: any;
@@ -188,7 +180,7 @@ export const ReconcileMercadoPagoUserAction = (
     const persistedId =
       (persistedSubscription as any).id ??
       (persistedSubscription as any).toJSON?.()?.id ??
-      planWithMp.id;
+      jsonPlans.find((p: any) => String(p.mpPreapprovalId) === preapprovalId)?.id;
 
     await demoteOtherActiveSubscriptions(
       targetUserId,
@@ -207,8 +199,8 @@ export const ReconcileMercadoPagoUserAction = (
       is_pro: resolvedIsPro,
       mpPayerId: String(mpSub.payer_id),
     };
-    const userJson = (user as any).toJSON ? (user as any).toJSON() : user;
-    const hasMercadopagoEmail = userJson?.mercadopago_email?.trim?.();
+    const userJsonSnapshot = userJson;
+    const hasMercadopagoEmail = userJsonSnapshot?.mercadopago_email?.trim?.();
     if (payerEmail && !hasMercadopagoEmail) {
       userUpdatePayload.mercadopago_email = payerEmail;
     }
@@ -244,6 +236,8 @@ export const ReconcileMercadoPagoUserAction = (
       local_subscription_status: mappedStatus,
       user_is_pro: resolvedIsPro,
       payments_saved: paymentsSaved,
+      preapproval_id: preapprovalId,
+      match_source: resolvedPreapproval.matchSource,
     };
   },
 });
