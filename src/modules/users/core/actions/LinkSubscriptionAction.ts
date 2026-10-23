@@ -196,7 +196,7 @@ export const LinkSubscriptionAction = (
             is_pro: mappedStatus === "ACTIVE",
             // Guardar el email de MP ayuda al cron a emparejar futuros cobros con este usuario.
             ...(lookupByEmail && !String((user as any).mercadopago_email ?? "").trim()
-              ? { mercadopago_email: codeOrEmail }
+              ? { mercadopago_email: codeOrEmail.toLowerCase() }
               : {}),
           };
           await UserRepository.edit(updatedUser, userId);
