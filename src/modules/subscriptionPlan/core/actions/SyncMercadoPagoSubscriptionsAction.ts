@@ -13,9 +13,37 @@ import {
   userHasActiveInternalGrant,
 } from "../../../users/core/domain/userVipPolicy.js";
 
+/**
+ * `preapproval/search` puede devolver una lista incompleta; antes de cancelar un plan ACTIVE que
+ * no figura como authorized se consulta su detalle en MP. Si sigue authorized se agrega al set
+ * (para que tampoco se revoque is_pro) y no se cancela. Si la consulta falla, no se cancela.
+ */
+const isStillAuthorizedInMp = async (
+  mpId: string,
+  mpAuthorizedIds: Set<string>,
+  mercadoPagoSyncService: MercadoPagoSyncService
+): Promise<boolean> => {
+  try {
+    const detail = await mercadoPagoSyncService.getPreapprovalById(mpId);
+    if (String(detail?.status ?? "").toLowerCase() === "authorized") {
+      mpAuthorizedIds.add(mpId);
+      return true;
+    }
+    return false;
+  } catch (error: any) {
+    console.warn("[MP SYNC] No se pudo verificar plan en MP; no se cancela", {
+      mpPreapprovalId: mpId,
+      message: error?.message,
+    });
+    mpAuthorizedIds.add(mpId);
+    return true;
+  }
+};
+
 const cancelStaleActiveMpPlans = async (
   mpAuthorizedIds: Set<string>,
-  subscriptionPlanRepository: ISubscriptionPlanRepository
+  subscriptionPlanRepository: ISubscriptionPlanRepository,
+  mercadoPagoSyncService: MercadoPagoSyncService
 ): Promise<number> => {
   let cancelled = 0;
   let page = 0;
@@ -36,6 +64,9 @@ const cancelStaleActiveMpPlans = async (
       const mpId = String(plan.mpPreapprovalId ?? "");
       if (!isMpManagedPreapprovalId(mpId)) continue;
       if (mpAuthorizedIds.has(mpId)) continue;
+      if (await isStillAuthorizedInMp(mpId, mpAuthorizedIds, mercadoPagoSyncService)) {
+        continue;
+      }
 
       await subscriptionPlanRepository.edit(
         { status: "CANCELLED" } as any,
@@ -228,7 +259,8 @@ export const SyncMercadoPagoSubscriptionsAction = (
 
       stalePlansCancelled = await cancelStaleActiveMpPlans(
         mpAuthorizedIds,
-        subscriptionPlanRepository
+        subscriptionPlanRepository,
+        mercadoPagoSyncService
       );
 
       const proUsersResult = await userRepository.get({ is_pro: true });

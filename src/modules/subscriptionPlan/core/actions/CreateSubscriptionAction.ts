@@ -8,13 +8,22 @@ const OWNER_PREAPPROVAL_PREFIX = "owner-";
 
 import {
   mapMpCreateStatusToModel,
+  mapMpDetailStatusToModel,
 } from "../domain/subscriptionStatusPolicy.js";
+import { isMpManagedPreapprovalId } from "../domain/subscriptionPlanHelpers.js";
 
-/** Política PENDING obsoleto: al iniciar un nuevo checkout, las filas PENDING del mismo usuario pasan a CANCELLED (nuevo intento reemplaza el anterior). */
-const cancelPreviousPendingCheckouts = async (
+/**
+ * Política PENDING obsoleto: al iniciar un nuevo checkout, las filas PENDING del mismo usuario
+ * pasan a CANCELLED (nuevo intento reemplaza el anterior).
+ * Antes de cancelar se consulta MP: si el checkout anterior ya fue pagado (authorized), no se
+ * cancela; se activa y se devuelve su id para no crear una suscripción duplicada.
+ */
+const resolvePreviousPendingCheckouts = async (
   userId: number,
-  subscriptionPlanRepository: ISubscriptionPlanRepository
-) => {
+  subscriptionPlanRepository: ISubscriptionPlanRepository,
+  mercadoPagoGateway: MercadoPagoGateway,
+  userRepository: IUserRepository
+): Promise<string | null> => {
   const result = await subscriptionPlanRepository.get({
     userId,
     status: "PENDING",
@@ -23,13 +32,38 @@ const cancelPreviousPendingCheckouts = async (
   });
   const plans = result?.subscriptionPlans ?? [];
   for (const row of plans) {
-    const id = (row as any).id ?? (row as any).dataValues?.id;
+    const plan = (row as any).toJSON?.() ?? row;
+    const id = plan.id ?? (row as any).dataValues?.id;
     if (id == null) continue;
+
+    if (isMpManagedPreapprovalId(plan.mpPreapprovalId)) {
+      try {
+        const detail = await mercadoPagoGateway.getPreapprovalById(
+          String(plan.mpPreapprovalId)
+        );
+        if (mapMpDetailStatusToModel(detail?.status) === "ACTIVE") {
+          await subscriptionPlanRepository.edit(
+            { status: "ACTIVE" } as any,
+            String(id)
+          );
+          await userRepository.edit({ is_pro: true } as any, String(userId));
+          return String(plan.mpPreapprovalId);
+        }
+      } catch (error: any) {
+        console.warn("[CreateSubscription] No se pudo consultar checkout previo en MP", {
+          userId,
+          preapprovalId: plan.mpPreapprovalId,
+          message: error?.message,
+        });
+      }
+    }
+
     await subscriptionPlanRepository.edit(
       { status: "CANCELLED" } as any,
       String(id)
     );
   }
+  return null;
 };
 
 const grantOwnerSubscription = async (
@@ -114,10 +148,22 @@ export const CreateSubscriptionAction = (
           throw new Error("MERCADO_PAGO_PRICE no está configurado. Configuralo en Environments o en la variable de entorno.");
         }
         const transactionAmount = Number(transactionAmountRaw);
-        await cancelPreviousPendingCheckouts(
+        const alreadyPaidPreapprovalId = await resolvePreviousPendingCheckouts(
           user.id,
-          subscriptionPlanRepository
+          subscriptionPlanRepository,
+          mercadoPagoGateway,
+          userRepository
         );
+        if (alreadyPaidPreapprovalId) {
+          // is_owner + sin url: la app ya lo trata como "PRO activo, recargar" sin abrir checkout.
+          return {
+            status: "ACTIVE",
+            init_point: null,
+            preapproval_id: alreadyPaidPreapprovalId,
+            already_active: true,
+            is_owner: true,
+          };
+        }
 
         const response = await mercadoPagoGateway.createPreapproval(mpEmail, transactionAmount);
         const { id, init_point, status } = response;

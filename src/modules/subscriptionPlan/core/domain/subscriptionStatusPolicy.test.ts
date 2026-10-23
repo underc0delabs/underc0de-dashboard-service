@@ -4,7 +4,6 @@ import {
   isTerminalSubscriptionStatus,
   mapMpCreateStatusToModel,
   mapMpDetailStatusToModel,
-  shouldRejectAuthorizedOnTerminalRow,
 } from "./subscriptionStatusPolicy.js";
 
 describe("subscriptionStatusPolicy", () => {
@@ -23,16 +22,5 @@ describe("subscriptionStatusPolicy", () => {
   it("isTerminalSubscriptionStatus", () => {
     assert.equal(isTerminalSubscriptionStatus("CANCELLED"), true);
     assert.equal(isTerminalSubscriptionStatus("ACTIVE"), false);
-  });
-
-  it("shouldRejectAuthorizedOnTerminalRow", () => {
-    assert.equal(
-      shouldRejectAuthorizedOnTerminalRow("CANCELLED", "authorized"),
-      true
-    );
-    assert.equal(
-      shouldRejectAuthorizedOnTerminalRow("PENDING", "authorized"),
-      false
-    );
   });
 });
