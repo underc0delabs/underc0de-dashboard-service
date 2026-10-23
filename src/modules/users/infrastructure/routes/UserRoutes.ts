@@ -4,6 +4,7 @@ import { allowOnlySelfOrAdmin } from "../../../../middlewares/AllowOnlySelfOrAdm
 import { IJwtValidator } from "../../../../middlewares/JwtValidator/core/IJwtValidator.js";
 import { jwtOrAppKeyAuth } from "../../../../middlewares/JwtOrAppKeyAuth.js";
 import { requireAdmin } from "../../../../middlewares/RequireAdmin.js";
+import { createSimpleWindowRateLimiter } from "../../../../middlewares/simpleApiRateLimiter.js";
 import { requireDashboardUser } from "../../../../middlewares/RequireDashboardUser.js";
 import { getUserControllers } from "../controllers/controllersProvider.js";
 import { uploadAvatarMiddleware } from "../middlewares/uploadAvatarMiddleware.js";
@@ -45,7 +46,15 @@ const getUserRoutes = (dependencyManager: DependencyManager) => {
   userRouter.post(`/${path}/fcm-token`, [jwtOrAppKeyAuth(jwtValidator)], saveFcmToken);
   userRouter.post(
     `/${path}/link-subscription`,
-    [jwtOrAppKeyAuth(jwtValidator)],
+    [
+      jwtOrAppKeyAuth(jwtValidator),
+      createSimpleWindowRateLimiter({
+        windowMs: 15 * 60 * 1000,
+        max: 10,
+        key: (req) =>
+          `link-subscription:${(req as any).auth?.id ?? req.headers["x-user-id"] ?? req.ip}`,
+      }),
+    ],
     linkSubscription
   );
   userRouter.get(`/${path}/get-by-username/:username`, getByUsername);
