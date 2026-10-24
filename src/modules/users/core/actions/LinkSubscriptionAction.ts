@@ -2,6 +2,7 @@ import { IUserRepository } from "../repository/IMongoUserRepository.js";
 import { ISubscriptionPlanRepository } from "../../../subscriptionPlan/core/repository/ISubscriptionPlanRepository.js";
 import { IPaymentRepository } from "../../../payment/core/repository/IPaymentRepository.js";
 import { MercadoPagoGateway } from "../../../../services/mercadopagoService/core/gateway/mercadoPagoGateway.js";
+import { findPreapprovalByPayerEmail } from "../../../subscriptionPlan/core/domain/findPreapprovalByPayerEmail.js";
 import {
   isTerminalSubscriptionStatus,
   mapMpDetailStatusToModel,
@@ -39,11 +40,13 @@ export const LinkSubscriptionAction = (
     execute: (body) => {
       return new Promise(async (resolve, reject) => {
         try {
-          const preapprovalId = body?.suscriptionCode?.trim?.();
-          if (!preapprovalId) {
-            reject(new Error("El código de suscripción es obligatorio"));
+          const codeOrEmail = body?.suscriptionCode?.trim?.();
+          if (!codeOrEmail) {
+            reject(new Error("El email o código de suscripción es obligatorio"));
             return;
           }
+          const lookupByEmail = codeOrEmail.includes("@");
+          let preapprovalId = codeOrEmail;
 
           const userId = String(body.userId ?? "").trim();
           if (!userId) {
@@ -66,6 +69,38 @@ export const LinkSubscriptionAction = (
               )
             );
             return;
+          }
+
+          if (lookupByEmail) {
+            const mpSubscriptions = await mercadoPagoGateway.getSuscriptions();
+            const lookup = await findPreapprovalByPayerEmail(
+              mpSubscriptions,
+              codeOrEmail,
+              userId,
+              async (id) => {
+                const row: any = await SubscriptionPlanRepository.getOne({
+                  mpPreapprovalId: id,
+                });
+                return row?.toJSON?.().userId ?? row?.userId ?? null;
+              }
+            );
+            if (lookup.kind === "not_active") {
+              reject(
+                new Error(
+                  "Encontramos una suscripción con ese email, pero no está activa en Mercado Pago. Creá una nueva desde la app."
+                )
+              );
+              return;
+            }
+            if (lookup.kind === "not_found") {
+              reject(
+                new Error(
+                  "No encontramos una suscripción activa para ese email de Mercado Pago."
+                )
+              );
+              return;
+            }
+            preapprovalId = lookup.preapprovalId;
           }
 
           const detail = await mercadoPagoGateway.getPreapprovalById(preapprovalId);
@@ -159,6 +194,10 @@ export const LinkSubscriptionAction = (
             ...user,
             mpPayerId: payerId != null ? String(payerId) : (user as any).mpPayerId,
             is_pro: mappedStatus === "ACTIVE",
+            // Guardar el email de MP ayuda al cron a emparejar futuros cobros con este usuario.
+            ...(lookupByEmail && !String((user as any).mercadopago_email ?? "").trim()
+              ? { mercadopago_email: codeOrEmail.toLowerCase() }
+              : {}),
           };
           await UserRepository.edit(updatedUser, userId);
 

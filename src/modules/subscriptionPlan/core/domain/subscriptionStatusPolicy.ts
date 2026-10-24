@@ -47,15 +47,3 @@ export const mapMpDetailStatusToModel = (
   if (s === "charged_back" || s === "rejected") return "PAYMENT_FAILED";
   return "CANCELLED";
 };
-
-/**
- * No promover a ACTIVE una fila ya terminal aunque MP envíe authorized (evento tardío/inconsistente).
- */
-export const shouldRejectAuthorizedOnTerminalRow = (
-  dbStatus: string | null | undefined,
-  mpStatus: string | null | undefined
-): boolean => {
-  const mp = String(mpStatus || "").toLowerCase();
-  if (mp !== "authorized") return false;
-  return isTerminalSubscriptionStatus(dbStatus);
-};

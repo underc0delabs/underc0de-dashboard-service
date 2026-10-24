@@ -11,7 +11,7 @@ import {
   sanitizeIlikeLiteralFragment,
 } from "../../../../helpers/userLookupNormalize.js";
 import { isInternalPreapprovalId } from "../../../subscriptionPlan/core/domain/subscriptionPlanHelpers.js";
-import { resolveUserVip } from "../../core/domain/userVipPolicy.js";
+import { resolveUserVip, buildPendingSubscriptionView } from "../../core/domain/userVipPolicy.js";
 
 const flattenInternalMember = (userJson: Record<string, unknown>) => {
   const im = userJson.internalMember as Record<string, unknown> | null | undefined;
@@ -258,7 +258,12 @@ export const MongoUserRepository = (): IUserRepository => ({
         ...userJson,
         fullName: fullNameWithoutDuplicate(userJson.name, userJson.lastname),
         vip,
-        subscription: subscriptionPlan ? {
+        subscription: buildPendingSubscriptionView(
+          userJson.subscriptionPlans,
+          activeSubscription,
+          cancelledSubscription,
+          vip
+        ) ?? (subscriptionPlan ? {
           id: subscriptionPlan.id,
           status: displayStatus,
           rawStatus: subscriptionStatus,
@@ -272,7 +277,7 @@ export const MongoUserRepository = (): IUserRepository => ({
             currency: lastPayment.currency,
             paidAt: lastPayment.paidAt,
           } : null,
-        } : null,
+        } : null),
       };
     });
 
@@ -492,7 +497,12 @@ export const MongoUserRepository = (): IUserRepository => ({
       ...userJson,
       fullName: fullNameWithoutDuplicate(userJson.name, userJson.lastname),
       vip: resolvedVip,
-      subscription: subscriptionPlan
+      subscription: buildPendingSubscriptionView(
+        userJson.subscriptionPlans,
+        activeSubscription,
+        cancelledSubscription,
+        resolvedVip
+      ) ?? (subscriptionPlan
         ? {
             id: subscriptionPlan.id,
             status: displayStatus,
@@ -510,7 +520,7 @@ export const MongoUserRepository = (): IUserRepository => ({
                 }
               : null,
           }
-        : null,
+        : null),
     };
   },
   async getOne(query, includePassword = false) {

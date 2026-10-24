@@ -4,7 +4,6 @@ import { ISubscriptionPlanRepository } from "../repository/ISubscriptionPlanRepo
 import {
   isTerminalSubscriptionStatus,
   mapMpDetailStatusToModel,
-  shouldRejectAuthorizedOnTerminalRow,
   type SubscriptionPlanStatus,
 } from "../domain/subscriptionStatusPolicy.js";
 import {
@@ -77,21 +76,8 @@ export const SyncSubscriptionByPreapprovalIdAction = (
       const mappedStatus: SubscriptionPlanStatus =
         mapMpDetailStatusToModel(mpStatusRaw);
 
-      if (
-        shouldRejectAuthorizedOnTerminalRow(currentStatus, mpStatusRaw)
-      ) {
-        logWebhook("ignored_authorized_on_terminal_row", {
-          preapprovalId,
-          dbStatus: currentStatus,
-          mpStatus: mpStatusRaw,
-        });
-        return {
-          success: true,
-          message: "ignored_authorized_on_terminal_subscription",
-          subscription_status: currentStatus,
-          user_is_pro: false,
-        };
-      }
+      // MP es la fuente de verdad (detalle consultado en vivo): un authorized
+      // reactiva filas CANCELLED/PAYMENT_FAILED (p. ej. tras pausa o checkout reemplazado).
 
       if (currentStatus === mappedStatus) {
         const userId = subJson.userId;

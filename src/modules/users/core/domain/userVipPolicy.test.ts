@@ -1,6 +1,8 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
+  buildPendingSubscriptionView,
+  pickPendingToDisplay,
   resolveIsProAfterMpSync,
   resolveUserVip,
   userHasActiveInternalGrant,
@@ -121,6 +123,35 @@ describe("resolveIsProAfterMpSync", () => {
         { status: "CANCELLED", mpPreapprovalId: "12345" },
       ]),
       false
+    );
+  });
+});
+
+describe("pickPendingToDisplay / buildPendingSubscriptionView", () => {
+  const old = { id: 1, status: "CANCELLED", createdAt: "2026-01-01T00:00:00Z" };
+  const newer = { id: 2, status: "PENDING", createdAt: "2026-03-01T00:00:00Z" };
+
+  it("muestra el PENDING más nuevo que el último CANCELLED", () => {
+    assert.equal(pickPendingToDisplay([old, newer], null, old)?.id, 2);
+  });
+
+  it("no muestra un PENDING más viejo que el CANCELLED", () => {
+    const olderPending = { ...newer, createdAt: "2025-01-01T00:00:00Z" };
+    assert.equal(pickPendingToDisplay([old, olderPending], null, old), null);
+  });
+
+  it("no muestra PENDING si hay ACTIVE", () => {
+    assert.equal(
+      pickPendingToDisplay([newer], { id: 3, status: "ACTIVE" }, null),
+      null
+    );
+  });
+
+  it("la vista PENDING se omite si el usuario ya es VIP", () => {
+    assert.equal(buildPendingSubscriptionView([old, newer], null, old, true), null);
+    assert.equal(
+      buildPendingSubscriptionView([old, newer], null, old, false)?.status,
+      "PENDING"
     );
   });
 });
