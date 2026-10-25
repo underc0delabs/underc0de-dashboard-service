@@ -53,14 +53,15 @@ const buildUpdatePayload = (
   return payload;
 };
 
-/** Deja un solo plan ACTIVE por usuario al activar desde el panel (evita duplicados que confunden el listado). */
-const cancelOtherActivePlans = async (
+/** Cancela los planes ACTIVE del usuario; con keepSubId conserva ese plan. */
+const cancelActivePlans = async (
   subscriptionPlanRepository: ISubscriptionPlanRepository,
   userIdNum: number,
   keepSubId: number | null
 ) => {
   const result = await subscriptionPlanRepository.get({
     userId: userIdNum,
+    status: "ACTIVE",
     page_count: 100,
     page_number: 0,
   });
@@ -73,6 +74,43 @@ const cancelOtherActivePlans = async (
       { status: "CANCELLED" } as any,
       String(row.id)
     );
+  }
+};
+
+/**
+ * Quita todo acceso PRO del usuario desde el panel. Además de cancelar los planes ACTIVE se vence
+ * `nextPaymentDate` (una fila CANCELLED con fecha futura cuenta como "cancelada con acceso hasta X"
+ * y dejaría al usuario VIP, p. ej. la concesión con fecha 2099).
+ */
+const revokeAllAccess = async (
+  subscriptionPlanRepository: ISubscriptionPlanRepository,
+  userIdNum: number
+) => {
+  const result = await subscriptionPlanRepository.get({
+    userId: userIdNum,
+    page_count: 100,
+    page_number: 0,
+  });
+  const plans = (result as any).subscriptionPlans ?? [];
+  const now = Date.now();
+  const expired = new Date(now - 24 * 60 * 60 * 1000);
+  for (const p of plans) {
+    const row = p?.toJSON ? p.toJSON() : p;
+    if (row.status === "ACTIVE") {
+      await subscriptionPlanRepository.edit(
+        { status: "CANCELLED", nextPaymentDate: expired } as any,
+        String(row.id)
+      );
+    } else if (
+      row.status === "CANCELLED" &&
+      row.nextPaymentDate &&
+      new Date(row.nextPaymentDate).getTime() > now
+    ) {
+      await subscriptionPlanRepository.edit(
+        { nextPaymentDate: expired } as any,
+        String(row.id)
+      );
+    }
   }
 };
 
@@ -134,70 +172,53 @@ export const EditUserAction = (
 
           if (subscriptionStatus !== null) {
             const userIdNum = Number(id);
-            const adminNextPaymentDate = lifetimeNextPaymentDate();
-            
-            /** Suscripción más reciente del usuario (get ordena por createdAt DESC) */
-            let subscription: any = null;
-            try {
-              const result = await subscriptionPlanRepository.get({
-                userId: userIdNum,
-                page_count: 5,
-                page_number: 0,
-              });
-              const plans = (result as any).subscriptionPlans ?? [];
-              subscription = Array.isArray(plans) ? plans[0] : null;
-              if (subscription && typeof subscription.toJSON === "function") {
-                subscription = subscription.toJSON();
-              }
-            } catch (e) {
-              console.warn("[EditUser] Error al buscar suscripciones", e);
-            }
-
-            const adminPreapprovalId = `admin-${id}`;
-            if (!subscription && subscriptionStatus === "ACTIVE") {
-              subscription = await subscriptionPlanRepository.getOne({ mpPreapprovalId: adminPreapprovalId });
-            }
 
             if (subscriptionStatus === "ACTIVE") {
-              if (subscription) {
-                const subId = (subscription as any).id;
-                await cancelOtherActivePlans(
-                  subscriptionPlanRepository,
-                  userIdNum,
-                  subId
-                );
+              /**
+               * Siempre una concesión interna `admin-<id>`: las sincronizaciones con Mercado Pago
+               * (refresh de la app, webhook, cron, botón del panel) solo respetan estas filas.
+               * Reutilizar la última fila de MP la dejaba ACTIVE con un id real de MP, y el
+               * siguiente sync la revertía a lo que dice MP.
+               */
+              const adminPreapprovalId = `admin-${id}`;
+              const existingGrant: any = await subscriptionPlanRepository.getOne({
+                mpPreapprovalId: adminPreapprovalId,
+              });
+              const grantRow = existingGrant?.toJSON
+                ? existingGrant.toJSON()
+                : existingGrant;
+              let grantId: number;
+              if (grantRow) {
+                grantId = Number(grantRow.id);
                 await subscriptionPlanRepository.edit(
                   {
                     status: "ACTIVE",
-                    nextPaymentDate: adminNextPaymentDate,
+                    nextPaymentDate: lifetimeNextPaymentDate(),
                   } as any,
-                  String(subId)
+                  String(grantId)
                 );
               } else {
-                await cancelOtherActivePlans(
-                  subscriptionPlanRepository,
-                  userIdNum,
-                  null
-                );
-                await subscriptionPlanRepository.save({
+                const created: any = await subscriptionPlanRepository.save({
                   userId: userIdNum,
                   status: "ACTIVE",
                   startedAt: new Date(),
-                  nextPaymentDate: adminNextPaymentDate,
+                  nextPaymentDate: lifetimeNextPaymentDate(),
                   mpPreapprovalId: adminPreapprovalId,
                 } as any);
+                const createdRow = created?.toJSON ? created.toJSON() : created;
+                grantId = Number(createdRow?.id);
               }
+              await cancelActivePlans(
+                subscriptionPlanRepository,
+                userIdNum,
+                Number.isFinite(grantId) ? grantId : null
+              );
             } else {
-              if (subscription) {
-                const subId = (subscription as any).id;
-                await subscriptionPlanRepository.edit(
-                  { status: "CANCELLED" } as any,
-                  String(subId)
-                );
-              }
+              // Desactivar desde el panel quita todo acceso, incluida la concesión interna.
+              await revokeAllAccess(subscriptionPlanRepository, userIdNum);
             }
           }
-          
+
           const result = await UserRepository.getById(id);
           resolve(result);
         } catch (error) {
